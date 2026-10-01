@@ -222,10 +222,7 @@ describe("scenario document validation", () => {
 
   it("rejects an oversized URL-fragment share payload", () => {
     const inputPriceOverrides = Object.fromEntries(
-      Array.from({ length: 128 }, (_, index) => [
-        `item-${index}-${"x".repeat(48)}`,
-        index + 1,
-      ]),
+      Array.from({ length: 128 }, (_, index) => [`item-${index}-${"x".repeat(48)}`, index + 1]),
     );
     const largeMarketState: EconomyScenarioStateV1 = {
       skills: {},
