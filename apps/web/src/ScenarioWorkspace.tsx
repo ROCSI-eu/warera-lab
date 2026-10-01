@@ -167,7 +167,9 @@ export function ScenarioTransfer({
           </label>
           <div className="share-box">
             <strong>URL fragment share</strong>
-            <code>{shareFragment || "Scenario exceeds the share boundary."}</code>
+            <code tabIndex={0} aria-label="Scenario URL fragment">
+              {shareFragment || "Scenario exceeds the share boundary."}
+            </code>
             <button type="button" onClick={applyShareFragment} disabled={shareFragment === ""}>
               Put scenario in URL
             </button>
@@ -294,13 +296,12 @@ export function ScenarioWorkspace({
         </p>
       ) : null}
 
-      <div className="scenario-tabs" role="tablist" aria-label="Scenario">
+      <div className="scenario-tabs" role="group" aria-label="Scenario selection">
         {(Object.keys(slotLabels) as ScenarioSlot[]).map((slot) => (
           <button
             key={slot}
             type="button"
-            role="tab"
-            aria-selected={activeSlot === slot}
+            aria-pressed={activeSlot === slot}
             className={activeSlot === slot ? "scenario-tab scenario-tab--active" : "scenario-tab"}
             onClick={() => setActiveSlot(slot)}
           >
