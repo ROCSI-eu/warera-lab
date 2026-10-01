@@ -105,6 +105,10 @@ export interface CreateScenarioDocumentOptions {
   includeSourcePlayerIdentity?: boolean;
 }
 
+export interface ScenarioSerializationOptions {
+  includeSourcePlayerIdentity?: boolean;
+}
+
 export interface ScenarioChangeV1 {
   path: string;
   from?: string | number;
@@ -454,8 +458,27 @@ function byteLength(value: string): number {
   return new TextEncoder().encode(value).byteLength;
 }
 
-export function serializeScenarioJson(document: ScenarioDocumentV1): string {
+function prepareScenarioForSerialization(
+  document: ScenarioDocumentV1,
+  options: ScenarioSerializationOptions = {},
+): ScenarioDocumentV1 {
   const normalized = parseScenarioDocument(document);
+  if (options.includeSourcePlayerIdentity === true || normalized.source?.player === undefined) {
+    return normalized;
+  }
+
+  const { player: _player, ...sourceWithoutPlayer } = normalized.source;
+  return {
+    ...normalized,
+    ...(Object.keys(sourceWithoutPlayer).length === 0 ? { source: undefined } : { source: sourceWithoutPlayer }),
+  };
+}
+
+export function serializeScenarioJson(
+  document: ScenarioDocumentV1,
+  options: ScenarioSerializationOptions = {},
+): string {
+  const normalized = prepareScenarioForSerialization(document, options);
   const json = JSON.stringify(normalized);
   if (byteLength(json) > scenarioJsonMaxBytes) {
     throw new ScenarioModelError(
@@ -484,8 +507,13 @@ export function parseScenarioJson(json: string): ScenarioDocumentV1 {
   return parseScenarioDocument(parsed);
 }
 
-export function encodeScenarioFragment(document: ScenarioDocumentV1): string {
-  const fragment = `${scenarioShareFragmentPrefix}${encodeURIComponent(serializeScenarioJson(document))}`;
+export function encodeScenarioFragment(
+  document: ScenarioDocumentV1,
+  options: ScenarioSerializationOptions = {},
+): string {
+  const fragment = `${scenarioShareFragmentPrefix}${encodeURIComponent(
+    serializeScenarioJson(document, options),
+  )}`;
   if (byteLength(fragment) > scenarioShareFragmentMaxBytes) {
     throw new ScenarioModelError(
       `Scenario share fragment exceeds the ${scenarioShareFragmentMaxBytes}-byte limit.`,
