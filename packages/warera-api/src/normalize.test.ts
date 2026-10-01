@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { documentedMvpProcedures, normalizeEconomyGameConfig } from "./index.js";
+import {
+  documentedMvpProcedures,
+  normalizeCompaniesPage,
+  normalizeEconomyGameConfig,
+} from "./index.js";
 
 const rawConfig = {
   skills: {
@@ -44,6 +48,14 @@ const rawConfig = {
   company: { depositResourceBonus: 30, moveCost: 5, changeItemCost: 5 },
   worker: { maxFidelity: 10, fidelityProductionBonusPercent: 1 },
 };
+
+describe("normalizeCompaniesPage", () => {
+  it("normalizes the live company list as company identifiers, not detail objects", () => {
+    expect(normalizeCompaniesPage({ items: ["company-1", "company-2"], nextCursor: null })).toEqual(
+      { itemIds: ["company-1", "company-2"] },
+    );
+  });
+});
 
 describe("normalizeEconomyGameConfig", () => {
   it("keeps only the Economy Lab subset with numeric level keys", () => {

@@ -26,7 +26,7 @@ import {
   normalizeRegion,
   normalizeRegionsObject,
   normalizeSearchResult,
-  type CompaniesPage,
+  type CompanyIdsPage,
 } from "./normalize.js";
 import type { DocumentedMvpProcedure } from "./procedures.js";
 import { readRateLimitMetadata, type WarEraRateLimitMetadata } from "./rate-limit.js";
@@ -175,8 +175,16 @@ export class WarEraPublicApiClient {
     return this.#normalized("user.getUserLite", { userId }, normalizePublicPlayer);
   }
 
-  getCompanies(userId: string, perPage = 100): Promise<WarEraAdapterResponse<CompaniesPage>> {
-    return this.#normalized("company.getCompanies", { userId, perPage }, normalizeCompaniesPage);
+  getCompanies(
+    userId: string,
+    perPage = 100,
+    cursor?: string,
+  ): Promise<WarEraAdapterResponse<CompanyIdsPage>> {
+    return this.#normalized(
+      "company.getCompanies",
+      { userId, perPage, ...(cursor === undefined ? {} : { cursor }) },
+      normalizeCompaniesPage,
+    );
   }
 
   getCompany(companyId: string): Promise<WarEraAdapterResponse<PublicCompanySnapshot>> {

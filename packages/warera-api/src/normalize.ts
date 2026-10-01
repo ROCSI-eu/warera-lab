@@ -30,8 +30,8 @@ import {
   searchResultSchema,
 } from "./schemas.js";
 
-export interface CompaniesPage {
-  items: PublicCompanySnapshot[];
+export interface CompanyIdsPage {
+  itemIds: string[];
   nextCursor?: string;
 }
 
@@ -102,10 +102,10 @@ export function normalizeCompany(raw: unknown): PublicCompanySnapshot {
   return normalizeCompanyFromParsed(companySchema.parse(raw));
 }
 
-export function normalizeCompaniesPage(raw: unknown): CompaniesPage {
+export function normalizeCompaniesPage(raw: unknown): CompanyIdsPage {
   const value = companiesPageSchema.parse(raw);
   return {
-    items: value.items.map(normalizeCompanyFromParsed),
+    itemIds: value.items,
     ...(value.nextCursor == null ? {} : { nextCursor: value.nextCursor }),
   };
 }

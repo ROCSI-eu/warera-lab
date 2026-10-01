@@ -148,3 +148,47 @@ export interface MarketOrderBook {
   buyOrders: MarketOrder[];
   sellOrders: MarketOrder[];
 }
+
+export interface PublicPlayerSearchMatch {
+  id: string;
+  username: string;
+  countryId: string;
+  level: number;
+}
+
+export type SnapshotFreshnessState = "live" | "cached" | "stale";
+export type SnapshotFreshnessSourceKind =
+  "search" | "player" | "companies" | "company" | "regions" | "countries";
+
+export interface SnapshotFreshnessSource {
+  source: SnapshotFreshnessSourceKind;
+  subjectId?: string;
+  retrievedAt: string;
+  ageMs: number;
+  state: SnapshotFreshnessState;
+}
+
+export interface SnapshotFreshness {
+  generatedAt: string;
+  hasStaleData: boolean;
+  sources: SnapshotFreshnessSource[];
+}
+
+export interface PlayerSearchResponse {
+  query: string;
+  matches: PublicPlayerSearchMatch[];
+  truncated: boolean;
+  freshness: SnapshotFreshness;
+}
+
+export interface PublicPlayerSnapshotResponse {
+  player: PublicPlayerEconomySnapshot;
+  companies: PublicCompanySnapshot[];
+  regions: Record<string, RegionContext>;
+  countries: Record<string, CountryContext>;
+  contextGaps: {
+    regionIds: string[];
+    countryIds: string[];
+  };
+  freshness: SnapshotFreshness;
+}

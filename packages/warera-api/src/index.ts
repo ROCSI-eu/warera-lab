@@ -32,4 +32,4 @@ export {
   normalizeRegionsObject,
   normalizeSearchResult,
 } from "./normalize.js";
-export type { CompaniesPage } from "./normalize.js";
+export type { CompanyIdsPage } from "./normalize.js";
