@@ -1,17 +1,24 @@
 import type {
+  EconomyPlannerContextResponse,
   PublicCompanySnapshot,
+  PublicPlayerSnapshotResponse,
   SnapshotFreshness,
   SnapshotFreshnessSource,
 } from "@warera-lab/domain";
-import { type FormEvent, useMemo, useReducer } from "react";
+import type { ScenarioDocumentV1 } from "@warera-lab/simulation-core";
+import { type FormEvent, useMemo, useReducer, useState } from "react";
 
-import { EconomyLab } from "./EconomyLab.js";
+import { ScenarioTransfer, ScenarioWorkspace } from "./ScenarioWorkspace.js";
 import {
   PublicApiClientError,
   getEconomyContext,
   getPlayerSnapshot,
   searchPlayers,
 } from "./public-api.js";
+import {
+  createWorkspaceScenarioDocument,
+  importScenarioFragment,
+} from "./scenario-workspace-model.js";
 import { initialWorkspaceState, workspaceReducer } from "./workspace-state.js";
 
 const skillLabels = {
@@ -112,14 +119,60 @@ function describeClientError(error: unknown): string {
   return error.message;
 }
 
+function initialScenarioFromLocation(): {
+  document?: ScenarioDocumentV1;
+  message?: string;
+} {
+  if (typeof window === "undefined") return {};
+  const imported = importScenarioFragment(window.location.hash);
+  if (imported.document) {
+    return {
+      document: imported.document,
+      message: "Shared scenario imported from the URL. No live player lookup was performed.",
+    };
+  }
+  return imported.error === undefined ? {} : { message: imported.error };
+}
+
 export function App() {
   const [state, dispatch] = useReducer(workspaceReducer, initialWorkspaceState);
+  const [initialScenario] = useState(initialScenarioFromLocation);
+  const [scenarioDocument, setScenarioDocument] = useState<ScenarioDocumentV1 | undefined>(
+    initialScenario.document,
+  );
+  const [scenarioCompanyId, setScenarioCompanyId] = useState<string>();
+  const [scenarioImportMessage, setScenarioImportMessage] = useState<string | undefined>(
+    initialScenario.message,
+  );
+  const [scenarioSessionKey, setScenarioSessionKey] = useState(
+    initialScenario.document === undefined ? 0 : 1,
+  );
   const selectedCompany = useMemo(
     () =>
       state.snapshot?.companies.find((company) => company.id === state.selectedCompanyId) ??
       state.snapshot?.companies[0],
     [state.selectedCompanyId, state.snapshot],
   );
+
+  function establishScenarioDocument(
+    snapshot: PublicPlayerSnapshotResponse,
+    company: PublicCompanySnapshot,
+    context: EconomyPlannerContextResponse,
+  ) {
+    setScenarioDocument(createWorkspaceScenarioDocument(snapshot, company, context));
+    setScenarioCompanyId(company.id);
+    setScenarioImportMessage(undefined);
+    setScenarioSessionKey((current) => current + 1);
+  }
+
+  function handleScenarioImport(document: ScenarioDocumentV1) {
+    setScenarioDocument(document);
+    setScenarioCompanyId(undefined);
+    setScenarioImportMessage(
+      "Portable scenario loaded without attaching or looking up a live player workspace.",
+    );
+    setScenarioSessionKey((current) => current + 1);
+  }
 
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -141,17 +194,21 @@ export function App() {
     }
   }
 
-  async function loadEconomyContext(itemCode: string) {
+  async function loadEconomyContext(
+    itemCode: string,
+  ): Promise<EconomyPlannerContextResponse | undefined> {
     dispatch({ type: "economy-context-started", itemCode });
     try {
       const context = await getEconomyContext(itemCode);
       dispatch({ type: "economy-context-succeeded", itemCode, context });
+      return context;
     } catch (error) {
       dispatch({
         type: "economy-context-failed",
         itemCode,
         message: describeClientError(error),
       });
+      return undefined;
     }
   }
 
@@ -161,7 +218,12 @@ export function App() {
       const snapshot = await getPlayerSnapshot(playerId);
       dispatch({ type: "import-succeeded", snapshot });
       const firstCompany = snapshot.companies[0];
-      if (firstCompany) await loadEconomyContext(firstCompany.itemCode);
+      if (firstCompany) {
+        const context = await loadEconomyContext(firstCompany.itemCode);
+        if (context) establishScenarioDocument(snapshot, firstCompany, context);
+      } else {
+        setScenarioCompanyId(undefined);
+      }
     } catch (error) {
       dispatch({ type: "import-failed", message: describeClientError(error) });
     }
@@ -169,7 +231,10 @@ export function App() {
 
   async function handleCompanySelect(company: PublicCompanySnapshot) {
     dispatch({ type: "company-selected", companyId: company.id });
-    await loadEconomyContext(company.itemCode);
+    const context = await loadEconomyContext(company.itemCode);
+    if (context && state.snapshot) {
+      establishScenarioDocument(state.snapshot, company, context);
+    }
   }
 
   const playerCountry = state.snapshot?.countries[state.snapshot.player.countryId];
@@ -278,6 +343,25 @@ export function App() {
           </div>
         ) : null}
       </section>
+
+      <ScenarioTransfer
+        document={scenarioDocument}
+        onImport={(document) => handleScenarioImport(document)}
+      />
+      {scenarioImportMessage ? (
+        <p
+          className={
+            scenarioImportMessage.toLowerCase().includes("could not") ||
+            scenarioImportMessage.toLowerCase().includes("exceeds") ||
+            scenarioImportMessage.toLowerCase().includes("unsupported")
+              ? "message message--error"
+              : "message"
+          }
+          role="status"
+        >
+          {scenarioImportMessage}
+        </p>
+      ) : null}
 
       {state.snapshot ? (
         <section className="workspace" aria-labelledby="workspace-title">
@@ -426,15 +510,7 @@ export function App() {
           {selectedCompany &&
           state.economyContext &&
           state.economyContextItemCode === selectedCompany.itemCode ? (
-            <>
-              <FreshnessPanel freshness={state.economyContext.freshness} title="Economy context" />
-              <EconomyLab
-                key={selectedCompany.id}
-                player={state.snapshot.player}
-                company={selectedCompany}
-                context={state.economyContext}
-              />
-            </>
+            <FreshnessPanel freshness={state.economyContext.freshness} title="Economy context" />
           ) : null}
         </section>
       ) : (
@@ -443,10 +519,35 @@ export function App() {
           <h2 id="workspace-preview-title">Economy Lab starts with an imported snapshot</h2>
           <p>
             Import a player to see economy skills, companies, selected company context, and source
-            freshness. Scenario controls arrive in the next MVP slice.
+            freshness. You can also import a portable scenario without attaching a player.
           </p>
         </section>
       )}
+
+      {scenarioDocument ? (
+        <ScenarioWorkspace
+          key={scenarioSessionKey}
+          document={scenarioDocument}
+          onDocumentChange={(document) => setScenarioDocument(document)}
+          snapshot={
+            scenarioCompanyId !== undefined && scenarioCompanyId === selectedCompany?.id
+              ? state.snapshot
+              : undefined
+          }
+          company={
+            scenarioCompanyId !== undefined && scenarioCompanyId === selectedCompany?.id
+              ? selectedCompany
+              : undefined
+          }
+          context={
+            scenarioCompanyId !== undefined &&
+            scenarioCompanyId === selectedCompany?.id &&
+            state.economyContextItemCode === selectedCompany?.itemCode
+              ? state.economyContext
+              : undefined
+          }
+        />
+      ) : null}
 
       <footer>
         WarEra Lab is an independent community project and is not affiliated with, endorsed by, or

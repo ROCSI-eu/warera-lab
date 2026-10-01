@@ -41,6 +41,31 @@ function aggregateFreshness(
   };
 }
 
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value === null || typeof value !== "object") return value;
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, nested]) => [key, canonicalize(nested)]),
+  );
+}
+
+function configRevision(input: {
+  skills: EconomyGameConfig["skills"];
+  companyUpgrades: EconomyGameConfig["companyUpgrades"];
+  item?: EconomyGameConfig["items"][string];
+}): string {
+  const serialized = JSON.stringify(canonicalize(input));
+  let hash = 2_166_136_261;
+  for (let index = 0; index < serialized.length; index += 1) {
+    hash ^= serialized.charCodeAt(index);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  return `fnv1a-${(hash >>> 0).toString(16).padStart(8, "0")}-${serialized.length.toString(16)}`;
+}
+
 export class EconomyContextService {
   readonly #client: EconomyWarEraClient;
   readonly #now: () => Date;
@@ -78,6 +103,11 @@ export class EconomyContextService {
 
     return {
       itemCode,
+      configRevision: configRevision({
+        skills: config.data.skills,
+        companyUpgrades: config.data.companyUpgrades,
+        ...(item === undefined ? {} : { item }),
+      }),
       ...(item === undefined ? {} : { item }),
       skills: config.data.skills,
       companyUpgrades: config.data.companyUpgrades,

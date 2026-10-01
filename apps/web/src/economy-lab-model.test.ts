@@ -38,6 +38,7 @@ const company: PublicCompanySnapshot = {
 
 const context: EconomyPlannerContextResponse = {
   itemCode: "steel",
+  configRevision: "test-config",
   item: {
     code: "steel",
     type: "resource",

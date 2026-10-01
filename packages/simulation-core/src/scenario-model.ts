@@ -1,6 +1,7 @@
 import {
   companyUpgradeKeys,
   economySkillKeys,
+  publicItemCodeMaxLength,
   type CompanyUpgradeKey,
   type EconomySkillKey,
 } from "@warera-lab/domain";
@@ -18,7 +19,7 @@ export const scenarioShareFragmentMaxBytes = 8 * 1024;
 export const scenarioJsonMaxBytes = 64 * 1024;
 
 const maxInputPriceOverrides = 128;
-const maxCodeLength = 64;
+const maxCodeLength = publicItemCodeMaxLength;
 const maxMetadataLength = 128;
 
 export type ScenarioDocumentVersion = typeof scenarioDocumentVersion;
@@ -293,6 +294,13 @@ function parseScenarioState(value: unknown, path: string): EconomyScenarioStateV
   }
 
   const market = parseMarket(record.market, `${path}.market`);
+  if (
+    companyItemCode !== undefined &&
+    market !== undefined &&
+    companyItemCode !== market.itemCode
+  ) {
+    fail(`${path}.companyItemCode must match ${path}.market.itemCode.`, `${path}.market.itemCode`);
+  }
 
   return {
     skills: parseLevelMap(record.skills, `${path}.skills`, economySkillKeys),

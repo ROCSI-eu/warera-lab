@@ -35,27 +35,33 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
 }
 
-function updateForm(
-  setForm: React.Dispatch<React.SetStateAction<EconomyLabFormState>>,
-  updater: (current: EconomyLabFormState) => EconomyLabFormState,
-) {
-  setForm((current) => updater(current));
-}
-
 export function EconomyLab({
   player,
   company,
   context,
+  form: controlledForm,
+  onFormChange,
+  readOnly = false,
 }: {
   player: PublicPlayerEconomySnapshot;
   company: PublicCompanySnapshot;
   context: EconomyPlannerContextResponse;
+  form?: EconomyLabFormState;
+  onFormChange?: (form: EconomyLabFormState) => void;
+  readOnly?: boolean;
 }) {
-  const [form, setForm] = useState(() => createEconomyLabForm(player, company, context));
+  const [localForm, setLocalForm] = useState(() => createEconomyLabForm(player, company, context));
+  const form = controlledForm ?? localForm;
   const evaluation = useMemo(
     () => evaluateEconomyLab(player, company, context, form),
     [player, company, context, form],
   );
+
+  function updateForm(updater: (current: EconomyLabFormState) => EconomyLabFormState) {
+    const next = updater(form);
+    if (onFormChange) onFormChange(next);
+    else setLocalForm(next);
+  }
 
   return (
     <section className="economy-lab" aria-labelledby="economy-lab-title">
@@ -113,9 +119,10 @@ export function EconomyLab({
                     <small>Observed level {currentLevel}</small>
                   </span>
                   <select
+                    disabled={readOnly}
                     value={form.skillLevels[key]}
                     onChange={(event) =>
-                      updateForm(setForm, (current) => ({
+                      updateForm((current) => ({
                         ...current,
                         skillLevels: { ...current.skillLevels, [key]: event.currentTarget.value },
                       }))
@@ -204,9 +211,10 @@ export function EconomyLab({
                     </small>
                   </span>
                   <select
+                    disabled={readOnly}
                     value={form.upgradeLevels[key]}
                     onChange={(event) =>
-                      updateForm(setForm, (current) => ({
+                      updateForm((current) => ({
                         ...current,
                         upgradeLevels: {
                           ...current.upgradeLevels,
@@ -281,12 +289,13 @@ export function EconomyLab({
             <label>
               <span>Quantity {provenance("assumed")}</span>
               <input
+                disabled={readOnly}
                 type="number"
                 min="0"
                 step="any"
                 value={form.quantity}
                 onChange={(event) =>
-                  updateForm(setForm, (current) => ({
+                  updateForm((current) => ({
                     ...current,
                     quantity: event.currentTarget.value,
                   }))
@@ -296,13 +305,14 @@ export function EconomyLab({
             <label>
               <span>Output price override {provenance("overridden")}</span>
               <input
+                disabled={readOnly}
                 type="number"
                 min="0"
                 step="any"
                 placeholder={context.marketPrices[context.itemCode]?.toString() ?? "No live price"}
                 value={form.outputPriceOverride}
                 onChange={(event) =>
-                  updateForm(setForm, (current) => ({
+                  updateForm((current) => ({
                     ...current,
                     outputPriceOverride: event.currentTarget.value,
                   }))
@@ -312,12 +322,13 @@ export function EconomyLab({
             <label>
               <span>Assumed labour cost {provenance("assumed")}</span>
               <input
+                disabled={readOnly}
                 type="number"
                 min="0"
                 step="any"
                 value={form.assumedLabourCostTotal}
                 onChange={(event) =>
-                  updateForm(setForm, (current) => ({
+                  updateForm((current) => ({
                     ...current,
                     assumedLabourCostTotal: event.currentTarget.value,
                   }))
@@ -327,12 +338,13 @@ export function EconomyLab({
             <label>
               <span>Other assumed cost {provenance("assumed")}</span>
               <input
+                disabled={readOnly}
                 type="number"
                 min="0"
                 step="any"
                 value={form.assumedOtherCostTotal}
                 onChange={(event) =>
-                  updateForm(setForm, (current) => ({
+                  updateForm((current) => ({
                     ...current,
                     assumedOtherCostTotal: event.currentTarget.value,
                   }))
@@ -351,6 +363,7 @@ export function EconomyLab({
                       {itemCode} override {provenance("overridden")}
                     </span>
                     <input
+                      disabled={readOnly}
                       type="number"
                       min="0"
                       step="any"
@@ -359,7 +372,7 @@ export function EconomyLab({
                       }
                       value={form.inputPriceOverrides[itemCode] ?? ""}
                       onChange={(event) =>
-                        updateForm(setForm, (current) => ({
+                        updateForm((current) => ({
                           ...current,
                           inputPriceOverrides: {
                             ...current.inputPriceOverrides,
