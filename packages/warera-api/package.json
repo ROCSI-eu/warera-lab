@@ -14,5 +14,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@warera-lab/domain": "*",
+    "zod": "4.6.5"
   }
 }
