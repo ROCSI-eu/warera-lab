@@ -141,6 +141,7 @@ describe("WarEra request coordination", () => {
   });
 
   it("holds new upstream work when the observed budget reaches the safety reserve", async () => {
+    let nowMs = 0;
     const fetchMock = vi.fn<typeof fetch>().mockImplementation(async (input) =>
       successResponse(playerPayload(userIdFromRequest(input)), {
         "ratelimit-limit": "100",
@@ -151,11 +152,13 @@ describe("WarEra request coordination", () => {
     );
     const client = new WarEraPublicApiClient({
       fetch: fetchMock,
+      now: () => new Date(nowMs),
       coordination: { safetyReserve: 2 },
     });
 
     await client.getPlayer("user-1");
     const cached = await client.getPlayer("user-1");
+    nowMs = 0;
 
     expect(cached.cache.state).toBe("fresh");
     await expect(client.getPlayer("user-2")).rejects.toMatchObject<Partial<WarEraApiError>>({
