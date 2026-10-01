@@ -503,3 +503,233 @@ footer {
     animation-duration: 0.01ms !important;
   }
 }
+
+.economy-lab {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(232, 237, 244, 0.09);
+}
+
+.planner-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.planner-panel {
+  min-width: 0;
+  padding: 1.05rem;
+  border: 1px solid rgba(232, 237, 244, 0.08);
+  border-radius: 0.9rem;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.planner-panel--wide {
+  grid-column: 1 / -1;
+}
+
+.planner-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.control-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.planner-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 0.55fr);
+  gap: 0.45rem 0.75rem;
+  align-items: center;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(232, 237, 244, 0.06);
+}
+
+.planner-control:last-child {
+  border-bottom: 0;
+}
+
+.planner-control > span:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.planner-control small,
+.control-result {
+  color: #8794a5;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.planner-control select,
+.market-controls input {
+  width: 100%;
+  min-height: 2.7rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(232, 237, 244, 0.14);
+  border-radius: 0.65rem;
+  background: rgba(5, 9, 14, 0.72);
+  color: #eef3f9;
+}
+
+.control-result {
+  grid-column: 1 / -1;
+}
+
+.result-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.result-strip span {
+  padding: 0.65rem;
+  border-radius: 0.65rem;
+  background: rgba(155, 183, 220, 0.06);
+  color: #9eacbd;
+  font-size: 0.76rem;
+}
+
+.result-strip strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: #eef3f9;
+  font-size: 1rem;
+}
+
+.provenance {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.38rem;
+  border: 1px solid rgba(232, 237, 244, 0.12);
+  border-radius: 999px;
+  color: #aeb9c8;
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.provenance--observed {
+  color: #a8d5c8;
+  border-color: rgba(114, 181, 164, 0.28);
+}
+
+.provenance--derived {
+  color: #b9cce5;
+  border-color: rgba(155, 183, 220, 0.28);
+}
+
+.provenance--assumed {
+  color: #efd492;
+  border-color: rgba(235, 190, 95, 0.28);
+}
+
+.provenance--overridden {
+  color: #e7b4de;
+  border-color: rgba(207, 125, 190, 0.28);
+}
+
+.market-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.market-controls label {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.market-controls label > span {
+  color: #aeb9c8;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.recipe-overrides {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(232, 237, 244, 0.06);
+}
+
+.recipe-overrides h4 {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.margin-results {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.margin-results article {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid rgba(232, 237, 244, 0.07);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.margin-results article > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  color: #8794a5;
+  font-size: 0.72rem;
+}
+
+.margin-results strong {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 1.12rem;
+}
+
+@media (max-width: 50rem) {
+  .planner-grid,
+  .market-controls,
+  .margin-results {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .planner-panel--wide {
+    grid-column: 1 / -1;
+  }
+
+  .result-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 36rem) {
+  .planner-grid,
+  .market-controls,
+  .margin-results,
+  .result-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-panel--wide {
+    grid-column: auto;
+  }
+
+  .planner-control {
+    grid-template-columns: 1fr;
+  }
+
+  .control-result {
+    grid-column: auto;
+  }
+}

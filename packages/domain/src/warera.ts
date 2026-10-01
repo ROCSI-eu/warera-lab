@@ -158,7 +158,14 @@ export interface PublicPlayerSearchMatch {
 
 export type SnapshotFreshnessState = "live" | "cached" | "stale";
 export type SnapshotFreshnessSourceKind =
-  "search" | "player" | "companies" | "company" | "regions" | "countries";
+  | "search"
+  | "player"
+  | "companies"
+  | "company"
+  | "regions"
+  | "countries"
+  | "gameConfig"
+  | "marketPrices";
 
 export interface SnapshotFreshnessSource {
   source: SnapshotFreshnessSourceKind;
@@ -189,6 +196,19 @@ export interface PublicPlayerSnapshotResponse {
   contextGaps: {
     regionIds: string[];
     countryIds: string[];
+  };
+  freshness: SnapshotFreshness;
+}
+
+export interface EconomyPlannerContextResponse {
+  itemCode: string;
+  item?: ItemEconomyConfig;
+  skills: EconomyGameConfig["skills"];
+  companyUpgrades: EconomyGameConfig["companyUpgrades"];
+  marketPrices: MarketPriceMap;
+  contextGaps: {
+    itemCodes: string[];
+    marketPriceItemCodes: string[];
   };
   freshness: SnapshotFreshness;
 }

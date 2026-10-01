@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { PublicApiClientError, getPlayerSnapshot, searchPlayers } from "./public-api.js";
+import {
+  PublicApiClientError,
+  getEconomyContext,
+  getPlayerSnapshot,
+  searchPlayers,
+} from "./public-api.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -30,6 +35,34 @@ describe("public API client", () => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ query: "Example" }),
+    });
+  });
+
+  it("uses the same-origin economy context endpoint", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        data: {
+          itemCode: "steel",
+          skills: {},
+          companyUpgrades: {},
+          marketPrices: { steel: 10 },
+          contextGaps: { itemCodes: [], marketPriceItemCodes: [] },
+          freshness: {
+            generatedAt: "2026-10-01T12:00:00.000Z",
+            hasStaleData: false,
+            sources: [],
+          },
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getEconomyContext("steel");
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/economy/context", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ itemCode: "steel" }),
     });
   });
 

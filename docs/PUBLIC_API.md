@@ -64,6 +64,27 @@ The response is the normalized public economy snapshot used by the MVP:
 
 WarEra's current documented `company.getCompanies` runtime response is a list of company identifiers. WarEra Lab resolves those identifiers through documented `company.getById` calls before returning the snapshot. The browser never receives the raw company-list payload.
 
+## `POST /api/economy/context`
+
+Request:
+
+```json
+{
+  "itemCode": "steel"
+}
+```
+
+This endpoint supplies the browser-facing inputs needed by the Economy Lab planners for the selected company item:
+
+- normalized economy-skill configuration;
+- normalized company-upgrade configuration;
+- the selected output item's normalized recipe/configuration when available;
+- only live market-price references relevant to the output item and its recipe inputs;
+- explicit item/market context gaps;
+- freshness for the game-configuration and market-price sources.
+
+The endpoint does not expose the raw upstream game-configuration payload or the complete market-price map.
+
 ## Freshness
 
 Browser-facing freshness states are intentionally simple:

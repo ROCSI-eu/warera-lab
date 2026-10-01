@@ -1,4 +1,8 @@
-import type { PlayerSearchResponse, PublicPlayerSnapshotResponse } from "@warera-lab/domain";
+import type {
+  EconomyPlannerContextResponse,
+  PlayerSearchResponse,
+  PublicPlayerSnapshotResponse,
+} from "@warera-lab/domain";
 
 export type PublicApiErrorCode =
   | "INVALID_REQUEST"
@@ -119,4 +123,8 @@ export function searchPlayers(query: string): Promise<PlayerSearchResponse> {
 
 export function getPlayerSnapshot(userId: string): Promise<PublicPlayerSnapshotResponse> {
   return post<PublicPlayerSnapshotResponse>("/api/players/snapshot", { userId });
+}
+
+export function getEconomyContext(itemCode: string): Promise<EconomyPlannerContextResponse> {
+  return post<EconomyPlannerContextResponse>("/api/economy/context", { itemCode });
 }

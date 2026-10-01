@@ -2,6 +2,7 @@ import { WarEraApiError, WarEraPublicApiClient } from "@warera-lab/warera-api";
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { EconomyContextService, type EconomyWarEraClient } from "./economy-context-service.js";
 import {
   PlayerNotFoundError,
   PlayerSnapshotService,
@@ -16,8 +17,12 @@ const snapshotRequestSchema = z.object({
   userId: z.string().trim().min(1).max(128),
 });
 
+const economyContextRequestSchema = z.object({
+  itemCode: z.string().trim().min(1).max(128),
+});
+
 interface AppDependencies {
-  wareraClient?: PublicWarEraClient;
+  wareraClient?: PublicWarEraClient & EconomyWarEraClient;
   now?: () => Date;
 }
 
@@ -112,6 +117,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono();
   const client = dependencies.wareraClient ?? new WarEraPublicApiClient();
   const playerService = new PlayerSnapshotService(client, dependencies.now);
+  const economyContextService = new EconomyContextService(client, dependencies.now);
 
   app.use("/api/*", async (context, next) => {
     await next();
@@ -146,6 +152,18 @@ export function createApp(dependencies: AppDependencies = {}) {
       return context.json({ data: await playerService.getSnapshot(parsed.data.userId) });
     } catch (error) {
       if (error instanceof PlayerNotFoundError) return playerNotFound();
+      if (error instanceof WarEraApiError) return mapWarEraError(error);
+      throw error;
+    }
+  });
+
+  app.post("/api/economy/context", async (context) => {
+    const parsed = economyContextRequestSchema.safeParse(await readJson(context.req.raw));
+    if (!parsed.success) return invalidRequest("Provide a valid company item code.");
+
+    try {
+      return context.json({ data: await economyContextService.getContext(parsed.data.itemCode) });
+    } catch (error) {
       if (error instanceof WarEraApiError) return mapWarEraError(error);
       throw error;
     }
