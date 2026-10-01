@@ -147,15 +147,12 @@ function requireRecord(value: unknown, path: string): UnknownRecord {
 function assertKnownKeys(record: UnknownRecord, allowed: readonly string[], path: string): void {
   const allowedSet = new Set(allowed);
   for (const key of Object.keys(record)) {
-    if (!allowedSet.has(key)) fail(`${path} contains unsupported field "${key}".`, `${path}.${key}`);
+    if (!allowedSet.has(key))
+      fail(`${path} contains unsupported field "${key}".`, `${path}.${key}`);
   }
 }
 
-function readString(
-  value: unknown,
-  path: string,
-  options: { maxLength?: number } = {},
-): string {
+function readString(value: unknown, path: string, options: { maxLength?: number } = {}): string {
   if (typeof value !== "string" || value.length === 0) {
     fail(`${path} must be a non-empty string.`, path);
   }
@@ -314,12 +311,7 @@ function parseCalculationVersions(value: unknown): ScenarioCalculationVersionsV1
   const record = requireRecord(value, path);
   assertKnownKeys(
     record,
-    [
-      "skillPlanner",
-      "companyUpgradePlanner",
-      "marketMarginSimulator",
-      "marketMarginComparison",
-    ],
+    ["skillPlanner", "companyUpgradePlanner", "marketMarginSimulator", "marketMarginComparison"],
     path,
   );
 
@@ -389,14 +381,18 @@ function parseSource(value: unknown): ScenarioSourceMetadataV1 | undefined {
 
 export function parseScenarioDocument(value: unknown): ScenarioDocumentV1 {
   const record = requireRecord(value, "scenario");
-  assertKnownKeys(record, ["version", "calculationVersions", "config", "scenarios", "source"], "scenario");
+  assertKnownKeys(
+    record,
+    ["version", "calculationVersions", "config", "scenarios", "source"],
+    "scenario",
+  );
 
   if (record.version !== scenarioDocumentVersion) {
     if (typeof record.version === "string") {
-      throw new ScenarioModelError(
-        `Unsupported scenario document version: ${record.version}.`,
-        { code: "UNSUPPORTED_VERSION", path: "scenario.version" },
-      );
+      throw new ScenarioModelError(`Unsupported scenario document version: ${record.version}.`, {
+        code: "UNSUPPORTED_VERSION",
+        path: "scenario.version",
+      });
     }
     fail("scenario.version must be a supported version string.", "scenario.version");
   }
@@ -485,20 +481,18 @@ export function serializeScenarioJson(
   const normalized = prepareScenarioForSerialization(document, options);
   const json = JSON.stringify(normalized);
   if (byteLength(json) > scenarioJsonMaxBytes) {
-    throw new ScenarioModelError(
-      `Scenario JSON exceeds the ${scenarioJsonMaxBytes}-byte limit.`,
-      { code: "JSON_PAYLOAD_TOO_LARGE" },
-    );
+    throw new ScenarioModelError(`Scenario JSON exceeds the ${scenarioJsonMaxBytes}-byte limit.`, {
+      code: "JSON_PAYLOAD_TOO_LARGE",
+    });
   }
   return json;
 }
 
 export function parseScenarioJson(json: string): ScenarioDocumentV1 {
   if (byteLength(json) > scenarioJsonMaxBytes) {
-    throw new ScenarioModelError(
-      `Scenario JSON exceeds the ${scenarioJsonMaxBytes}-byte limit.`,
-      { code: "JSON_PAYLOAD_TOO_LARGE" },
-    );
+    throw new ScenarioModelError(`Scenario JSON exceeds the ${scenarioJsonMaxBytes}-byte limit.`, {
+      code: "JSON_PAYLOAD_TOO_LARGE",
+    });
   }
 
   let parsed: unknown;
@@ -578,7 +572,12 @@ export function compareScenarioStates(
   const normalizedTo = parseScenarioState(to, "to");
   const changes: ScenarioChangeV1[] = [];
 
-  addChange(changes, "companyItemCode", normalizedFrom.companyItemCode, normalizedTo.companyItemCode);
+  addChange(
+    changes,
+    "companyItemCode",
+    normalizedFrom.companyItemCode,
+    normalizedTo.companyItemCode,
+  );
 
   for (const key of economySkillKeys) {
     addChange(changes, `skills.${key}`, normalizedFrom.skills[key], normalizedTo.skills[key]);
@@ -593,8 +592,18 @@ export function compareScenarioStates(
     );
   }
 
-  addChange(changes, "market.itemCode", normalizedFrom.market?.itemCode, normalizedTo.market?.itemCode);
-  addChange(changes, "market.quantity", normalizedFrom.market?.quantity, normalizedTo.market?.quantity);
+  addChange(
+    changes,
+    "market.itemCode",
+    normalizedFrom.market?.itemCode,
+    normalizedTo.market?.itemCode,
+  );
+  addChange(
+    changes,
+    "market.quantity",
+    normalizedFrom.market?.quantity,
+    normalizedTo.market?.quantity,
+  );
   addChange(
     changes,
     "market.outputPriceOverride",
