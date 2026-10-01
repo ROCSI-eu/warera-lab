@@ -1,5 +1,3 @@
-[Reading 552 lines from start (total: 552 lines, 0 remaining)]
-
 import type {
   EconomyPlannerContextResponse,
   PublicCompanySnapshot,
