@@ -1,3 +1,5 @@
+[Reading 552 lines from start (total: 552 lines, 0 remaining)]
+
 import type {
   EconomyPlannerContextResponse,
   PublicCompanySnapshot,
@@ -243,7 +245,9 @@ export function ScenarioTransfer({
             </div>
           </div>
         ) : (
-          <p className="muted">Import a scenario or player workspace to inspect raw portable data.</p>
+          <p className="muted">
+            Import a scenario or player workspace to inspect raw portable data.
+          </p>
         )}
       </details>
 
@@ -548,3 +552,5 @@ export function ScenarioWorkspace({
     </section>
   );
 }
+
+[executed on device: wordpress-vm.europe-central2-a.c.rocsi-website-hosting.internal (cf7b7a3c-8ae4-4a25-9de1-9e3d5dde425e)]
