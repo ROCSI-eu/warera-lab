@@ -1,6 +1,6 @@
 # First Public MVP
 
-**Status:** proposed for issue #6  
+**Status:** accepted MVP scope  
 **Target:** first public release at `warera-lab.rocsi.eu`
 
 ## Product statement
