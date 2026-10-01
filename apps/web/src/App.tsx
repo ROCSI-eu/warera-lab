@@ -18,6 +18,7 @@ import {
 import {
   createWorkspaceScenarioDocument,
   importScenarioFragment,
+  refreshWorkspaceScenarioDocument,
 } from "./scenario-workspace-model.js";
 import { initialWorkspaceState, workspaceReducer } from "./workspace-state.js";
 
@@ -153,13 +154,20 @@ export function App() {
       state.snapshot?.companies[0],
     [state.selectedCompanyId, state.snapshot],
   );
+  const scenarioImportIsError =
+    scenarioImportMessage !== undefined &&
+    /malformed|invalid|exceeds|unsupported|could not/i.test(scenarioImportMessage);
 
   function establishScenarioDocument(
     snapshot: PublicPlayerSnapshotResponse,
     company: PublicCompanySnapshot,
     context: EconomyPlannerContextResponse,
   ) {
-    setScenarioDocument(createWorkspaceScenarioDocument(snapshot, company, context));
+    setScenarioDocument((current) =>
+      current && scenarioCompanyId === company.id
+        ? refreshWorkspaceScenarioDocument(current, snapshot, company, context)
+        : createWorkspaceScenarioDocument(snapshot, company, context),
+    );
     setScenarioCompanyId(company.id);
     setScenarioImportMessage(undefined);
     setScenarioSessionKey((current) => current + 1);
@@ -217,10 +225,16 @@ export function App() {
     try {
       const snapshot = await getPlayerSnapshot(playerId);
       dispatch({ type: "import-succeeded", snapshot });
-      const firstCompany = snapshot.companies[0];
-      if (firstCompany) {
-        const context = await loadEconomyContext(firstCompany.itemCode);
-        if (context) establishScenarioDocument(snapshot, firstCompany, context);
+      const targetCompany =
+        (scenarioCompanyId
+          ? snapshot.companies.find((company) => company.id === scenarioCompanyId)
+          : undefined) ?? snapshot.companies[0];
+      if (targetCompany) {
+        if (targetCompany.id !== snapshot.companies[0]?.id) {
+          dispatch({ type: "company-selected", companyId: targetCompany.id });
+        }
+        const context = await loadEconomyContext(targetCompany.itemCode);
+        if (context) establishScenarioDocument(snapshot, targetCompany, context);
       } else {
         setScenarioCompanyId(undefined);
       }
@@ -350,14 +364,8 @@ export function App() {
       />
       {scenarioImportMessage ? (
         <p
-          className={
-            scenarioImportMessage.toLowerCase().includes("could not") ||
-            scenarioImportMessage.toLowerCase().includes("exceeds") ||
-            scenarioImportMessage.toLowerCase().includes("unsupported")
-              ? "message message--error"
-              : "message"
-          }
-          role="status"
+          className={scenarioImportIsError ? "message message--error" : "message"}
+          role={scenarioImportIsError ? "alert" : "status"}
         >
           {scenarioImportMessage}
         </p>
@@ -406,7 +414,7 @@ export function App() {
           <div className="workspace-grid">
             <section className="workspace-panel" aria-labelledby="skills-title">
               <p className="section-kicker">Observed</p>
-              <h3 id="skills-title">Economy skills</h3>
+              <h3 id="skills-title">Observed economy skills</h3>
               <dl className="skill-list">
                 {Object.entries(state.snapshot.player.skills).map(([key, skill]) => (
                   <div key={key}>

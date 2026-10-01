@@ -12,6 +12,7 @@ import {
   evaluateScenario,
   formToScenario,
   importScenarioFragment,
+  refreshWorkspaceScenarioDocument,
   replaceScenario,
   scenarioToForm,
 } from "./scenario-workspace-model.js";
@@ -188,6 +189,56 @@ describe("scenario workspace model", () => {
     );
     expect(comparison.derived.baselineToA.skillPointDelta).toBe(2);
     expect(comparison.derived.baselineToA.grossMarginDelta).toBe(2);
+  });
+
+  it("refreshes the observed baseline without discarding Scenario A/B hypotheticals", () => {
+    let document = createWorkspaceScenarioDocument(snapshot, company, context);
+    const formA = scenarioToForm(document.scenarios.scenarioA, context);
+    formA.skillLevels.production = "2";
+    formA.outputPriceOverride = "12";
+    document = replaceScenario(document, "scenarioA", formToScenario(formA, "steel"));
+
+    const refreshedSnapshot: PublicPlayerSnapshotResponse = {
+      ...snapshot,
+      player: {
+        ...snapshot.player,
+        availableSkillPoints: 8,
+      },
+      freshness: {
+        ...snapshot.freshness,
+        generatedAt: "2026-10-01T15:00:00.000Z",
+      },
+    };
+    const refreshedContext: EconomyPlannerContextResponse = {
+      ...context,
+      configRevision: "fnv1a-updated-456",
+      freshness: {
+        ...context.freshness,
+        generatedAt: "2026-10-01T15:00:05.000Z",
+        sources: context.freshness.sources.map((source) =>
+          source.source === "gameConfig"
+            ? { ...source, retrievedAt: "2026-10-01T15:00:01.000Z" }
+            : source,
+        ),
+      },
+    };
+
+    const refreshed = refreshWorkspaceScenarioDocument(
+      document,
+      refreshedSnapshot,
+      company,
+      refreshedContext,
+    );
+
+    expect(refreshed.scenarios.baseline.skills.production).toBe(1);
+    expect(refreshed.scenarios.scenarioA.skills.production).toBe(2);
+    expect(refreshed.scenarios.scenarioA.market?.outputPriceOverride).toBe(12);
+    expect(refreshed.scenarios.scenarioB).toEqual(document.scenarios.scenarioB);
+    expect(refreshed.source?.snapshotRetrievedAt).toBe("2026-10-01T15:00:00.000Z");
+    expect(refreshed.config).toEqual({
+      revision: "fnv1a-updated-456",
+      retrievedAt: "2026-10-01T15:00:01.000Z",
+    });
   });
 
   it("keeps invalid numeric drafts out of the authoritative scenario document", () => {

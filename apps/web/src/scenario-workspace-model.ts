@@ -93,25 +93,59 @@ function cloneScenario(state: EconomyScenarioStateV1): EconomyScenarioStateV1 {
   };
 }
 
+function scenarioConfigMetadata(context: EconomyPlannerContextResponse) {
+  return {
+    revision: context.configRevision,
+    retrievedAt:
+      context.freshness.sources.find((source) => source.source === "gameConfig")?.retrievedAt ??
+      context.freshness.generatedAt,
+  };
+}
+
 export function createWorkspaceScenarioDocument(
   snapshot: PublicPlayerSnapshotResponse,
   company: PublicCompanySnapshot,
   context: EconomyPlannerContextResponse,
 ): ScenarioDocumentV1 {
   const baseline = observedScenario(snapshot, company);
-  const configRetrievedAt =
-    context.freshness.sources.find((source) => source.source === "gameConfig")?.retrievedAt ??
-    context.freshness.generatedAt;
 
   return createScenarioDocument(
     {
       baseline,
       scenarioA: cloneScenario(baseline),
       scenarioB: cloneScenario(baseline),
-      config: {
-        revision: context.configRevision,
-        retrievedAt: configRetrievedAt,
+      config: scenarioConfigMetadata(context),
+      sourceSnapshotRetrievedAt: snapshot.freshness.generatedAt,
+      sourcePlayer: {
+        id: snapshot.player.id,
+        username: snapshot.player.username,
       },
+    },
+    { includeSourcePlayerIdentity: true },
+  );
+}
+
+export function refreshWorkspaceScenarioDocument(
+  document: ScenarioDocumentV1,
+  snapshot: PublicPlayerSnapshotResponse,
+  company: PublicCompanySnapshot,
+  context: EconomyPlannerContextResponse,
+): ScenarioDocumentV1 {
+  const samePlayer = document.source?.player?.id === snapshot.player.id;
+  const sameItem =
+    document.scenarios.baseline.companyItemCode === company.itemCode &&
+    document.scenarios.baseline.market?.itemCode === company.itemCode;
+
+  if (!samePlayer || !sameItem) {
+    return createWorkspaceScenarioDocument(snapshot, company, context);
+  }
+
+  return createScenarioDocument(
+    {
+      baseline: observedScenario(snapshot, company),
+      scenarioA: cloneScenario(document.scenarios.scenarioA),
+      scenarioB: cloneScenario(document.scenarios.scenarioB),
+      config: scenarioConfigMetadata(context),
       sourceSnapshotRetrievedAt: snapshot.freshness.generatedAt,
       sourcePlayer: {
         id: snapshot.player.id,

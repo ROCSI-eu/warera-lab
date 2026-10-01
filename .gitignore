@@ -2,6 +2,9 @@ node_modules/
 dist/
 coverage/
 .vite/
+.pw-browsers/
+playwright-report/
+test-results/
 *.log
 .env
 .env.*
