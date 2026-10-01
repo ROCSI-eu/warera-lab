@@ -32,7 +32,7 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   await expect(page.getByText(/steel · quantity 1/)).toBeVisible();
   await expect(page.locator("dd").filter({ hasText: "fnv1a-testcfg-123" })).toBeVisible();
   await expect(page.locator("dd").filter({ hasText: "skill-planner-v1" })).toBeVisible();
-  await expect(page.locator(".calculation-details pre")).not.toBeVisible();
+  await expect(page.locator(".calculation-details .raw-details")).not.toHaveAttribute("open", "");
 
   await page.locator(".transfer-advanced > summary").click();
   const exportedJson = await page.getByLabel("JSON export").inputValue();
