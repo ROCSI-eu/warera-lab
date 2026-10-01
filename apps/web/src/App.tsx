@@ -5,7 +5,13 @@ import type {
 } from "@warera-lab/domain";
 import { type FormEvent, useMemo, useReducer } from "react";
 
-import { PublicApiClientError, getPlayerSnapshot, searchPlayers } from "./public-api.js";
+import { EconomyLab } from "./EconomyLab.js";
+import {
+  PublicApiClientError,
+  getEconomyContext,
+  getPlayerSnapshot,
+  searchPlayers,
+} from "./public-api.js";
 import { initialWorkspaceState, workspaceReducer } from "./workspace-state.js";
 
 const skillLabels = {
@@ -135,14 +141,35 @@ export function App() {
     }
   }
 
+  async function loadEconomyContext(itemCode: string) {
+    dispatch({ type: "economy-context-started", itemCode });
+    try {
+      const context = await getEconomyContext(itemCode);
+      dispatch({ type: "economy-context-succeeded", itemCode, context });
+    } catch (error) {
+      dispatch({
+        type: "economy-context-failed",
+        itemCode,
+        message: describeClientError(error),
+      });
+    }
+  }
+
   async function handleImport(playerId: string) {
     dispatch({ type: "import-started", playerId });
     try {
       const snapshot = await getPlayerSnapshot(playerId);
       dispatch({ type: "import-succeeded", snapshot });
+      const firstCompany = snapshot.companies[0];
+      if (firstCompany) await loadEconomyContext(firstCompany.itemCode);
     } catch (error) {
       dispatch({ type: "import-failed", message: describeClientError(error) });
     }
+  }
+
+  async function handleCompanySelect(company: PublicCompanySnapshot) {
+    dispatch({ type: "company-selected", companyId: company.id });
+    await loadEconomyContext(company.itemCode);
   }
 
   const playerCountry = state.snapshot?.countries[state.snapshot.player.countryId];
@@ -319,7 +346,7 @@ export function App() {
                       key={company.id}
                       company={company}
                       selected={company.id === selectedCompany?.id}
-                      onSelect={() => dispatch({ type: "company-selected", companyId: company.id })}
+                      onSelect={() => void handleCompanySelect(company)}
                     />
                   ))}
                 </div>
@@ -389,6 +416,26 @@ export function App() {
           ) : null}
 
           <FreshnessPanel freshness={state.snapshot.freshness} title="Snapshot" />
+
+          {state.isLoadingEconomyContext ? (
+            <p className="message" role="status">
+              Loading live Economy Lab configuration and relevant market references…
+            </p>
+          ) : null}
+
+          {selectedCompany &&
+          state.economyContext &&
+          state.economyContextItemCode === selectedCompany.itemCode ? (
+            <>
+              <FreshnessPanel freshness={state.economyContext.freshness} title="Economy context" />
+              <EconomyLab
+                key={selectedCompany.id}
+                player={state.snapshot.player}
+                company={selectedCompany}
+                context={state.economyContext}
+              />
+            </>
+          ) : null}
         </section>
       ) : (
         <section className="empty-workspace" aria-labelledby="workspace-preview-title">

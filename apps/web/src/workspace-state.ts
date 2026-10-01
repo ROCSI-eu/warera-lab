@@ -1,4 +1,8 @@
-import type { PlayerSearchResponse, PublicPlayerSnapshotResponse } from "@warera-lab/domain";
+import type {
+  EconomyPlannerContextResponse,
+  PlayerSearchResponse,
+  PublicPlayerSnapshotResponse,
+} from "@warera-lab/domain";
 
 export interface WorkspaceMessage {
   kind: "error" | "status";
@@ -13,6 +17,9 @@ export interface WorkspaceState {
   search?: PlayerSearchResponse | undefined;
   snapshot?: PublicPlayerSnapshotResponse | undefined;
   selectedCompanyId?: string | undefined;
+  economyContext?: EconomyPlannerContextResponse | undefined;
+  economyContextItemCode?: string | undefined;
+  isLoadingEconomyContext: boolean;
   message?: WorkspaceMessage | undefined;
 }
 
@@ -24,12 +31,20 @@ export type WorkspaceAction =
   | { type: "import-started"; playerId: string }
   | { type: "import-succeeded"; snapshot: PublicPlayerSnapshotResponse }
   | { type: "import-failed"; message: string }
-  | { type: "company-selected"; companyId: string };
+  | { type: "company-selected"; companyId: string }
+  | { type: "economy-context-started"; itemCode: string }
+  | {
+      type: "economy-context-succeeded";
+      itemCode: string;
+      context: EconomyPlannerContextResponse;
+    }
+  | { type: "economy-context-failed"; itemCode: string; message: string };
 
 export const initialWorkspaceState: WorkspaceState = {
   query: "",
   isSearching: false,
   isImporting: false,
+  isLoadingEconomyContext: false,
 };
 
 export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
@@ -72,6 +87,9 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         pendingPlayerId: undefined,
         snapshot: action.snapshot,
         selectedCompanyId: action.snapshot.companies[0]?.id,
+        economyContext: undefined,
+        economyContextItemCode: undefined,
+        isLoadingEconomyContext: false,
         message: undefined,
       };
     case "import-failed":
@@ -85,6 +103,37 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       if (!state.snapshot?.companies.some((company) => company.id === action.companyId)) {
         return state;
       }
-      return { ...state, selectedCompanyId: action.companyId };
+      return {
+        ...state,
+        selectedCompanyId: action.companyId,
+        economyContext: undefined,
+        economyContextItemCode: undefined,
+      };
+    case "economy-context-started":
+      return {
+        ...state,
+        isLoadingEconomyContext: true,
+        economyContextItemCode: action.itemCode,
+        message: {
+          kind: "status",
+          text: "Loading live Economy Lab configuration and market references…",
+        },
+      };
+    case "economy-context-succeeded":
+      if (state.economyContextItemCode !== action.itemCode) return state;
+      return {
+        ...state,
+        isLoadingEconomyContext: false,
+        economyContext: action.context,
+        message: undefined,
+      };
+    case "economy-context-failed":
+      if (state.economyContextItemCode !== action.itemCode) return state;
+      return {
+        ...state,
+        isLoadingEconomyContext: false,
+        economyContext: undefined,
+        message: { kind: "error", text: action.message },
+      };
   }
 }

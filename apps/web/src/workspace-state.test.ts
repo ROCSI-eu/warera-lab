@@ -1,4 +1,8 @@
-import type { PlayerSearchResponse, PublicPlayerSnapshotResponse } from "@warera-lab/domain";
+import type {
+  EconomyPlannerContextResponse,
+  PlayerSearchResponse,
+  PublicPlayerSnapshotResponse,
+} from "@warera-lab/domain";
 import { describe, expect, it } from "vitest";
 
 import { initialWorkspaceState, workspaceReducer, type WorkspaceState } from "./workspace-state.js";
@@ -65,6 +69,28 @@ const snapshot: PublicPlayerSnapshotResponse = {
   },
 };
 
+const economyContext: EconomyPlannerContextResponse = {
+  itemCode: "steel",
+  skills: {
+    production: { key: "production", levels: {} },
+    entrepreneurship: { key: "entrepreneurship", levels: {} },
+    management: { key: "management", levels: {} },
+    companies: { key: "companies", levels: {} },
+  },
+  companyUpgrades: {
+    automatedEngine: { key: "automatedEngine", levels: {} },
+    storage: { key: "storage", levels: {} },
+    breakRoom: { key: "breakRoom", levels: {} },
+  },
+  marketPrices: { steel: 10 },
+  contextGaps: { itemCodes: [], marketPriceItemCodes: [] },
+  freshness: {
+    generatedAt: "2026-10-01T12:00:07.000Z",
+    hasStaleData: false,
+    sources: [],
+  },
+};
+
 function readyState(): WorkspaceState {
   return workspaceReducer(
     workspaceReducer(workspaceReducer(initialWorkspaceState, { type: "search-started" }), {
@@ -125,6 +151,28 @@ describe("workspace state", () => {
       kind: "error",
       text: "WarEra is temporarily unavailable.",
     });
+  });
+
+  it("accepts only the economy context response for the currently requested item", () => {
+    const started = workspaceReducer(readyState(), {
+      type: "economy-context-started",
+      itemCode: "steel",
+    });
+    const stale = workspaceReducer(started, {
+      type: "economy-context-succeeded",
+      itemCode: "iron",
+      context: { ...economyContext, itemCode: "iron" },
+    });
+    const ready = workspaceReducer(stale, {
+      type: "economy-context-succeeded",
+      itemCode: "steel",
+      context: economyContext,
+    });
+
+    expect(stale.economyContext).toBeUndefined();
+    expect(stale.isLoadingEconomyContext).toBe(true);
+    expect(ready.economyContext).toBe(economyContext);
+    expect(ready.isLoadingEconomyContext).toBe(false);
   });
 
   it("allows selection only from companies in the imported snapshot", () => {

@@ -1,5 +1,7 @@
 import type {
   CountryContext,
+  EconomyGameConfig,
+  MarketPriceMap,
   PublicCompanySnapshot,
   PublicPlayerEconomySnapshot,
   RegionContext,
@@ -9,7 +11,10 @@ import { WarEraApiError } from "@warera-lab/warera-api";
 import { describe, expect, it, vi } from "vitest";
 
 import { createApp } from "./app.js";
+import type { EconomyWarEraClient } from "./economy-context-service.js";
 import type { PublicWarEraClient } from "./player-service.js";
+
+type TestWarEraClient = PublicWarEraClient & EconomyWarEraClient;
 
 function adapter<T>(
   data: T,
@@ -86,7 +91,50 @@ const companyCountry: CountryContext = {
   name: "Country Two",
 };
 
-function client(overrides: Partial<PublicWarEraClient> = {}): PublicWarEraClient {
+const economyConfig: EconomyGameConfig = {
+  skills: {
+    production: {
+      key: "production",
+      levels: { 4: { level: 4, value: 22, totalCost: 10, unlockAtLevel: 1 } },
+    },
+    entrepreneurship: {
+      key: "entrepreneurship",
+      levels: { 3: { level: 3, value: 45, totalCost: 8, unlockAtLevel: 1 } },
+    },
+    management: {
+      key: "management",
+      levels: { 2: { level: 2, value: 8, totalCost: 5, unlockAtLevel: 1 } },
+    },
+    companies: {
+      key: "companies",
+      levels: { 5: { level: 5, value: 7, totalCost: 12, unlockAtLevel: 1 } },
+    },
+  },
+  items: {
+    steel: {
+      code: "steel",
+      type: "resource",
+      rarity: "common",
+      productionNeeds: { iron: 2 },
+      isTradable: true,
+    },
+  },
+  companyUpgrades: {
+    automatedEngine: { key: "automatedEngine", levels: {} },
+    storage: { key: "storage", levels: {} },
+    breakRoom: { key: "breakRoom", levels: {} },
+  },
+  company: {},
+  worker: {},
+};
+
+const marketPrices: MarketPriceMap = {
+  steel: 10,
+  iron: 2,
+  unrelated: 99,
+};
+
+function client(overrides: Partial<TestWarEraClient> = {}): TestWarEraClient {
   return {
     search: vi.fn(async () => adapter({ userIds: ["user-1"] })),
     getPlayer: vi.fn(async () => adapter(player)),
@@ -94,6 +142,8 @@ function client(overrides: Partial<PublicWarEraClient> = {}): PublicWarEraClient
     getCompany: vi.fn(async () => adapter(company)),
     getRegions: vi.fn(async () => adapter({ "region-1": region })),
     getCountries: vi.fn(async () => adapter([playerCountry, companyCountry])),
+    getEconomyGameConfig: vi.fn(async () => adapter(economyConfig)),
+    getItemPrices: vi.fn(async () => adapter(marketPrices)),
     ...overrides,
   };
 }
@@ -318,6 +368,57 @@ describe("WarEra Lab API", () => {
       },
     });
     expect(JSON.stringify(body)).not.toContain("schema detail");
+  });
+
+  it("returns only the selected item configuration and relevant market prices", async () => {
+    const app = createApp({
+      wareraClient: client(),
+      now: () => new Date("2026-10-01T12:00:05.000Z"),
+    });
+
+    const response = await app.request("/api/economy/context", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ itemCode: "steel" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(body).toMatchObject({
+      data: {
+        itemCode: "steel",
+        item: { code: "steel", productionNeeds: { iron: 2 } },
+        marketPrices: { steel: 10, iron: 2 },
+        contextGaps: { itemCodes: [], marketPriceItemCodes: [] },
+        freshness: { hasStaleData: false },
+      },
+    });
+    expect(JSON.stringify(body)).not.toContain("unrelated");
+  });
+
+  it("reports missing item configuration and market references without inventing values", async () => {
+    const app = createApp({ wareraClient: client() });
+
+    const response = await app.request("/api/economy/context", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ itemCode: "missing-item" }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      data: {
+        itemCode: "missing-item",
+        marketPrices: {},
+        contextGaps: {
+          itemCodes: ["missing-item"],
+          marketPriceItemCodes: ["missing-item"],
+        },
+      },
+    });
+    expect(body.data.item).toBeUndefined();
   });
 
   it("rejects invalid JSON/body input before calling WarEra", async () => {
