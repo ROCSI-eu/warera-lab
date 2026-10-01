@@ -1,3 +1,4 @@
+import { publicItemCodeMaxLength } from "@warera-lab/domain";
 import { WarEraApiError, WarEraPublicApiClient } from "@warera-lab/warera-api";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -18,7 +19,7 @@ const snapshotRequestSchema = z.object({
 });
 
 const economyContextRequestSchema = z.object({
-  itemCode: z.string().trim().min(1).max(128),
+  itemCode: z.string().trim().min(1).max(publicItemCodeMaxLength),
 });
 
 interface AppDependencies {

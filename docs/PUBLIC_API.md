@@ -78,6 +78,7 @@ This endpoint supplies the browser-facing inputs needed by the Economy Lab plann
 
 - normalized economy-skill configuration;
 - normalized company-upgrade configuration;
+- a deterministic `configRevision` fingerprint for the exact normalized skill/upgrade/item configuration used by the planners;
 - the selected output item's normalized recipe/configuration when available;
 - only live market-price references relevant to the output item and its recipe inputs;
 - explicit item/market context gaps;

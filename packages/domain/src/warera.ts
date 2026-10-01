@@ -1,3 +1,5 @@
+export const publicItemCodeMaxLength = 64;
+
 export const economySkillKeys = [
   "production",
   "entrepreneurship",
@@ -202,6 +204,7 @@ export interface PublicPlayerSnapshotResponse {
 
 export interface EconomyPlannerContextResponse {
   itemCode: string;
+  configRevision: string;
   item?: ItemEconomyConfig;
   skills: EconomyGameConfig["skills"];
   companyUpgrades: EconomyGameConfig["companyUpgrades"];

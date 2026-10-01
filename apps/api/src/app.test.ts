@@ -388,6 +388,7 @@ describe("WarEra Lab API", () => {
     expect(body).toMatchObject({
       data: {
         itemCode: "steel",
+        configRevision: expect.stringMatching(/^fnv1a-[0-9a-f]{8}-[0-9a-f]+$/),
         item: { code: "steel", productionNeeds: { iron: 2 } },
         marketPrices: { steel: 10, iron: 2 },
         contextGaps: { itemCodes: [], marketPriceItemCodes: [] },
@@ -419,6 +420,21 @@ describe("WarEra Lab API", () => {
       },
     });
     expect(body.data.item).toBeUndefined();
+  });
+
+  it("rejects Economy context item codes that cannot be serialized in scenario documents", async () => {
+    const wareraClient = client();
+    const app = createApp({ wareraClient });
+
+    const response = await app.request("/api/economy/context", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ itemCode: "x".repeat(65) }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(wareraClient.getEconomyGameConfig).not.toHaveBeenCalled();
+    expect(wareraClient.getItemPrices).not.toHaveBeenCalled();
   });
 
   it("rejects invalid JSON/body input before calling WarEra", async () => {

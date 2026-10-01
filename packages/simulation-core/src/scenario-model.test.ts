@@ -220,6 +220,27 @@ describe("scenario document validation", () => {
     }
   });
 
+  it("rejects mismatched company and market item codes", () => {
+    const document = buildDocument();
+
+    expect(() =>
+      parseScenarioDocument({
+        ...document,
+        scenarios: {
+          ...document.scenarios,
+          scenarioA: {
+            ...document.scenarios.scenarioA,
+            companyItemCode: "steel",
+            market: {
+              ...document.scenarios.scenarioA.market,
+              itemCode: "iron",
+            },
+          },
+        },
+      }),
+    ).toThrowError(ScenarioModelError);
+  });
+
   it("rejects an oversized URL-fragment share payload", () => {
     const inputPriceOverrides = Object.fromEntries(
       Array.from({ length: 128 }, (_, index) => [`item-${index}-${"x".repeat(48)}`, index + 1]),

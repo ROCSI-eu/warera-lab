@@ -71,6 +71,7 @@ const snapshot: PublicPlayerSnapshotResponse = {
 
 const economyContext: EconomyPlannerContextResponse = {
   itemCode: "steel",
+  configRevision: "test-config",
   skills: {
     production: { key: "production", levels: {} },
     entrepreneurship: { key: "entrepreneurship", levels: {} },
