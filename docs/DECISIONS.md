@@ -47,11 +47,40 @@ User-visible results should distinguish:
 
 This provenance should survive scenario comparison and, where practical, exported/shared simulations.
 
+### D-007 — First public MVP
+
+The first public release is **credential-free and Economy-Lab-first**.
+
+It should provide:
+
+- public player search/import;
+- economy-relevant player/company snapshot;
+- economy skill planning from live game configuration;
+- company upgrade planning from live game configuration;
+- market/margin scenarios with explicit overrides;
+- side-by-side scenario comparison;
+- provenance, freshness, and share/export behavior without server-side user accounts.
+
+Token-gated worker/transaction features, Combat Lab calculations, persistent player history, continuous historical collection, and generic global-statistics dashboards are outside the first MVP.
+
+See [MVP.md](MVP.md).
+
+### D-008 — Formula verification
+
+WarEra-specific derived calculations must not be exposed as authoritative until their mechanics and units are verified, documented, versioned, and tested.
+
+Where a mechanic is not verified, WarEra Lab should either omit the derived result or require the uncertain value as an explicit user assumption/override.
+
+### D-009 — Launch monetization
+
+The canonical WarEra Lab service launches without advertising or sponsorship.
+
+Commercial-use, advertising, sponsorship, donation/support, caching, and historical-dataset permissions remain subject to clarification tracked in issue #9. This does not change the AGPL-3.0-only licence of the WarEra Lab software.
+
 ## Working directions, not yet final
 
 - Core simulation functionality is expected to remain free and publicly accessible.
-- Monetization may later use restrained advertising, sponsorship, or voluntary support rather than feature paywalls.
-- Historical market/world datasets may become a distinct hosted capability if their storage and maintenance cost becomes material.
+- Historical market/world datasets may become a distinct hosted capability only after the API/terms/privacy questions are resolved.
 - The canonical ROCSI-hosted service should be deployable independently from the main `rocsi.eu` website.
 
 These directions require separate product, privacy, and architecture review before implementation.
@@ -63,14 +92,13 @@ The following should not be treated as settled:
 - application framework and monorepo/package structure;
 - backend/runtime choice;
 - API proxy versus direct-browser access boundaries;
-- WarEra API-key handling and whether account-specific functionality is needed for MVP;
+- optional post-MVP API-token handling for authenticated features;
 - caching policy and rate-limit strategy;
-- persistent database requirements;
+- whether the MVP needs any persistent database at all;
 - historical-data collection scope;
-- exact Economy Lab MVP;
-- exact Combat Lab mechanics and formula verification;
-- user accounts or saved scenario storage;
-- advertising provider and EU consent/CMP implications;
+- exact post-MVP Combat Lab mechanics;
+- post-MVP user accounts or saved scenario storage;
+- monetization provider / EU consent implications if issue #9 later permits advertising or sponsorship;
 - production deployment topology and observability.
 
 Each material decision should be resolved through an issue and pull request or an ADR before becoming implementation policy.
