@@ -9,4 +9,5 @@ export function scenarioValue<T>(value: T, provenance: ProvenanceKind): Scenario
   return { value, provenance };
 }
 
+export * from "./company-upgrade-planner.js";
 export * from "./skill-planner.js";
