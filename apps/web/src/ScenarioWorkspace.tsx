@@ -236,7 +236,7 @@ export function ScenarioTransfer({
               <textarea readOnly value={exportedJson} rows={7} />
             </label>
             <div className="share-box">
-              <strong>URL fragment</strong>
+              <strong>URL fragment share</strong>
               <code tabIndex={0} aria-label="Scenario URL fragment">
                 {shareFragment || "Scenario exceeds the share boundary."}
               </code>
