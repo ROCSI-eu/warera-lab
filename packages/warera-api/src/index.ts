@@ -1,3 +1,16 @@
+export {
+  buildRequestCacheKey,
+  DEFAULT_CACHE_POLICIES,
+  WarEraRequestCoordinator,
+} from "./coordination.js";
+export type {
+  CoordinatedResult,
+  WarEraCacheMetadata,
+  WarEraCachePolicy,
+  WarEraCachePolicyOverrides,
+  WarEraCacheState,
+  WarEraCoordinationOptions,
+} from "./coordination.js";
 export { WarEraPublicApiClient, OFFICIAL_WARERA_API_BASE_URL } from "./client.js";
 export type { WarEraAdapterResponse, WarEraApiClientOptions } from "./client.js";
 export { WarEraApiError } from "./errors.js";

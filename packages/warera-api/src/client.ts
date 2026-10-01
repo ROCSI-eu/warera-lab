@@ -8,6 +8,11 @@ import type {
   PublicSearchResult,
   RegionContext,
 } from "@warera-lab/domain";
+import {
+  WarEraRequestCoordinator,
+  type WarEraCacheMetadata,
+  type WarEraCoordinationOptions,
+} from "./coordination.js";
 import { WarEraApiError } from "./errors.js";
 import {
   normalizeCompaniesPage,
@@ -23,7 +28,7 @@ import {
   normalizeSearchResult,
   type CompaniesPage,
 } from "./normalize.js";
-import { isDocumentedMvpProcedure, type DocumentedMvpProcedure } from "./procedures.js";
+import type { DocumentedMvpProcedure } from "./procedures.js";
 import { readRateLimitMetadata, type WarEraRateLimitMetadata } from "./rate-limit.js";
 import { trpcErrorEnvelopeSchema, trpcSuccessEnvelopeSchema } from "./schemas.js";
 
@@ -33,6 +38,7 @@ export interface WarEraAdapterResponse<T> {
   data: T;
   retrievedAt: string;
   rateLimit: WarEraRateLimitMetadata;
+  cache: WarEraCacheMetadata;
 }
 
 export interface WarEraApiClientOptions {
@@ -40,6 +46,7 @@ export interface WarEraApiClientOptions {
   fetch?: typeof globalThis.fetch;
   now?: () => Date;
   timeoutMs?: number;
+  coordination?: WarEraCoordinationOptions;
 }
 
 function retryAfterSeconds(headers: Headers): number | undefined {
@@ -64,6 +71,7 @@ export class WarEraPublicApiClient {
   readonly #fetch: typeof globalThis.fetch;
   readonly #now: () => Date;
   readonly #timeoutMs: number;
+  readonly #coordinator: WarEraRequestCoordinator;
 
   constructor(options: WarEraApiClientOptions = {}) {
     this.#baseUrl = (options.baseUrl ?? OFFICIAL_WARERA_API_BASE_URL).replace(/\/$/, "");
@@ -73,15 +81,15 @@ export class WarEraPublicApiClient {
     if (!Number.isFinite(this.#timeoutMs) || this.#timeoutMs <= 0) {
       throw new TypeError("WarEra API timeoutMs must be a positive finite number");
     }
+    this.#coordinator = new WarEraRequestCoordinator(options.coordination, () =>
+      this.#now().getTime(),
+    );
   }
 
-  async #request(procedure: string, input: unknown): Promise<WarEraAdapterResponse<unknown>> {
-    if (!isDocumentedMvpProcedure(procedure)) {
-      throw new WarEraApiError(`Unsupported WarEra procedure: ${procedure}`, {
-        kind: "unsupported-procedure",
-      });
-    }
-
+  async #fetchUpstream(
+    procedure: DocumentedMvpProcedure,
+    input: unknown,
+  ): Promise<Omit<WarEraAdapterResponse<unknown>, "cache">> {
     const url = new URL(`${this.#baseUrl}/${procedure}`);
     url.searchParams.set("input", JSON.stringify(input));
 
@@ -112,8 +120,9 @@ export class WarEraPublicApiClient {
       const upstreamCode = errorEnvelope.success ? errorEnvelope.data.error.data?.code : undefined;
       const retryAfter = retryAfterSeconds(response.headers);
       throw new WarEraApiError(message, {
-        kind: "http",
+        kind: response.status === 429 ? "rate-limited" : "http",
         status: response.status,
+        rateLimit,
         ...(upstreamCode === undefined ? {} : { upstreamCode }),
         ...(retryAfter === undefined ? {} : { retryAfterSeconds: retryAfter }),
       });
@@ -124,6 +133,7 @@ export class WarEraPublicApiClient {
       throw new WarEraApiError("WarEra API returned an invalid tRPC success envelope", {
         kind: "invalid-response",
         status: response.status,
+        rateLimit,
         cause: envelope.error,
       });
     }
@@ -140,16 +150,21 @@ export class WarEraPublicApiClient {
     input: unknown,
     normalize: (raw: unknown) => T,
   ): Promise<WarEraAdapterResponse<T>> {
-    const response = await this.#request(procedure, input);
-    try {
-      return { ...response, data: normalize(response.data) };
-    } catch (cause) {
-      if (cause instanceof WarEraApiError) throw cause;
-      throw new WarEraApiError(`WarEra payload failed validation for ${procedure}`, {
-        kind: "invalid-response",
-        cause,
-      });
-    }
+    const coordinated = await this.#coordinator.execute(procedure, input, async () => {
+      const response = await this.#fetchUpstream(procedure, input);
+      try {
+        return { ...response, data: normalize(response.data) };
+      } catch (cause) {
+        if (cause instanceof WarEraApiError) throw cause;
+        throw new WarEraApiError(`WarEra payload failed validation for ${procedure}`, {
+          kind: "invalid-response",
+          rateLimit: response.rateLimit,
+          cause,
+        });
+      }
+    });
+
+    return { ...coordinated.value, cache: coordinated.cache };
   }
 
   search(searchText: string): Promise<WarEraAdapterResponse<PublicSearchResult>> {
