@@ -550,5 +550,3 @@ export function ScenarioWorkspace({
     </section>
   );
 }
-
-[executed on device: wordpress-vm.europe-central2-a.c.rocsi-website-hosting.internal (cf7b7a3c-8ae4-4a25-9de1-9e3d5dde425e)]
