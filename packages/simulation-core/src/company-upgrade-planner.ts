@@ -32,11 +32,7 @@ export class CompanyUpgradePlannerError extends Error {
 
   constructor(
     message: string,
-    details: {
-      code: CompanyUpgradePlannerErrorCode;
-      upgrade: CompanyUpgradeKey;
-      level: number;
-    },
+    details: { code: CompanyUpgradePlannerErrorCode; upgrade: CompanyUpgradeKey; level: number },
   ) {
     super(message);
     this.name = "CompanyUpgradePlannerError";
