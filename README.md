@@ -51,4 +51,4 @@ The WarEra Lab software is licensed under the **GNU Affero General Public Licens
 
 Project branding and third-party names, marks, assets, or data are not granted additional rights by the software license unless explicitly stated.
 
-Copyright © 2026 Cyber Space Initiative SRL (ROCSI).
+Initial WarEra Lab work: Copyright © 2026 Cyber Space Initiative SRL (ROCSI). Contributors retain copyright in their contributions unless otherwise agreed.
