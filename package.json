@@ -23,7 +23,7 @@
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,html,json}\" \"packages/**/*.{ts,json}\" \"*.{json,js,mjs,ts}\" \".github/**/*.yml\" \"docs/adr/**/*.md\"",
     "lint": "eslint .",
     "test": "vitest run",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.tests.json --noEmit",
     "verify": "npm run format:check && npm run lint && npm run build && npm run typecheck && npm run test"
   },
   "devDependencies": {
