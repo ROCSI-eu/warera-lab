@@ -92,11 +92,14 @@ function requireLevel(
 
   const configured = config.levels[level];
   if (configured === undefined) {
-    throw new SkillPlannerError(`${skill} level ${level} is absent from the current game configuration.`, {
-      code,
-      skill,
-      level,
-    });
+    throw new SkillPlannerError(
+      `${skill} level ${level} is absent from the current game configuration.`,
+      {
+        code,
+        skill,
+        level,
+      },
+    );
   }
 
   return configured;
@@ -111,12 +114,7 @@ export function planEconomySkills(input: EconomySkillPlannerInput): EconomySkill
   for (const skill of economySkillKeys) {
     const observed = input.player.skills[skill];
     const config = input.skillConfig[skill];
-    const currentConfig = requireLevel(
-      skill,
-      observed.level,
-      config,
-      "CURRENT_LEVEL_UNAVAILABLE",
-    );
+    const currentConfig = requireLevel(skill, observed.level, config, "CURRENT_LEVEL_UNAVAILABLE");
     const proposedLevel = input.proposedLevels?.[skill] ?? observed.level;
 
     if (proposedLevel < observed.level) {
@@ -165,8 +163,7 @@ export function planEconomySkills(input: EconomySkillPlannerInput): EconomySkill
 
   const additionalSkillPointsRequired =
     proposedEconomySkillPointCost - currentEconomySkillPointCost;
-  const rawRemainingSkillPoints =
-    input.player.availableSkillPoints - additionalSkillPointsRequired;
+  const rawRemainingSkillPoints = input.player.availableSkillPoints - additionalSkillPointsRequired;
   const remainingSkillPoints = Math.max(0, rawRemainingSkillPoints);
   const overspentSkillPoints = Math.max(0, -rawRemainingSkillPoints);
 
