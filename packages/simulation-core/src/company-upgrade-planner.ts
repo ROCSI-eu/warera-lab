@@ -21,9 +21,7 @@ export type CompanyUpgradeStatKey = (typeof companyUpgradeStatKeys)[number];
 export type CompanyUpgradeDirection = "no-op" | "upgrade" | "downgrade";
 
 export type CompanyUpgradePlannerErrorCode =
-  | "CURRENT_LEVEL_UNAVAILABLE"
-  | "PROPOSED_LEVEL_UNAVAILABLE"
-  | "DOWNGRADE_NOT_ALLOWED";
+  "CURRENT_LEVEL_UNAVAILABLE" | "PROPOSED_LEVEL_UNAVAILABLE" | "DOWNGRADE_NOT_ALLOWED";
 
 export class CompanyUpgradePlannerError extends Error {
   readonly code: CompanyUpgradePlannerErrorCode;
