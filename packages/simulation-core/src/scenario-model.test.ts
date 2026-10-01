@@ -133,6 +133,44 @@ describe("scenario document round trips", () => {
       username: "Planner",
     });
   });
+
+  it("requires explicit opt-in again when exporting or sharing source player identity", () => {
+    const document = createScenarioDocument(
+      {
+        baseline,
+        scenarioA,
+        scenarioB,
+        sourceSnapshotRetrievedAt: "2026-10-01T12:01:00.000Z",
+        sourcePlayer: {
+          id: "player-1",
+          username: "Planner",
+        },
+      },
+      { includeSourcePlayerIdentity: true },
+    );
+
+    const defaultJson = serializeScenarioJson(document);
+    const optedInJson = serializeScenarioJson(document, {
+      includeSourcePlayerIdentity: true,
+    });
+    const defaultFragment = encodeScenarioFragment(document);
+    const optedInFragment = encodeScenarioFragment(document, {
+      includeSourcePlayerIdentity: true,
+    });
+
+    expect(parseScenarioJson(defaultJson).source).toEqual({
+      snapshotRetrievedAt: "2026-10-01T12:01:00.000Z",
+    });
+    expect(parseScenarioJson(optedInJson).source?.player).toEqual({
+      id: "player-1",
+      username: "Planner",
+    });
+    expect(decodeScenarioFragment(defaultFragment).source?.player).toBeUndefined();
+    expect(decodeScenarioFragment(optedInFragment).source?.player).toEqual({
+      id: "player-1",
+      username: "Planner",
+    });
+  });
 });
 
 describe("scenario document validation", () => {
