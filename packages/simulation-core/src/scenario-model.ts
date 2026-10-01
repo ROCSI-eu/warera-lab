@@ -467,10 +467,14 @@ function prepareScenarioForSerialization(
     return normalized;
   }
 
-  const { player: _player, ...sourceWithoutPlayer } = normalized.source;
   return {
-    ...normalized,
-    ...(Object.keys(sourceWithoutPlayer).length === 0 ? { source: undefined } : { source: sourceWithoutPlayer }),
+    version: normalized.version,
+    calculationVersions: normalized.calculationVersions,
+    config: normalized.config,
+    scenarios: normalized.scenarios,
+    ...(normalized.source.snapshotRetrievedAt === undefined
+      ? {}
+      : { source: { snapshotRetrievedAt: normalized.source.snapshotRetrievedAt } }),
   };
 }
 
