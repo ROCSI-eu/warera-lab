@@ -77,6 +77,23 @@ The canonical WarEra Lab service launches without advertising or sponsorship.
 
 Commercial-use, advertising, sponsorship, donation/support, caching, and historical-dataset permissions remain subject to clarification tracked in issue #9. This does not change the AGPL-3.0-only licence of the WarEra Lab software.
 
+### D-010 — Initial application architecture
+
+The first implementation uses:
+
+- Node.js 22 and npm workspaces;
+- a static Vite + React web application served by Apache;
+- a small Hono API service bound to loopback and exposed only through same-origin `/api/` routing;
+- `domain`, `warera-api`, and `simulation-core` workspace packages;
+- server-side access to the official documented WarEra API rather than browser-direct upstream calls;
+- a bounded in-memory operational cache with no Redis/database dependency for the MVP;
+- browser-local/shareable scenario state rather than server-side user accounts;
+- a dedicated future production systemd service and Apache virtual host, isolated from existing ROCSI services.
+
+Raw WarEra responses stop at the API normalization boundary. Simulation logic remains pure TypeScript with no network or storage dependencies.
+
+See [ADR 0001](adr/0001-initial-architecture.md).
+
 ## Working directions, not yet final
 
 - Core simulation functionality is expected to remain free and publicly accessible.
@@ -89,16 +106,12 @@ These directions require separate product, privacy, and architecture review befo
 
 The following should not be treated as settled:
 
-- application framework and monorepo/package structure;
-- backend/runtime choice;
-- API proxy versus direct-browser access boundaries;
+- exact per-endpoint cache TTLs and rate-limit safety-reserve tuning;
 - optional post-MVP API-token handling for authenticated features;
-- caching policy and rate-limit strategy;
-- whether the MVP needs any persistent database at all;
 - historical-data collection scope;
 - exact post-MVP Combat Lab mechanics;
 - post-MVP user accounts or saved scenario storage;
 - monetization provider / EU consent implications if issue #9 later permits advertising or sponsorship;
-- production deployment topology and observability.
+- final production release paths, service naming, monitoring, and operational runbooks.
 
 Each material decision should be resolved through an issue and pull request or an ADR before becoming implementation policy.

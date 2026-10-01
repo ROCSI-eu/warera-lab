@@ -2,7 +2,7 @@
 
 WarEra Lab is an independent, open-source toolkit for **WarEra simulation, analytics, and game-data exploration**, developed by ROCSI.
 
-> **Status:** project foundation / discovery. No public application has been released yet.
+> **Status:** initial implementation scaffold. The first public MVP is defined, but no public application has been released yet.
 
 The planned canonical deployment is **`warera-lab.rocsi.eu`**.
 
@@ -14,7 +14,7 @@ The central design rule is:
 
 **WarEra API data describes the current state; WarEra Lab owns the hypothetical simulation model.**
 
-Planned areas include player/account modelling, economy and production scenarios, combat/build analysis, market context, and relevant world/battle data. Exact MVP scope is still being defined.
+The first public MVP is credential-free and Economy-Lab-first. Its accepted scope is documented in [docs/MVP.md](docs/MVP.md). Post-MVP areas may include combat/build analysis, richer market context, and other documented public game data.
 
 ## Data and calculation provenance
 
@@ -31,7 +31,25 @@ The official WarEra API documentation at <https://api2.warera.io/docs/> is the p
 
 WarEra Lab is developed publicly in this repository. Architecture and implementation choices that are not yet settled should be tracked through GitHub issues and pull requests rather than silently treated as final decisions.
 
-See [docs/DECISIONS.md](docs/DECISIONS.md) for the current decision record and open questions.
+See [docs/DECISIONS.md](docs/DECISIONS.md) for the current decision record and [ADR 0001](docs/adr/0001-initial-architecture.md) for the initial application architecture.
+
+## Development
+
+The initial scaffold uses Node.js 22, npm workspaces, a Vite + React web application, a small Hono API service, and pure shared TypeScript packages.
+
+```bash
+npm ci
+npm run verify
+```
+
+For local development, run the API and web application in separate terminals:
+
+```bash
+npm run dev:api
+npm run dev:web
+```
+
+The API binds to `127.0.0.1:3220` by default and Vite proxies local `/api` requests to it. The scaffold does **not** call the WarEra API yet.
 
 ## Independence and attribution
 
