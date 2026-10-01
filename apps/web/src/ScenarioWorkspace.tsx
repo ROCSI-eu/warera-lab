@@ -84,6 +84,7 @@ export function ScenarioTransfer({
 }) {
   const [includeIdentity, setIncludeIdentity] = useState(false);
   const [importText, setImportText] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
 
@@ -104,8 +105,8 @@ export function ScenarioTransfer({
       return encodeScenarioFragment(document, {
         includeSourcePlayerIdentity: includeIdentity,
       });
-    } catch (caught) {
-      return caught instanceof Error ? "" : "";
+    } catch {
+      return "";
     }
   }, [document, includeIdentity]);
 
@@ -125,14 +126,33 @@ export function ScenarioTransfer({
     }
   }
 
-  function applyShareFragment() {
+  async function copyShareLink() {
     if (!document || shareFragment === "") {
       setError("This scenario is too large or invalid for URL-fragment sharing.");
       return;
     }
+
     window.history.replaceState(null, "", shareFragment);
+    const shareUrl = window.location.href;
     setError(undefined);
-    setMessage("The current scenario is now encoded in this page URL.");
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setMessage("Share link copied. The scenario is encoded only in the URL fragment.");
+    } catch {
+      setMessage("Share link is ready in the address bar. The scenario remains client-side only.");
+    }
+  }
+
+  function exportJson() {
+    if (!document || exportedJson === "") return;
+    const blobUrl = URL.createObjectURL(new Blob([exportedJson], { type: "application/json" }));
+    const link = window.document.createElement("a");
+    link.href = blobUrl;
+    link.download = "warera-lab-scenario.json";
+    link.click();
+    URL.revokeObjectURL(blobUrl);
+    setError(undefined);
+    setMessage("Scenario JSON exported.");
   }
 
   return (
@@ -145,6 +165,27 @@ export function ScenarioTransfer({
         <span className="badge">No server persistence</span>
       </div>
 
+      <p className="transfer-intro">
+        Move a scenario between browsers without an account. Player identity stays excluded unless
+        you explicitly include it.
+      </p>
+
+      <div className="transfer-actions" aria-label="Scenario transfer actions">
+        <button
+          type="button"
+          onClick={() => void copyShareLink()}
+          disabled={!document || !shareFragment}
+        >
+          Copy share link
+        </button>
+        <button type="button" onClick={exportJson} disabled={!document || exportedJson === ""}>
+          Export JSON
+        </button>
+        <button type="button" onClick={() => setAdvancedOpen(true)}>
+          Import scenario
+        </button>
+      </div>
+
       <label className="identity-choice">
         <input
           type="checkbox"
@@ -154,45 +195,48 @@ export function ScenarioTransfer({
         />
         Include source player identity in this export/share
       </label>
-      <p className="field-help">
-        Player identity is excluded by default. Calculation inputs and version metadata remain
-        portable without it.
-      </p>
 
-      {document ? (
-        <div className="transfer-grid">
-          <label>
-            <span>JSON export</span>
-            <textarea readOnly value={exportedJson} rows={7} />
+      <details
+        className="advanced-details"
+        open={advancedOpen}
+        onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
+      >
+        <summary>Advanced scenario data</summary>
+        <div className="advanced-details__body">
+          <p className="field-help">
+            Raw serialization is available for inspection and manual transfer. Editing these values
+            does not bypass scenario validation.
+          </p>
+
+          {document ? (
+            <div className="transfer-grid">
+              <label>
+                <span>JSON export</span>
+                <textarea readOnly value={exportedJson} rows={7} />
+              </label>
+              <div className="share-box">
+                <strong>URL fragment</strong>
+                <code tabIndex={0} aria-label="Scenario URL fragment">
+                  {shareFragment || "Scenario exceeds the share boundary."}
+                </code>
+              </div>
+            </div>
+          ) : null}
+
+          <label className="scenario-import">
+            <span>Import scenario JSON</span>
+            <textarea
+              value={importText}
+              onChange={(event) => setImportText(event.currentTarget.value)}
+              rows={7}
+              placeholder='{"version":"warera-lab-scenario-v1",...}'
+            />
           </label>
-          <div className="share-box">
-            <strong>URL fragment share</strong>
-            <code tabIndex={0} aria-label="Scenario URL fragment">
-              {shareFragment || "Scenario exceeds the share boundary."}
-            </code>
-            <button type="button" onClick={applyShareFragment} disabled={shareFragment === ""}>
-              Put scenario in URL
-            </button>
-          </div>
+          <button type="button" onClick={importJson} disabled={importText.trim() === ""}>
+            Import JSON
+          </button>
         </div>
-      ) : (
-        <p className="muted">
-          Import a scenario below or import a player workspace before exporting.
-        </p>
-      )}
-
-      <label className="scenario-import">
-        <span>Import scenario JSON</span>
-        <textarea
-          value={importText}
-          onChange={(event) => setImportText(event.currentTarget.value)}
-          rows={7}
-          placeholder='{"version":"warera-lab-scenario-v1",...}'
-        />
-      </label>
-      <button type="button" onClick={importJson} disabled={importText.trim() === ""}>
-        Import JSON
-      </button>
+      </details>
 
       {message ? (
         <p className="message" role="status">
@@ -393,26 +437,78 @@ export function ScenarioWorkspace({
             Scenario inputs are evaluated by the versioned pure calculation modules. Observed live
             values, explicit overrides, assumptions, and derived outputs keep textual provenance.
           </p>
-          <h4>Active scenario inputs</h4>
-          <pre>{JSON.stringify(activeState, null, 2)}</pre>
+
+          <h4>Active scenario</h4>
+          <dl className="calculation-summary">
+            <div>
+              <dt>Scenario</dt>
+              <dd>{slotLabels[activeSlot]}</dd>
+            </div>
+            <div>
+              <dt>Company item</dt>
+              <dd>{activeState.companyItemCode ?? activeState.market?.itemCode ?? "not set"}</dd>
+            </div>
+            <div>
+              <dt>Skill levels</dt>
+              <dd>
+                Production {activeState.skills.production} · Entrepreneurship{" "}
+                {activeState.skills.entrepreneurship} · Management {activeState.skills.management} ·
+                Companies {activeState.skills.companies}
+              </dd>
+            </div>
+            <div>
+              <dt>Company upgrades</dt>
+              <dd>
+                Automated Engine {activeState.companyUpgrades.automatedEngine} · Storage{" "}
+                {activeState.companyUpgrades.storage} · Break Room{" "}
+                {activeState.companyUpgrades.breakRoom}
+              </dd>
+            </div>
+            <div>
+              <dt>Market quantity</dt>
+              <dd>{formatValue(activeState.market?.quantity)}</dd>
+            </div>
+            <div>
+              <dt>Output price override</dt>
+              <dd>{formatValue(activeState.market?.outputPriceOverride)}</dd>
+            </div>
+          </dl>
+
           {context ? (
             <>
               <h4>Current live references</h4>
-              <pre>
-                {JSON.stringify(
-                  {
-                    itemCode: context.itemCode,
-                    recipe: context.item?.productionNeeds ?? {},
-                    marketPrices: context.marketPrices,
-                    configRevision: context.configRevision,
-                    freshness: context.freshness,
-                  },
-                  null,
-                  2,
-                )}
-              </pre>
+              <dl className="calculation-summary">
+                <div>
+                  <dt>Item context</dt>
+                  <dd>{context.itemCode}</dd>
+                </div>
+                <div>
+                  <dt>Live output price</dt>
+                  <dd>{formatValue(context.marketPrices[context.itemCode])}</dd>
+                </div>
+                <div>
+                  <dt>Recipe inputs</dt>
+                  <dd>
+                    {Object.keys(context.item?.productionNeeds ?? {}).length === 0
+                      ? "No recipe inputs reported"
+                      : Object.entries(context.item?.productionNeeds ?? {})
+                          .map(([itemCode, quantity]) => itemCode + " × " + formatValue(quantity))
+                          .join(" · ")}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Reference freshness</dt>
+                  <dd>
+                    {context.freshness.hasStaleData ? "Contains stale data" : "Current snapshot"} ·{" "}
+                    {context.freshness.sources.length}{" "}
+                    {context.freshness.sources.length === 1 ? "source" : "sources"}
+                  </dd>
+                </div>
+              </dl>
             </>
           ) : null}
+
+          <h4>Calculation versions</h4>
           <dl>
             <div>
               <dt>Skill planner</dt>
@@ -443,6 +539,32 @@ export function ScenarioWorkspace({
               <dd>{document.source?.snapshotRetrievedAt ?? "not recorded"}</dd>
             </div>
           </dl>
+
+          <details className="raw-details">
+            <summary>Raw calculation inputs and references</summary>
+            <div>
+              <h4>Scenario inputs</h4>
+              <pre>{JSON.stringify(activeState, null, 2)}</pre>
+              {context ? (
+                <>
+                  <h4>Live references</h4>
+                  <pre>
+                    {JSON.stringify(
+                      {
+                        itemCode: context.itemCode,
+                        recipe: context.item?.productionNeeds ?? {},
+                        marketPrices: context.marketPrices,
+                        configRevision: context.configRevision,
+                        freshness: context.freshness,
+                      },
+                      null,
+                      2,
+                    )}
+                  </pre>
+                </>
+              ) : null}
+            </div>
+          </details>
         </div>
       </details>
     </section>

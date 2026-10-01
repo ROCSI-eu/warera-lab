@@ -46,8 +46,10 @@ describe("scenario workspace rendering", () => {
       }),
     );
 
+    expect(html).toContain("Copy share link");
+    expect(html).toContain("Advanced scenario data");
     expect(html).toContain("JSON export");
-    expect(html).toContain("URL fragment share");
+    expect(html).toContain("URL fragment");
     expect(html).not.toContain("secret-player-id");
     expect(html).not.toContain("Private Planner");
   });

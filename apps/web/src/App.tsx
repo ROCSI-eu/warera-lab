@@ -52,6 +52,21 @@ function freshnessLabel(source: SnapshotFreshnessSource): string {
 
 function FreshnessPanel({ freshness, title }: { freshness: SnapshotFreshness; title: string }) {
   const titleId = title.toLowerCase() + "-freshness";
+  const counts = freshness.sources.reduce(
+    (current, source) => ({ ...current, [source.state]: current[source.state] + 1 }),
+    { live: 0, cached: 0, stale: 0 },
+  );
+  const sourceSummary =
+    freshness.sources.length === 0
+      ? "No individual source timestamps were returned."
+      : [
+          counts.live > 0 ? counts.live + " live" : undefined,
+          counts.cached > 0 ? counts.cached + " cached" : undefined,
+          counts.stale > 0 ? counts.stale + " stale" : undefined,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
   return (
     <section className="freshness-panel" aria-labelledby={titleId}>
       <div className="section-heading">
@@ -63,25 +78,32 @@ function FreshnessPanel({ freshness, title }: { freshness: SnapshotFreshness; ti
           {freshness.hasStaleData ? "Contains stale data" : "Current snapshot"}
         </span>
       </div>
-      <p className="muted">Generated {formatTimestamp(freshness.generatedAt)}</p>
+      <p className="freshness-summary">
+        <strong>
+          {freshness.sources.length} {freshness.sources.length === 1 ? "source" : "sources"}
+        </strong>
+        <span>{sourceSummary}</span>
+        <span>Generated {formatTimestamp(freshness.generatedAt)}</span>
+      </p>
       {freshness.sources.length > 0 ? (
-        <ul className="freshness-list">
-          {freshness.sources.map((source, index) => (
-            <li key={source.source + "-" + (source.subjectId ?? "global") + "-" + index}>
-              <strong className={"freshness-state freshness-state--" + source.state}>
-                {freshnessLabel(source)}
-              </strong>
-              <span>
-                {source.source}
-                {source.subjectId ? " · " + source.subjectId : ""}
-              </span>
-              <time dateTime={source.retrievedAt}>{formatTimestamp(source.retrievedAt)}</time>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="muted">No individual source timestamps were returned.</p>
-      )}
+        <details className="freshness-details">
+          <summary>View source details</summary>
+          <ul className="freshness-list">
+            {freshness.sources.map((source, index) => (
+              <li key={source.source + "-" + (source.subjectId ?? "global") + "-" + index}>
+                <strong className={"freshness-state freshness-state--" + source.state}>
+                  {freshnessLabel(source)}
+                </strong>
+                <span>
+                  {source.source}
+                  {source.subjectId ? " · " + source.subjectId : ""}
+                </span>
+                <time dateTime={source.retrievedAt}>{formatTimestamp(source.retrievedAt)}</time>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </section>
   );
 }

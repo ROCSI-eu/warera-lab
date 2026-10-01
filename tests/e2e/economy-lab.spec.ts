@@ -23,15 +23,19 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   await expect(page.getByLabel("Derived output changes")).toContainText("Gross margin Δ");
 
   await page.getByText("How is this calculated?").click();
+  await expect(page.getByText(/Production 2/)).toBeVisible();
+  await expect(page.getByText(/Current snapshot · 2 sources/)).toBeVisible();
   await expect(page.locator("dd").filter({ hasText: "fnv1a-testcfg-123" })).toBeVisible();
   await expect(page.locator("dd").filter({ hasText: "skill-planner-v1" })).toBeVisible();
+  await expect(page.getByText("Raw calculation inputs and references")).toBeVisible();
 
+  await page.getByText("Advanced scenario data").click();
   const exportedJson = await page.getByLabel("JSON export").inputValue();
   expect(exportedJson).toContain('"production":2');
   expect(exportedJson).not.toContain("player-1");
   expect(exportedJson).not.toContain('"username":"Planner"');
 
-  await page.getByRole("button", { name: "Put scenario in URL" }).click();
+  await page.getByRole("button", { name: "Copy share link" }).click();
   await expect(page).toHaveURL(/#wl=/);
 
   // Re-importing the same live workspace refreshes the observed baseline/context
@@ -79,7 +83,7 @@ test("@journey shared scenario reloads without a live player lookup", async ({ p
   const state = await installApiMocks(page);
   await importPlannerWorkspace(page);
   await productionSelect(page).selectOption("2");
-  await page.getByRole("button", { name: "Put scenario in URL" }).click();
+  await page.getByRole("button", { name: "Copy share link" }).click();
 
   const sharedUrl = page.url();
   expect(sharedUrl).toContain("#wl=");
@@ -93,6 +97,7 @@ test("@journey shared scenario reloads without a live player lookup", async ({ p
   ).toBeVisible();
   expect(state.apiRequests).toEqual([]);
 
+  await page.getByText("Advanced scenario data").click();
   const json = await page.getByLabel("JSON export").inputValue();
   expect(json).toContain('"production":2');
   expect(json).not.toContain("player-1");
@@ -122,11 +127,12 @@ test("@a11y integrated workspace has no automated axe violations and visible key
 
   await expectKeyboardFocusRing(page.getByRole("button", { name: "Scenario B" }));
   await expectKeyboardFocusRing(page.getByLabel("Comparison pair"));
+  await page.getByRole("button", { name: "Import scenario" }).click();
   await expectKeyboardFocusRing(page.getByLabel("Import scenario JSON"));
 
   await expect(page.getByText("observed").first()).toBeVisible();
   await expect(page.getByText("derived").first()).toBeVisible();
-  await expect(page.getByText("Live").first()).toBeVisible();
+  await expect(page.getByText(/2 live/).first()).toBeVisible();
 });
 
 test("@a11y invalid share and empty states remain understandable", async ({ page }) => {
@@ -162,5 +168,6 @@ test("@visual representative loaded Economy Lab", async ({ page }) => {
 
   await expect(page).toHaveScreenshot("economy-lab-release-candidate.png", {
     fullPage: true,
+    timeout: 60_000,
   });
 });
