@@ -104,6 +104,32 @@ describe("WarEraPublicApiClient", () => {
     });
   });
 
+  it("normalizes an upstream 429 as a retryable rate-limit error", async () => {
+    const client = new WarEraPublicApiClient({
+      fetch: vi.fn<typeof fetch>().mockResolvedValue(
+        jsonResponse(
+          { error: { message: "Too many requests", data: { code: "TOO_MANY_REQUESTS" } } },
+          {
+            status: 429,
+            headers: {
+              "retry-after": "12",
+              "ratelimit-limit": "100",
+              "ratelimit-remaining": "0",
+              "ratelimit-reset": "12",
+            },
+          },
+        ),
+      ),
+    });
+
+    await expect(client.getItemPrices()).rejects.toMatchObject<Partial<WarEraApiError>>({
+      kind: "rate-limited",
+      status: 429,
+      retryAfterSeconds: 12,
+      rateLimit: expect.objectContaining({ remaining: 0, resetSeconds: 12 }),
+    });
+  });
+
   it("normalizes plain-text upstream outages", async () => {
     const client = new WarEraPublicApiClient({
       fetch: vi

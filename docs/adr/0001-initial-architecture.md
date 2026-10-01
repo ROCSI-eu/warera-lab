@@ -74,14 +74,9 @@ This allows the same formulas to be unit-tested independently and reused by the 
 
 The MVP does **not** add Redis, a database, or persistent cache storage. The API service will use a bounded in-memory cache with request coalescing once upstream integration begins. Cache entries disappear when the service restarts.
 
-Cache policy is endpoint-specific and conservative:
+Cache policy is endpoint-specific and conservative. The initial implementation uses a hard bound of 256 entries and short, configurable defaults: 10 seconds for player/search/company state, 30 seconds for region/country context, 5 seconds for aggregate market prices, 3 seconds for top orders, and 60 seconds for game configuration. Stale-if-error is disabled for player/search/company/order data and is limited to short explicit windows for region/country context, market prices, and game configuration. Every response reports whether its data was a cache miss, fresh cache hit, or explicitly stale fallback, together with age and policy metadata. These defaults remain configurable and will be reviewed when issue #9 clarifies acceptable caching expectations.
 
-- immutable/slow-changing configuration may live longer than player/market state;
-- player/company/market data uses short operational TTLs;
-- a stale value may be served only when the response explicitly identifies its age/staleness;
-- exact TTLs remain configurable and will be reviewed when issue #9 clarifies acceptable caching expectations.
-
-Every upstream response's rate-limit headers are treated as runtime truth. The adapter will retain a safety reserve, reduce new upstream work when the remaining budget is low, and return a controlled retryable response rather than rotating tokens, IPs, proxies, or hosts.
+Identical in-flight requests are coalesced. Every upstream response's rate-limit headers are treated as runtime truth. The adapter keeps a configurable safety reserve (initial default: 5 requests), accounts for concurrent upstream work, and holds new uncached requests when the observed remaining budget reaches that reserve. Cached data can still be served without consuming upstream budget; eligible stale data may be used only inside its configured stale-if-error window. The service never rotates tokens, IPs, proxies, or hosts to evade limits.
 
 ### Persistence and sharing
 
