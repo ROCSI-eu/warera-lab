@@ -1,8 +1,4 @@
-import type {
-  ItemEconomyConfig,
-  MarketPriceMap,
-  ValueWithProvenance,
-} from "@warera-lab/domain";
+import type { ItemEconomyConfig, MarketPriceMap, ValueWithProvenance } from "@warera-lab/domain";
 
 export const marketMarginSimulatorVersion = "market-margin-v1" as const;
 export const marketMarginComparisonVersion = "market-margin-comparison-v1" as const;
@@ -104,9 +100,7 @@ function requireFiniteNumber(
     positive?: boolean;
   },
 ): number {
-  const invalid =
-    !Number.isFinite(input) ||
-    (options.positive === true ? input <= 0 : input < 0);
+  const invalid = !Number.isFinite(input) || (options.positive === true ? input <= 0 : input < 0);
 
   if (invalid) {
     throw new MarketMarginSimulationError(
@@ -125,10 +119,10 @@ function getObservedMarketPrice(
 ): number {
   const price = marketPrices[itemCode];
   if (price === undefined) {
-    throw new MarketMarginSimulationError(
-      `No live market price is available for ${itemCode}.`,
-      { code: missingCode, subject: itemCode },
-    );
+    throw new MarketMarginSimulationError(`No live market price is available for ${itemCode}.`, {
+      code: missingCode,
+      subject: itemCode,
+    });
   }
 
   return requireFiniteNumber(price, {
@@ -281,9 +275,7 @@ export function simulateMarketMargin(
     grossMarginAtLiveOutputPrice: derived(grossMarginAtLiveOutputPrice),
     grossMarginDeltaVsLiveOutputPrice: derived(grossMargin - grossMarginAtLiveOutputPrice),
     marginPerUnit: derived(grossMargin / quantity),
-    breakEvenOutputPrice: derived(
-      (recipeInputCost + explicitAssumedCostTotal) / quantity,
-    ),
+    breakEvenOutputPrice: derived((recipeInputCost + explicitAssumedCostTotal) / quantity),
   };
 }
 
