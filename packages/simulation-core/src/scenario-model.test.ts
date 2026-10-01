@@ -95,7 +95,7 @@ describe("scenario document round trips", () => {
     expect(parsed.source?.snapshotRetrievedAt).toBe("2026-10-01T12:01:00.000Z");
     expect(parsed.source?.player).toBeUndefined();
     expect(json).not.toContain("player-1");
-    expect(json).not.toContain("Planner");
+    expect(json).not.toContain('"username":"Planner"');
     expect(parsed.calculationVersions).toEqual({
       skillPlanner: "skill-planner-v1",
       companyUpgradePlanner: "company-upgrade-planner-v1",
