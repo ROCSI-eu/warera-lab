@@ -72,7 +72,7 @@ export const companySchema = z
 
 export const companiesPageSchema = z
   .object({
-    items: z.array(companySchema),
+    items: z.array(z.string()),
     nextCursor: z.string().nullish(),
   })
   .passthrough();

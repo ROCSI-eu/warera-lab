@@ -17,7 +17,7 @@
     "build": "npm run build:packages && npm run build:apps",
     "build:packages": "npm run build -w @warera-lab/domain && npm run build -w @warera-lab/warera-api && npm run build -w @warera-lab/simulation-core",
     "build:apps": "npm run build -w @warera-lab/api && npm run build -w @warera-lab/web",
-    "dev:api": "npm run dev -w @warera-lab/api",
+    "dev:api": "npm run build:packages && npm run dev -w @warera-lab/api",
     "dev:web": "npm run dev -w @warera-lab/web",
     "format": "prettier --write \"apps/**/*.{ts,tsx,css,html,json}\" \"packages/**/*.{ts,json}\" \"*.{json,js,mjs,ts}\" \".github/**/*.yml\" \"docs/adr/**/*.md\"",
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,html,json}\" \"packages/**/*.{ts,json}\" \"*.{json,js,mjs,ts}\" \".github/**/*.yml\" \"docs/adr/**/*.md\"",

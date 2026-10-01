@@ -144,6 +144,26 @@ describe("WarEraPublicApiClient", () => {
     });
   });
 
+  it("passes company pagination cursors through the documented input", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        jsonResponse({ result: { data: { items: ["company-1"], nextCursor: null } } }),
+      );
+    const client = new WarEraPublicApiClient({ fetch: fetchMock });
+
+    const response = await client.getCompanies("user-1", 25, "cursor-2");
+
+    expect(response.data).toEqual({ itemIds: ["company-1"] });
+    const [url] = fetchMock.mock.calls[0] ?? [];
+    const calledUrl = new URL(String(url));
+    expect(JSON.parse(calledUrl.searchParams.get("input") ?? "null")).toEqual({
+      userId: "user-1",
+      perPage: 25,
+      cursor: "cursor-2",
+    });
+  });
+
   it("normalizes market order books", async () => {
     const client = new WarEraPublicApiClient({
       fetch: vi.fn<typeof fetch>().mockResolvedValue(

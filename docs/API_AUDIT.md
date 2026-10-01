@@ -60,7 +60,7 @@ Legend:
 | Procedure | Key documented inputs | Anonymous observation | WarEra Lab relevance | Priority |
 | --- | --- | --- | --- | --- |
 | `company.getById` | `companyId*` | Public observed | Company state for economic scenarios | P0 |
-| `company.getCompanies` | `userId`, `perPage`, `cursor` | Public observed | Import a player's companies | P0 |
+| `company.getCompanies` | `userId`, `perPage`, `cursor` | Public observed | Import a player's company IDs; resolve details with `company.getById` | P0 |
 | `country.getCountryById` | `countryId*` | Public observed | Country context, taxes/resources | P1 |
 | `country.getAllCountries` | none | Public observed | Country lookup and global context | P1 |
 | `event.getEventsPaginated` | `limit`, `cursor`, `countryId`, `eventTypes` | Public observed | World/history context | P2 |
@@ -120,6 +120,8 @@ These should be generated or normalized from the official contract where practic
 A useful credential-free first release appears feasible.
 
 ### Player import
+
+A 2026-10-01 runtime check confirmed that `company.getCompanies` currently returns company identifiers in its `items` array, not embedded company-detail objects. Company details therefore require documented `company.getById` calls. WarEra Lab normalizes this distinction internally rather than exposing the raw list shape to browser code.
 
 The public documented surface can resolve entities and import:
 
