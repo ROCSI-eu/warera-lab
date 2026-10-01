@@ -6,10 +6,7 @@ import type {
 } from "@warera-lab/domain";
 import { describe, expect, it } from "vitest";
 
-import {
-  CompanyUpgradePlannerError,
-  planCompanyUpgrades,
-} from "./company-upgrade-planner.js";
+import { CompanyUpgradePlannerError, planCompanyUpgrades } from "./company-upgrade-planner.js";
 
 function upgrade(
   key: CompanyUpgradeKey,
