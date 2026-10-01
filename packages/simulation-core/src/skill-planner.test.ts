@@ -8,10 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import { planEconomySkills, SkillPlannerError } from "./skill-planner.js";
 
-function skill(
-  key: EconomySkillKey,
-  levels: EconomySkillConfig["levels"],
-): EconomySkillConfig {
+function skill(key: EconomySkillKey, levels: EconomySkillConfig["levels"]): EconomySkillConfig {
   return { key, levels };
 }
 
@@ -142,19 +139,20 @@ describe("planEconomySkills", () => {
   });
 
   it("rejects downgrades until a skill respec/refund mechanic is verified", () => {
-    expect(() =>
+    try {
       planEconomySkills({
         player,
         skillConfig,
         proposedLevels: { production: 0 },
-      }),
-    ).toThrowError(
-      expect.objectContaining({
+      });
+      throw new Error("Expected downgrade to fail");
+    } catch (error) {
+      expect(error).toMatchObject({
         code: "DOWNGRADE_UNVERIFIED",
         skill: "production",
         level: 0,
-      }),
-    );
+      });
+    }
   });
 
   it("rejects a configuration whose cumulative cost decreases at a higher level", () => {
@@ -166,18 +164,19 @@ describe("planEconomySkills", () => {
       }),
     };
 
-    expect(() =>
+    try {
       planEconomySkills({
         player,
         skillConfig: invalidConfig,
         proposedLevels: { production: 2 },
-      }),
-    ).toThrowError(
-      expect.objectContaining({
+      });
+      throw new Error("Expected non-monotonic configuration to fail");
+    } catch (error) {
+      expect(error).toMatchObject({
         code: "NON_MONOTONIC_CONFIG",
         skill: "production",
         level: 2,
-      }),
-    );
+      });
+    }
   });
 });
