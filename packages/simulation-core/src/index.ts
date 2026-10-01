@@ -11,4 +11,5 @@ export function scenarioValue<T>(value: T, provenance: ProvenanceKind): Scenario
 
 export * from "./company-upgrade-planner.js";
 export * from "./market-margin-simulator.js";
+export * from "./scenario-model.js";
 export * from "./skill-planner.js";
