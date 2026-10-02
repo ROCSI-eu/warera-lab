@@ -190,6 +190,57 @@ test("@journey duplicate company names remain unambiguous before and after selec
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
+test("@journey nine-company portfolio stays compact and unambiguous at 320 px", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+  state.largePortfolio = true;
+  await page.setViewportSize({ width: 320, height: 800 });
+  await importPlannerWorkspace(page, "MihaiROCSI");
+
+  const companies = page.locator(".company-card");
+  await expect(companies).toHaveCount(9);
+
+  const steelCompanies = companies.filter({ hasText: "Steel Inc" });
+  await expect(steelCompanies).toHaveCount(2);
+  await expect(steelCompanies.nth(0)).toContainText("steel · Algarve · Portugal");
+  await expect(steelCompanies.nth(0)).toContainText("1 worker · Production 1.73");
+  await expect(steelCompanies.nth(1)).toContainText("steel · Algarve · Portugal");
+  await expect(steelCompanies.nth(1)).toContainText("0 workers · Production 4.99");
+  await expect(steelCompanies.nth(0)).not.toContainText("ID ");
+  await expect(steelCompanies.nth(1)).not.toContainText("ID ");
+
+  const selectorBox = await page.locator(".company-list").boundingBox();
+  expect(selectorBox).not.toBeNull();
+  expect(selectorBox!.height).toBeLessThan(892.08);
+
+  await expect(steelCompanies.nth(0).locator(".company-card__upgrades")).not.toBeVisible();
+  await steelCompanies.nth(1).focus();
+  await expect(steelCompanies.nth(1)).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(steelCompanies.nth(0)).toHaveAttribute("aria-pressed", "false");
+  await expect(steelCompanies.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-detail")).toContainText("4.99");
+  await expect(page.locator(".company-detail")).toContainText("0");
+
+  const storageControl = page
+    .locator(".scenario-workspace .planner-control")
+    .filter({ has: page.getByText("Storage", { exact: true }) });
+  await expect(storageControl).toContainText("Observed level 2");
+
+  const scenarioBox = await page.getByRole("heading", { name: "Scenario workspace" }).boundingBox();
+  expect(scenarioBox).not.toBeNull();
+  expect(scenarioBox!.y).toBeLessThan(4800);
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(0);
+
+  const accessibility = await new AxeBuilder({ page }).include(".company-list").analyze();
+  expect(accessibility.violations).toEqual([]);
+});
+
 test("@journey shared scenario reloads without a live player lookup", async ({ page }) => {
   const state = await installApiMocks(page);
   await importPlannerWorkspace(page);
@@ -256,6 +307,30 @@ test("@a11y invalid share and empty states remain understandable", async ({ page
   await page.getByRole("button", { name: "Search" }).click();
   await expect(page.getByRole("heading", { name: "0 matches" })).toBeVisible();
   await expect(page.getByText(/Economy Lab starts with an imported snapshot/i)).toBeVisible();
+});
+
+test("@visual nine-company selector", async ({ page }) => {
+  const state = await installApiMocks(page);
+  state.largePortfolio = true;
+  await importPlannerWorkspace(page, "MihaiROCSI");
+
+  if (test.info().project.name === "visual-320") {
+    const selectorBox = await page.locator(".company-list").boundingBox();
+    expect(selectorBox).not.toBeNull();
+    expect(selectorBox!.height).toBeLessThan(892.08);
+  }
+
+  const firstUpgradeSummary = page.locator(".company-card__upgrades").first();
+  if ((page.viewportSize()?.width ?? 0) >= 1000) {
+    await expect(firstUpgradeSummary).toBeVisible();
+  } else {
+    await expect(firstUpgradeSummary).not.toBeVisible();
+  }
+
+  const companiesPanel = page
+    .locator(".workspace-panel")
+    .filter({ has: page.getByRole("heading", { name: "Companies" }) });
+  await expect(companiesPanel).toHaveScreenshot("company-selector-nine-companies.png");
 });
 
 test("@visual representative loaded Economy Lab", async ({ page }) => {

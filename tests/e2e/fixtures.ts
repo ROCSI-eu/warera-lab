@@ -5,6 +5,7 @@ export interface MockApiState {
   snapshotMode: "ok" | "unavailable";
   staleSnapshot: boolean;
   duplicateCompanies: boolean;
+  largePortfolio: boolean;
   apiRequests: string[];
   externalRequests: string[];
 }
@@ -111,6 +112,139 @@ export const snapshotResponse = {
   },
 };
 
+const largePortfolioSnapshotResponse = {
+  ...snapshotResponse,
+  player: {
+    ...snapshotResponse.player,
+    username: "MihaiROCSI",
+    level: 35,
+  },
+  companies: [
+    {
+      ...company,
+      id: "steel-algarve-1",
+      name: "Steel Inc",
+      regionId: "region-algarve",
+      production: 1.73,
+      workerCount: 1,
+      activeUpgradeLevels: { automatedEngine: 1 },
+    },
+    {
+      ...company,
+      id: "steel-algarve-2",
+      name: "Steel Inc",
+      regionId: "region-algarve",
+      production: 4.99,
+      workerCount: 0,
+      activeUpgradeLevels: { storage: 2 },
+    },
+    {
+      ...company,
+      id: "iron-liberia-1",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-ne-liberia",
+      production: 2.17,
+      workerCount: 0,
+      activeUpgradeLevels: {},
+    },
+    {
+      ...company,
+      id: "iron-sierra-1",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-sierra-leone",
+      production: 3.25,
+      workerCount: 1,
+      activeUpgradeLevels: { breakRoom: 1 },
+    },
+    {
+      ...company,
+      id: "iron-salta-1",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-salta",
+      production: 5.1,
+      workerCount: 2,
+      activeUpgradeLevels: { automatedEngine: 1, storage: 1 },
+    },
+    {
+      ...company,
+      id: "iron-liberia-2",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-ne-liberia",
+      production: 6.2,
+      workerCount: 2,
+      activeUpgradeLevels: { automatedEngine: 2 },
+    },
+    {
+      ...company,
+      id: "iron-sierra-2",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-sierra-leone",
+      production: 1.3,
+      workerCount: 0,
+      activeUpgradeLevels: { storage: 1 },
+    },
+    {
+      ...company,
+      id: "iron-salta-2",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-salta",
+      production: 2.8,
+      workerCount: 1,
+      activeUpgradeLevels: { breakRoom: 2 },
+    },
+    {
+      ...company,
+      id: "iron-liberia-3",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-ne-liberia",
+      production: 7.4,
+      workerCount: 3,
+      activeUpgradeLevels: { automatedEngine: 2, storage: 2 },
+    },
+  ],
+  regions: {
+    ...snapshotResponse.regions,
+    "region-algarve": {
+      id: "region-algarve",
+      countryId: "country-pt",
+      countryCode: "PT",
+      name: "Algarve",
+    },
+    "region-ne-liberia": {
+      id: "region-ne-liberia",
+      countryId: "country-lr",
+      countryCode: "LR",
+      name: "Northeastern Liberia",
+    },
+    "region-sierra-leone": {
+      id: "region-sierra-leone",
+      countryId: "country-sl",
+      countryCode: "SL",
+      name: "Sierra Leone",
+    },
+    "region-salta": {
+      id: "region-salta",
+      countryId: "country-ar",
+      countryCode: "AR",
+      name: "Salta",
+    },
+  },
+  countries: {
+    ...snapshotResponse.countries,
+    "country-pt": { id: "country-pt", code: "PT", name: "Portugal" },
+    "country-lr": { id: "country-lr", code: "LR", name: "Liberia" },
+    "country-sl": { id: "country-sl", code: "SL", name: "Sierra Leone" },
+    "country-ar": { id: "country-ar", code: "AR", name: "Argentina" },
+  },
+};
+
 export const economyContextResponse = {
   itemCode: "steel",
   configRevision: "fnv1a-testcfg-123",
@@ -205,6 +339,7 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     snapshotMode: "ok",
     staleSnapshot: false,
     duplicateCompanies: false,
+    largePortfolio: false,
     apiRequests: [],
     externalRequests: [],
   };
@@ -240,9 +375,9 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
           : [
               {
                 id: player.id,
-                username: player.username,
+                username: state.largePortfolio ? "MihaiROCSI" : player.username,
                 countryId: longOpaqueCountryId,
-                level: 12,
+                level: state.largePortfolio ? 35 : 12,
               },
             ];
 
@@ -251,7 +386,12 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
         contentType: "application/json",
         body: JSON.stringify({
           data: {
-            query: state.searchMode === "empty" ? "Nobody" : "Planner",
+            query:
+              state.searchMode === "empty"
+                ? "Nobody"
+                : state.largePortfolio
+                  ? "MihaiROCSI"
+                  : "Planner",
             matches,
             truncated: false,
             freshness: baseFreshness,
@@ -276,7 +416,9 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
         return;
       }
 
-      const response = structuredClone(snapshotResponse);
+      const response = structuredClone(
+        state.largePortfolio ? largePortfolioSnapshotResponse : snapshotResponse,
+      );
       if (state.duplicateCompanies) {
         response.companies = [
           { ...company, id: "company-duplicate-1", name: "Iron Inc" },
@@ -312,11 +454,11 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
   return state;
 }
 
-export async function importPlannerWorkspace(page: Page) {
+export async function importPlannerWorkspace(page: Page, playerName = "Planner") {
   await page.goto("/");
-  await page.getByLabel("WarEra player name").fill("Planner");
+  await page.getByLabel("WarEra player name").fill(playerName);
   await page.getByRole("button", { name: "Search" }).click();
-  await page.getByRole("button", { name: /Planner Level 12/ }).click();
+  await page.getByRole("button", { name: new RegExp(playerName + " Level") }).click();
   await page.getByRole("heading", { name: "Scenario workspace" }).waitFor();
 }
 
