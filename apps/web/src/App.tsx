@@ -128,13 +128,17 @@ function CompanyButton({
         <strong>{company.name}</strong>
         {presentation.fallbackId ? (
           <small className="company-card__id">ID {presentation.fallbackId}</small>
+        ) : presentation.compactFallbackId ? (
+          <small className="company-card__id company-card__id--compact">
+            ID {presentation.compactFallbackId}
+          </small>
         ) : null}
       </span>
-      <span>
+      <span className="company-card__context">
         {company.itemCode} · {presentation.location}
       </span>
-      <span>{presentation.operations}</span>
-      <small>{presentation.upgrades}</small>
+      <span className="company-card__operations">{presentation.operations}</span>
+      <small className="company-card__upgrades">{presentation.upgrades}</small>
     </button>
   );
 }

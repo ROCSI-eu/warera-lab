@@ -73,6 +73,20 @@ describe("describeCompany", () => {
     expect(describeCompany(duplicate, current).fallbackId).toBe("…7654321");
   });
 
+  it("uses a compact-only ID when entries differ only by upgrades", () => {
+    const other = {
+      ...baseCompany,
+      id: "company-beta-7654321",
+      activeUpgradeLevels: { automatedEngine: 2, storage: 2 },
+    };
+    const current = { ...snapshot, companies: [baseCompany, other] };
+
+    expect(describeCompany(baseCompany, current).fallbackId).toBeUndefined();
+    expect(describeCompany(other, current).fallbackId).toBeUndefined();
+    expect(describeCompany(baseCompany, current).compactFallbackId).toBe("…1234567");
+    expect(describeCompany(other, current).compactFallbackId).toBe("…7654321");
+  });
+
   it("does not use an ID when duplicate names differ by meaningful context", () => {
     const other = { ...baseCompany, id: "company-other", workerCount: 4 };
     const current = { ...snapshot, companies: [baseCompany, other] };
