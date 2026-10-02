@@ -4,6 +4,7 @@ export interface MockApiState {
   searchMode: "ok" | "empty" | "rate-limit";
   snapshotMode: "ok" | "unavailable";
   staleSnapshot: boolean;
+  duplicateCompanies: boolean;
   apiRequests: string[];
   externalRequests: string[];
 }
@@ -52,6 +53,15 @@ const company = {
   },
 };
 
+const duplicateNameCompany = {
+  ...company,
+  id: "company-duplicate-2",
+  regionId: "region-2",
+  name: "Iron Inc",
+  production: 31,
+  workerCount: 4,
+};
+
 export const snapshotResponse = {
   player,
   companies: [company],
@@ -61,6 +71,12 @@ export const snapshotResponse = {
       countryId: "country-1",
       countryCode: "RO",
       name: "Prahova",
+    },
+    "region-2": {
+      id: "region-2",
+      countryId: "country-1",
+      countryCode: "RO",
+      name: "Cluj",
     },
   },
   countries: {
@@ -186,6 +202,7 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     searchMode: "ok",
     snapshotMode: "ok",
     staleSnapshot: false,
+    duplicateCompanies: false,
     apiRequests: [],
     externalRequests: [],
   };
@@ -251,6 +268,12 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
       }
 
       const response = structuredClone(snapshotResponse);
+      if (state.duplicateCompanies) {
+        response.companies = [
+          { ...company, id: "company-duplicate-1", name: "Iron Inc" },
+          duplicateNameCompany,
+        ];
+      }
       if (state.staleSnapshot) {
         response.freshness.hasStaleData = true;
         response.freshness.sources[0]!.state = "stale";

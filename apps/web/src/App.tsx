@@ -9,6 +9,7 @@ import type { ScenarioDocumentV1 } from "@warera-lab/simulation-core";
 import { type FormEvent, useMemo, useReducer, useState } from "react";
 
 import { ScenarioTransfer, ScenarioWorkspace } from "./ScenarioWorkspace.js";
+import { describeCompany, type CompanyPresentation } from "./company-display.js";
 import {
   PublicApiClientError,
   getEconomyContext,
@@ -106,10 +107,12 @@ function FreshnessPanel({ freshness, title }: { freshness: SnapshotFreshness; ti
 
 function CompanyButton({
   company,
+  presentation,
   selected,
   onSelect,
 }: {
   company: PublicCompanySnapshot;
+  presentation: CompanyPresentation;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -120,10 +123,17 @@ function CompanyButton({
       aria-pressed={selected}
       onClick={onSelect}
     >
-      <strong>{company.name}</strong>
-      <span>
-        {company.itemCode} · {company.workerCount ?? "—"} workers
+      <span className="company-card__heading">
+        <strong>{company.name}</strong>
+        {presentation.fallbackId ? (
+          <small className="company-card__id">ID {presentation.fallbackId}</small>
+        ) : null}
       </span>
+      <span>
+        {company.itemCode} · {presentation.location}
+      </span>
+      <span>{presentation.operations}</span>
+      <small>{presentation.upgrades}</small>
     </button>
   );
 }
@@ -270,6 +280,21 @@ export function App() {
   }
 
   const playerCountry = state.snapshot?.countries[state.snapshot.player.countryId];
+  const companyPresentations = useMemo(
+    () =>
+      state.snapshot
+        ? new Map(
+            state.snapshot.companies.map((company) => [
+              company.id,
+              describeCompany(company, state.snapshot!),
+            ]),
+          )
+        : new Map<string, CompanyPresentation>(),
+    [state.snapshot],
+  );
+  const selectedCompanyPresentation = selectedCompany
+    ? companyPresentations.get(selectedCompany.id)
+    : undefined;
   const region = selectedCompany ? state.snapshot?.regions[selectedCompany.regionId] : undefined;
   const companyCountry = region ? state.snapshot?.countries[region.countryId] : undefined;
 
@@ -455,6 +480,7 @@ export function App() {
                     <CompanyButton
                       key={company.id}
                       company={company}
+                      presentation={companyPresentations.get(company.id)!}
                       selected={company.id === selectedCompany?.id}
                       onSelect={() => void handleCompanySelect(company)}
                     />
@@ -476,7 +502,12 @@ export function App() {
                   <div>
                     <span>Company</span>
                     <strong>{selectedCompany.name}</strong>
-                    <small>{selectedCompany.itemCode}</small>
+                    <small>
+                      {selectedCompany.itemCode}
+                      {selectedCompanyPresentation?.fallbackId
+                        ? " · ID " + selectedCompanyPresentation.fallbackId
+                        : ""}
+                    </small>
                   </div>
                   <div>
                     <span>Region</span>

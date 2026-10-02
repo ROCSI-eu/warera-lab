@@ -390,6 +390,29 @@ button:disabled {
   border-color: rgba(155, 183, 220, 0.48);
   background: rgba(155, 183, 220, 0.13);
 }
+.company-card__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.company-card__heading strong {
+  color: #eef3f9;
+}
+.company-card > small {
+  color: #718095;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.company-card__id {
+  flex: none;
+  padding: 0.12rem 0.35rem;
+  border: 1px solid rgba(232, 237, 244, 0.1);
+  border-radius: 999px;
+  color: #93a2b5;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
 
 .company-detail {
   display: grid;
