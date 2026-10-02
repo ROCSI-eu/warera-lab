@@ -20,7 +20,9 @@ export interface WorkspaceState {
   economyContext?: EconomyPlannerContextResponse | undefined;
   economyContextItemCode?: string | undefined;
   isLoadingEconomyContext: boolean;
+  isRefreshing: boolean;
   message?: WorkspaceMessage | undefined;
+  refreshMessage?: WorkspaceMessage | undefined;
 }
 
 export type WorkspaceAction =
@@ -31,6 +33,15 @@ export type WorkspaceAction =
   | { type: "import-started"; playerId: string }
   | { type: "import-succeeded"; snapshot: PublicPlayerSnapshotResponse }
   | { type: "import-failed"; message: string }
+  | { type: "refresh-started" }
+  | {
+      type: "refresh-succeeded";
+      snapshot: PublicPlayerSnapshotResponse;
+      selectedCompanyId?: string | undefined;
+      context?: EconomyPlannerContextResponse | undefined;
+      message: string;
+    }
+  | { type: "refresh-failed"; message: string }
   | { type: "company-selected"; companyId: string }
   | { type: "economy-context-started"; itemCode: string }
   | {
@@ -45,6 +56,7 @@ export const initialWorkspaceState: WorkspaceState = {
   isSearching: false,
   isImporting: false,
   isLoadingEconomyContext: false,
+  isRefreshing: false,
 };
 
 export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
@@ -78,6 +90,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         ...state,
         isImporting: true,
         pendingPlayerId: action.playerId,
+        refreshMessage: undefined,
         message: { kind: "status", text: "Importing the public economy snapshot…" },
       };
     case "import-succeeded":
@@ -98,6 +111,32 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         isImporting: false,
         pendingPlayerId: undefined,
         message: { kind: "error", text: action.message },
+      };
+    case "refresh-started":
+      return {
+        ...state,
+        isRefreshing: true,
+        refreshMessage: {
+          kind: "status",
+          text: "Refreshing the live snapshot and Economy context…",
+        },
+      };
+    case "refresh-succeeded":
+      return {
+        ...state,
+        isRefreshing: false,
+        snapshot: action.snapshot,
+        selectedCompanyId: action.selectedCompanyId,
+        economyContext: action.context,
+        economyContextItemCode: action.context?.itemCode,
+        isLoadingEconomyContext: false,
+        refreshMessage: { kind: "status", text: action.message },
+      };
+    case "refresh-failed":
+      return {
+        ...state,
+        isRefreshing: false,
+        refreshMessage: { kind: "error", text: action.message },
       };
     case "company-selected":
       if (!state.snapshot?.companies.some((company) => company.id === action.companyId)) {

@@ -154,6 +154,77 @@ describe("workspace state", () => {
     });
   });
 
+  it("starts refresh without clearing the current snapshot or Economy context", () => {
+    const current = workspaceReducer(readyState(), {
+      type: "economy-context-started",
+      itemCode: "steel",
+    });
+    const withContext = workspaceReducer(current, {
+      type: "economy-context-succeeded",
+      itemCode: "steel",
+      context: economyContext,
+    });
+    const refreshing = workspaceReducer(withContext, { type: "refresh-started" });
+
+    expect(refreshing.isRefreshing).toBe(true);
+    expect(refreshing.snapshot).toBe(snapshot);
+    expect(refreshing.economyContext).toBe(economyContext);
+    expect(refreshing.selectedCompanyId).toBe("company-1");
+  });
+
+  it("commits a refreshed snapshot and Economy context atomically", () => {
+    const current = readyState();
+    const refreshedSnapshot = {
+      ...snapshot,
+      freshness: { ...snapshot.freshness, generatedAt: "2026-10-01T12:05:06.000Z" },
+    };
+    const refreshedContext = {
+      ...economyContext,
+      freshness: { ...economyContext.freshness, generatedAt: "2026-10-01T12:05:07.000Z" },
+    };
+    const refreshed = workspaceReducer(workspaceReducer(current, { type: "refresh-started" }), {
+      type: "refresh-succeeded",
+      snapshot: refreshedSnapshot,
+      selectedCompanyId: "company-2",
+      context: refreshedContext,
+      message: "Snapshot refreshed.",
+    });
+
+    expect(refreshed.isRefreshing).toBe(false);
+    expect(refreshed.snapshot).toBe(refreshedSnapshot);
+    expect(refreshed.selectedCompanyId).toBe("company-2");
+    expect(refreshed.economyContext).toBe(refreshedContext);
+    expect(refreshed.economyContextItemCode).toBe("steel");
+    expect(refreshed.refreshMessage).toEqual({ kind: "status", text: "Snapshot refreshed." });
+  });
+
+  it("keeps the current workspace intact when refresh fails", () => {
+    const current = workspaceReducer(
+      workspaceReducer(readyState(), {
+        type: "economy-context-started",
+        itemCode: "steel",
+      }),
+      {
+        type: "economy-context-succeeded",
+        itemCode: "steel",
+        context: economyContext,
+      },
+    );
+    const failed = workspaceReducer(workspaceReducer(current, { type: "refresh-started" }), {
+      type: "refresh-failed",
+      message: "WarEra rate limit reached. Try again shortly.",
+    });
+
+    expect(failed.isRefreshing).toBe(false);
+    expect(failed.snapshot).toBe(current.snapshot);
+    expect(failed.economyContext).toBe(current.economyContext);
+    expect(failed.selectedCompanyId).toBe(current.selectedCompanyId);
+    expect(failed.refreshMessage).toEqual({
+      kind: "error",
+      text: "WarEra rate limit reached. Try again shortly.",
+    });
+  });
+
   it("accepts only the economy context response for the currently requested item", () => {
     const started = workspaceReducer(readyState(), {
       type: "economy-context-started",
