@@ -84,6 +84,36 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   }
 });
 
+test("@journey duplicate company names remain unambiguous before and after selection", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+  state.duplicateCompanies = true;
+  await importPlannerWorkspace(page);
+
+  const companies = page.locator(".company-card").filter({ hasText: "Iron Inc" });
+  await expect(companies).toHaveCount(2);
+  await expect(companies.nth(0)).toContainText("Prahova · Romania");
+  await expect(companies.nth(0)).toContainText("2 workers · Production 24");
+  await expect(companies.nth(1)).toContainText("Cluj · Romania");
+  await expect(companies.nth(1)).toContainText("4 workers · Production 31");
+  await expect(companies.nth(0)).not.toContainText("ID ");
+  await expect(companies.nth(1)).not.toContainText("ID ");
+
+  await companies.nth(1).click();
+  await expect(companies.nth(0)).toHaveAttribute("aria-pressed", "false");
+  await expect(companies.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-detail")).toContainText("Cluj");
+  await expect(page.locator(".company-detail")).toContainText("31");
+  await expect(page.locator(".company-detail")).toContainText("4");
+
+  await page.setViewportSize({ width: 320, height: 800 });
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
 test("@journey shared scenario reloads without a live player lookup", async ({ page }) => {
   const state = await installApiMocks(page);
   await importPlannerWorkspace(page);
