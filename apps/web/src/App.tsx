@@ -111,11 +111,13 @@ function CompanyButton({
   presentation,
   selected,
   onSelect,
+  disabled,
 }: {
   company: PublicCompanySnapshot;
   presentation: CompanyPresentation;
   selected: boolean;
   onSelect: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -123,6 +125,7 @@ function CompanyButton({
       className={"company-card" + (selected ? " company-card--selected" : "")}
       aria-pressed={selected}
       onClick={onSelect}
+      disabled={disabled}
     >
       <span className="company-card__heading">
         <strong>{company.name}</strong>
@@ -195,9 +198,11 @@ export function App() {
     snapshot: PublicPlayerSnapshotResponse,
     company: PublicCompanySnapshot,
     context: EconomyPlannerContextResponse,
+    options: { preserveHypotheticals?: boolean } = {},
   ) {
+    const preserveHypotheticals = options.preserveHypotheticals ?? true;
     setScenarioDocument((current) =>
-      current && scenarioCompanyId === company.id
+      preserveHypotheticals && current && scenarioCompanyId === company.id
         ? refreshWorkspaceScenarioDocument(current, snapshot, company, context)
         : createWorkspaceScenarioDocument(snapshot, company, context),
     );
@@ -281,6 +286,62 @@ export function App() {
     const context = await loadEconomyContext(company.itemCode);
     if (context && state.snapshot) {
       establishScenarioDocument(state.snapshot, company, context);
+    }
+  }
+
+  async function handleRefreshSnapshot() {
+    if (!state.snapshot || state.isRefreshing || state.isLoadingEconomyContext) return;
+
+    const currentPlayerId = state.snapshot.player.id;
+    const previousCompanyId = state.selectedCompanyId;
+    dispatch({ type: "refresh-started" });
+
+    try {
+      const snapshot = await getPlayerSnapshot(currentPlayerId);
+      const preservedCompany = previousCompanyId
+        ? snapshot.companies.find((company) => company.id === previousCompanyId)
+        : undefined;
+      const targetCompany = preservedCompany ?? snapshot.companies[0];
+      const context = targetCompany ? await getEconomyContext(targetCompany.itemCode) : undefined;
+      const fellBack =
+        previousCompanyId !== undefined &&
+        targetCompany !== undefined &&
+        targetCompany.id !== previousCompanyId;
+      const canPreserveHypotheticals =
+        targetCompany !== undefined &&
+        targetCompany.id === previousCompanyId &&
+        scenarioCompanyId === targetCompany.id &&
+        scenarioDocument !== undefined &&
+        scenarioDocument.scenarios.baseline.companyItemCode === targetCompany.itemCode &&
+        scenarioDocument.scenarios.baseline.market?.itemCode === targetCompany.itemCode;
+
+      const refreshMessage = fellBack
+        ? `Snapshot refreshed. The previously selected company is no longer available; switched to ${targetCompany.name} and reset scenarios to its observed baseline.`
+        : previousCompanyId !== undefined && targetCompany === undefined
+          ? "Snapshot refreshed. The previously selected company is no longer available, and no replacement company was returned. The existing scenarios are now detached from live company context."
+          : canPreserveHypotheticals
+            ? "Snapshot and Economy context refreshed. Scenario A/B inputs were preserved."
+            : targetCompany
+              ? "Snapshot and Economy context refreshed. Scenarios were reset to the refreshed observed baseline."
+              : "Snapshot refreshed. No company context was returned.";
+
+      dispatch({
+        type: "refresh-succeeded",
+        snapshot,
+        selectedCompanyId: targetCompany?.id,
+        context,
+        message: refreshMessage,
+      });
+
+      if (targetCompany && context) {
+        establishScenarioDocument(snapshot, targetCompany, context, {
+          preserveHypotheticals: canPreserveHypotheticals,
+        });
+      } else {
+        setScenarioCompanyId(undefined);
+      }
+    } catch (error) {
+      dispatch({ type: "refresh-failed", message: describeClientError(error) });
     }
   }
 
@@ -383,7 +444,7 @@ export function App() {
                       type="button"
                       className="result-button"
                       onClick={() => handleImport(match.id)}
-                      disabled={state.isImporting}
+                      disabled={state.isImporting || state.isRefreshing}
                     >
                       <span>
                         <strong>{match.username}</strong>
@@ -428,8 +489,31 @@ export function App() {
                 {playerCountry?.name ?? state.snapshot.player.countryId}
               </p>
             </div>
-            <span className="badge badge--observed">Observed snapshot</span>
+            <div className="workspace-header-actions">
+              <span className="badge badge--observed">Observed snapshot</span>
+              <button
+                type="button"
+                className="refresh-button"
+                onClick={() => void handleRefreshSnapshot()}
+                disabled={state.isRefreshing || state.isImporting || state.isLoadingEconomyContext}
+              >
+                {state.isRefreshing ? "Refreshing…" : "Refresh snapshot"}
+              </button>
+            </div>
           </div>
+
+          {state.refreshMessage ? (
+            <p
+              className={
+                state.refreshMessage.kind === "error"
+                  ? "message message--error"
+                  : "message message--refresh"
+              }
+              role={state.refreshMessage.kind === "error" ? "alert" : "status"}
+            >
+              {state.refreshMessage.text}
+            </p>
+          ) : null}
 
           {state.snapshot.freshness.hasStaleData ? (
             <p className="message message--warning" role="status">
@@ -492,6 +576,7 @@ export function App() {
                       presentation={companyPresentations.get(company.id)!}
                       selected={company.id === selectedCompany?.id}
                       onSelect={() => void handleCompanySelect(company)}
+                      disabled={state.isRefreshing}
                     />
                   ))}
                 </div>

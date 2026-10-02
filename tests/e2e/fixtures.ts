@@ -2,10 +2,13 @@ import type { Page } from "@playwright/test";
 
 export interface MockApiState {
   searchMode: "ok" | "empty" | "rate-limit";
-  snapshotMode: "ok" | "unavailable";
+  snapshotMode: "ok" | "unavailable" | "rate-limit";
+  economyContextMode: "ok" | "unavailable";
   staleSnapshot: boolean;
   duplicateCompanies: boolean;
   largePortfolio: boolean;
+  snapshotRevision: number;
+  removedCompanyId?: string;
   apiRequests: string[];
   externalRequests: string[];
 }
@@ -337,9 +340,11 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
   const state: MockApiState = {
     searchMode: "ok",
     snapshotMode: "ok",
+    economyContextMode: "ok",
     staleSnapshot: false,
     duplicateCompanies: false,
     largePortfolio: false,
+    snapshotRevision: 0,
     apiRequests: [],
     externalRequests: [],
   };
@@ -415,15 +420,43 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
         });
         return;
       }
+      if (state.snapshotMode === "rate-limit") {
+        await route.fulfill({
+          status: 429,
+          headers: { "retry-after": "60" },
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: {
+              code: "UPSTREAM_RATE_LIMITED",
+              message: "WarEra rate limit reached. Try again shortly.",
+              retryAfterSeconds: 60,
+            },
+          }),
+        });
+        return;
+      }
 
-      const response = structuredClone(
-        state.largePortfolio ? largePortfolioSnapshotResponse : snapshotResponse,
-      );
-      if (state.duplicateCompanies) {
-        response.companies = [
-          { ...company, id: "company-duplicate-1", name: "Iron Inc" },
-          duplicateNameCompany,
-        ];
+      const duplicateCompanies = [
+        { ...company, id: "company-duplicate-1", name: "Iron Inc" },
+        duplicateNameCompany,
+      ];
+      const snapshotFixture = state.duplicateCompanies
+        ? {
+            ...snapshotResponse,
+            companies: state.removedCompanyId
+              ? duplicateCompanies.filter((candidate) => candidate.id !== state.removedCompanyId)
+              : duplicateCompanies,
+          }
+        : state.largePortfolio
+          ? largePortfolioSnapshotResponse
+          : snapshotResponse;
+      const response = structuredClone(snapshotFixture);
+      if (state.snapshotRevision > 0) {
+        response.player.availableSkillPoints += state.snapshotRevision;
+        response.freshness.generatedAt = "2026-10-01T12:05:06.000Z";
+        for (const source of response.freshness.sources) {
+          source.retrievedAt = "2026-10-01T12:05:02.000Z";
+        }
       }
       if (state.staleSnapshot) {
         response.freshness.hasStaleData = true;
@@ -440,10 +473,33 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     }
 
     if (url.pathname === "/api/economy/context") {
+      if (state.economyContextMode === "unavailable") {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: {
+              code: "UPSTREAM_UNAVAILABLE",
+              message: "WarEra Economy context is temporarily unavailable.",
+            },
+          }),
+        });
+        return;
+      }
+
+      const response = structuredClone(economyContextResponse);
+      if (state.snapshotRevision > 0) {
+        response.marketPrices.steel = 11;
+        response.freshness.generatedAt = "2026-10-01T12:05:07.000Z";
+        for (const source of response.freshness.sources) {
+          source.retrievedAt = "2026-10-01T12:05:04.000Z";
+        }
+      }
+
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ data: economyContextResponse }),
+        body: JSON.stringify({ data: response }),
       });
       return;
     }

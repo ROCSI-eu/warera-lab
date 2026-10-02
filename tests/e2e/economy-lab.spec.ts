@@ -48,32 +48,64 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   await page.getByRole("button", { name: "Put scenario in URL" }).click();
   await expect(page).toHaveURL(/#wl=/);
 
-  // Re-importing the same live workspace refreshes the observed baseline/context
-  // without silently discarding Scenario A/B hypotheticals.
-  await page.getByLabel("WarEra player name").fill("Planner");
-  await page.getByRole("button", { name: "Search" }).click();
-  await page.getByRole("button", { name: /Planner Level 12/ }).click();
-  await expect(productionSelect(page)).toHaveValue("2");
+  const refreshButton = page.getByRole("button", { name: "Refresh snapshot" });
+  await expect(refreshButton).toBeVisible();
+  const availableSkillPoints = page
+    .locator(".metric-grid article")
+    .filter({ hasText: "Available skill points" })
+    .locator("strong");
 
-  state.searchMode = "rate-limit";
-  await page.getByRole("button", { name: "Search" }).click();
+  const snapshotFreshness = page
+    .locator(".freshness-panel")
+    .filter({ has: page.getByRole("heading", { name: "Snapshot freshness" }) });
+  const contextFreshness = page
+    .locator(".freshness-panel")
+    .filter({ has: page.getByRole("heading", { name: "Economy context freshness" }) });
+  const snapshotFreshnessBefore = await snapshotFreshness.locator(".freshness-summary").innerText();
+  const contextFreshnessBefore = await contextFreshness.locator(".freshness-summary").innerText();
+  const searchRequestsBefore = state.apiRequests.filter(
+    (url) => new URL(url).pathname === "/api/players/search",
+  ).length;
+
+  state.snapshotRevision = 1;
+  await refreshButton.click();
+  await expect(page.getByText(/Scenario A\/B inputs were preserved/i)).toBeVisible();
+  await expect(productionSelect(page)).toHaveValue("2");
+  await expect(page.getByLabel(/Output price override/)).toHaveValue("12");
+  await expect(availableSkillPoints).toHaveText("6");
+  expect(await snapshotFreshness.locator(".freshness-summary").innerText()).not.toBe(
+    snapshotFreshnessBefore,
+  );
+  expect(await contextFreshness.locator(".freshness-summary").innerText()).not.toBe(
+    contextFreshnessBefore,
+  );
+  expect(
+    state.apiRequests.filter((url) => new URL(url).pathname === "/api/players/search").length,
+  ).toBe(searchRequestsBefore);
+
+  state.snapshotMode = "rate-limit";
+  await refreshButton.click();
   await expect(page.getByText(/rate limit reached/i)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
+  await expect(page.getByText(/Suggested retry: in about 60 seconds/i)).toBeVisible();
+  await expect(availableSkillPoints).toHaveText("6");
   await expect(productionSelect(page)).toHaveValue("2");
-
-  state.searchMode = "ok";
-  state.snapshotMode = "unavailable";
-  await page.getByRole("button", { name: "Search" }).click();
-  await page.getByRole("button", { name: /Planner Level 12/ }).click();
-  await expect(page.getByText(/temporarily unavailable/i)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
-  await expect(productionSelect(page)).toHaveValue("2");
+  await expect(page.getByLabel(/Output price override/)).toHaveValue("12");
 
   state.snapshotMode = "ok";
+  state.snapshotRevision = 2;
+  state.economyContextMode = "unavailable";
+  await refreshButton.click();
+  await expect(page.getByText(/Economy context is temporarily unavailable/i)).toBeVisible();
+  await expect(availableSkillPoints).toHaveText("6");
+  await expect(productionSelect(page)).toHaveValue("2");
+  await expect(page.getByLabel(/Output price override/)).toHaveValue("12");
+
+  state.economyContextMode = "ok";
   state.staleSnapshot = true;
-  await page.getByRole("button", { name: /Planner Level 12/ }).click();
+  await refreshButton.click();
   await expect(page.getByText(/Some imported values are stale/i)).toBeVisible();
   await expect(page.getByText("Stale").first()).toBeVisible();
+  await expect(availableSkillPoints).toHaveText("7");
   await expect(productionSelect(page)).toHaveValue("2");
 
   state.searchMode = "empty";
@@ -87,6 +119,68 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   for (const url of state.apiRequests) {
     expect(new URL(url).origin).toBe("http://127.0.0.1:4173");
   }
+});
+
+test("@journey refresh falls back safely when the selected company disappears", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+  state.duplicateCompanies = true;
+  await page.setViewportSize({ width: 320, height: 800 });
+  await importPlannerWorkspace(page);
+
+  const companies = page.locator(".company-card").filter({ hasText: "Iron Inc" });
+  await expect(companies).toHaveCount(2);
+  await companies.nth(1).click();
+  await expect(companies.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-detail")).toContainText("Cluj");
+
+  await productionSelect(page).selectOption("2");
+  await page.getByLabel(/Output price override/).fill("12");
+  await expect(productionSelect(page)).toHaveValue("2");
+
+  const refreshButton = page.getByRole("button", { name: "Refresh snapshot" });
+  const overflowBeforeRefresh = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflowBeforeRefresh).toBe(0);
+
+  state.snapshotRevision = 1;
+  await refreshButton.focus();
+  await expect(refreshButton).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByText(/Scenario A\/B inputs were preserved/i)).toBeVisible();
+  await expect(companies.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-detail")).toContainText("Cluj");
+  await expect(productionSelect(page)).toHaveValue("2");
+  await expect(page.getByLabel(/Output price override/)).toHaveValue("12");
+
+  state.snapshotRevision = 2;
+  state.removedCompanyId = "company-duplicate-2";
+  await refreshButton.click();
+
+  await expect(page.getByText(/previously selected company is no longer available/i)).toBeVisible();
+  await expect(page.getByText(/reset scenarios to its observed baseline/i)).toBeVisible();
+
+  const remainingCompany = page.locator(".company-card").filter({ hasText: "Iron Inc" });
+  await expect(remainingCompany).toHaveCount(1);
+  await expect(remainingCompany).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-detail")).toContainText("Prahova");
+  await expect(page.locator(".company-detail")).toContainText("24");
+  await expect(page.locator(".company-detail")).toContainText("2");
+  await expect(productionSelect(page)).toHaveValue("1");
+  await expect(page.getByLabel(/Output price override/)).toHaveValue("");
+
+  const upgradePanel = page
+    .locator(".scenario-workspace .planner-panel")
+    .filter({ has: page.getByRole("heading", { name: "Company upgrades" }) });
+  await expect(upgradePanel).toContainText("Observed level 1");
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(0);
 });
 
 test("@journey public shell prioritizes search and exposes project context", async ({ page }) => {
@@ -287,6 +381,7 @@ test("@a11y integrated workspace has no automated axe violations and visible key
     ).toBe(true);
   }
 
+  await expectKeyboardFocusRing(page.getByRole("button", { name: "Refresh snapshot" }));
   await expectKeyboardFocusRing(page.getByRole("button", { name: "Scenario B" }));
   await expectKeyboardFocusRing(page.getByLabel("Comparison pair"));
   await page.locator(".scenario-import-details > summary").click();
@@ -331,6 +426,14 @@ test("@visual nine-company selector", async ({ page }) => {
     .locator(".workspace-panel")
     .filter({ has: page.getByRole("heading", { name: "Companies" }) });
   await expect(companiesPanel).toHaveScreenshot("company-selector-nine-companies.png");
+});
+
+test("@visual refresh snapshot control", async ({ page }) => {
+  await installApiMocks(page);
+  await importPlannerWorkspace(page);
+
+  const workspaceHeader = page.locator(".workspace > .workspace-heading");
+  await expect(workspaceHeader).toHaveScreenshot("refresh-snapshot-control.png");
 });
 
 test("@visual representative loaded Economy Lab", async ({ page }) => {
