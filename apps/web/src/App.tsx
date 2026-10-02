@@ -24,6 +24,8 @@ import {
 } from "./scenario-workspace-model.js";
 import { initialWorkspaceState, workspaceReducer } from "./workspace-state.js";
 
+const releaseVersion = import.meta.env.VITE_WARERA_LAB_VERSION;
+
 const skillLabels = {
   production: "Production",
   entrepreneurship: "Entrepreneurship",
@@ -706,7 +708,12 @@ export function App() {
 
       <footer className="site-footer">
         <div className="footer-summary">
-          <strong>WarEra Lab</strong>
+          <div className="footer-title">
+            <strong>WarEra Lab</strong>
+            <span className="footer-version" aria-label={"Production release " + releaseVersion}>
+              {releaseVersion}
+            </span>
+          </div>
           <p>
             Independent open-source analysis and simulation by ROCSI. Not affiliated with, endorsed
             by, sponsored by, or operated by WarEra.
@@ -714,6 +721,7 @@ export function App() {
         </div>
         <nav className="footer-links" aria-label="Project links">
           <a href="https://github.com/ROCSI-eu/warera-lab">GitHub repository</a>
+          <a href="https://github.com/ROCSI-eu/warera-lab/blob/main/CHANGELOG.md">Changelog</a>
           <a href="https://rocsi.eu/">ROCSI website</a>
           <a href="https://github.com/ROCSI-eu/warera-lab/blob/main/LICENSE">AGPL-3.0 license</a>
           <a href="https://github.com/ROCSI-eu/warera-lab/blob/main/NOTICE.md">Notices</a>
