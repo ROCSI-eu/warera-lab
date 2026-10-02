@@ -84,6 +84,44 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   }
 });
 
+test("@journey public shell prioritizes search and exposes project context", async ({ page }) => {
+  await page.goto("/");
+
+  const searchHeading = page.getByRole("heading", { name: "Find a player" });
+  await expect(searchHeading).toBeVisible();
+
+  const viewport = page.viewportSize();
+  const searchBox = await searchHeading.boundingBox();
+  expect(viewport).not.toBeNull();
+  expect(searchBox).not.toBeNull();
+  expect(searchBox!.y).toBeLessThan(viewport!.height);
+
+  if (viewport!.width >= 1000) {
+    expect(searchBox!.y).toBeLessThan(620);
+  }
+
+  const projectLinks = page.getByRole("navigation", { name: "Project links" });
+  await expect(projectLinks.getByRole("link", { name: "GitHub repository" })).toHaveAttribute(
+    "href",
+    "https://github.com/ROCSI-eu/warera-lab",
+  );
+  await expect(projectLinks.getByRole("link", { name: "ROCSI website" })).toHaveAttribute(
+    "href",
+    "https://rocsi.eu/",
+  );
+  await expect(projectLinks.getByRole("link", { name: "AGPL-3.0 license" })).toHaveAttribute(
+    "href",
+    "https://github.com/ROCSI-eu/warera-lab/blob/main/LICENSE",
+  );
+  await expect(projectLinks.getByRole("link", { name: "Notices" })).toHaveAttribute(
+    "href",
+    "https://github.com/ROCSI-eu/warera-lab/blob/main/NOTICE.md",
+  );
+  await expect(
+    page.getByText(/Not affiliated with, endorsed by, sponsored by, or operated by WarEra/i),
+  ).toBeVisible();
+});
+
 test("@journey duplicate company names remain unambiguous before and after selection", async ({
   page,
 }) => {

@@ -617,9 +617,20 @@ export function App() {
         />
       ) : null}
 
-      <footer>
-        WarEra Lab is an independent community project and is not affiliated with, endorsed by, or
-        operated by WarEra.
+      <footer className="site-footer">
+        <div className="footer-summary">
+          <strong>WarEra Lab</strong>
+          <p>
+            Independent open-source analysis and simulation by ROCSI. Not affiliated with, endorsed
+            by, sponsored by, or operated by WarEra.
+          </p>
+        </div>
+        <nav className="footer-links" aria-label="Project links">
+          <a href="https://github.com/ROCSI-eu/warera-lab">GitHub repository</a>
+          <a href="https://rocsi.eu/">ROCSI website</a>
+          <a href="https://github.com/ROCSI-eu/warera-lab/blob/main/LICENSE">AGPL-3.0 license</a>
+          <a href="https://github.com/ROCSI-eu/warera-lab/blob/main/NOTICE.md">Notices</a>
+        </nav>
       </footer>
     </main>
   );
