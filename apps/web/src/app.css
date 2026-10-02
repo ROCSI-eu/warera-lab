@@ -813,7 +813,8 @@ footer {
 }
 
 .share-box button,
-.transfer-panel > button,
+.transfer-actions button,
+.scenario-import-body button,
 .scenario-tab {
   min-height: 2.6rem;
   padding: 0.55rem 0.8rem;
@@ -826,18 +827,117 @@ footer {
 }
 
 .share-box button:hover:not(:disabled),
-.transfer-panel > button:hover:not(:disabled),
+.transfer-actions button:hover:not(:disabled),
+.scenario-import-body button:hover:not(:disabled),
 .scenario-tab:hover {
   border-color: rgba(155, 183, 220, 0.5);
   background: rgba(155, 183, 220, 0.14);
 }
 
 .scenario-import {
+  margin-top: 0;
+}
+
+.transfer-intro,
+.freshness-summary {
+  color: #9ba9ba;
+  line-height: 1.55;
+}
+
+.transfer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
   margin-top: 1rem;
 }
 
-.transfer-panel > button {
+.transfer-actions button {
+  min-width: 9rem;
+}
+
+.scenario-import-details,
+.transfer-advanced,
+.provenance-details,
+.raw-details {
+  margin-top: 0.9rem;
+  border: 1px solid rgba(232, 237, 244, 0.08);
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.scenario-import-details > summary,
+.transfer-advanced > summary,
+.provenance-details > summary,
+.raw-details > summary {
+  padding: 0.8rem 0.9rem;
+  cursor: pointer;
+  color: #c9d5e3;
+  font-weight: 750;
+}
+
+.scenario-import-body,
+.transfer-advanced > .transfer-grid,
+.provenance-details > .freshness-list,
+.raw-details > :not(summary) {
+  margin-left: 0.9rem;
+  margin-right: 0.9rem;
+}
+
+.scenario-import-body {
+  padding-bottom: 0.9rem;
+}
+
+.scenario-import-body button {
   margin-top: 0.65rem;
+}
+
+.transfer-advanced > .transfer-grid {
+  margin-bottom: 0.9rem;
+}
+
+.provenance-details > .freshness-list {
+  margin-bottom: 0.9rem;
+}
+
+.calculation-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.calculation-summary-grid article {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border-radius: 0.7rem;
+  background: rgba(155, 183, 220, 0.05);
+}
+
+.calculation-summary-grid strong {
+  color: #dce6f1;
+  font-size: 0.8rem;
+}
+
+.calculation-summary-grid span {
+  color: #99a8ba;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.raw-details {
+  margin-top: 1rem;
+}
+
+.raw-details h4 {
+  padding: 0 0.9rem;
+}
+
+.raw-details pre {
+  margin-left: 0.9rem;
+  margin-right: 0.9rem;
+  margin-bottom: 0.9rem;
 }
 
 .scenario-tabs {
@@ -1008,8 +1108,17 @@ footer {
 @media (max-width: 36rem) {
   .scenario-tabs,
   .derived-comparison,
-  .calculation-details dl {
+  .calculation-details dl,
+  .calculation-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .transfer-actions {
+    display: grid;
+  }
+
+  .transfer-actions button {
+    width: 100%;
   }
 
   .comparison-list li {

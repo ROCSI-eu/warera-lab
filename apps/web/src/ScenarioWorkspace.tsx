@@ -56,6 +56,11 @@ function readablePath(path: string): string {
     .replaceAll(".", " · ");
 }
 
+function humanizeKey(value: string): string {
+  const spaced = value.replace(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " ");
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
 function ScenarioInputSummary({ changes }: { changes: ScenarioChangeV1[] }) {
   if (changes.length === 0) {
     return <p className="muted">No scenario inputs differ for this comparison.</p>;
@@ -104,8 +109,8 @@ export function ScenarioTransfer({
       return encodeScenarioFragment(document, {
         includeSourcePlayerIdentity: includeIdentity,
       });
-    } catch (caught) {
-      return caught instanceof Error ? "" : "";
+    } catch {
+      return "";
     }
   }, [document, includeIdentity]);
 
@@ -122,6 +127,35 @@ export function ScenarioTransfer({
           ? caught.message
           : "Scenario JSON could not be imported safely.",
       );
+    }
+  }
+
+  function exportJson() {
+    if (!document || exportedJson === "") return;
+    const blob = new Blob([exportedJson], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = window.document.createElement("a");
+    anchor.href = url;
+    anchor.download = "warera-lab-scenario.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setError(undefined);
+    setMessage("Scenario JSON export prepared locally in your browser.");
+  }
+
+  async function copyShareLink() {
+    if (!document || shareFragment === "") {
+      setError("This scenario is too large or invalid for URL-fragment sharing.");
+      return;
+    }
+    try {
+      const shareUrl = new URL(window.location.href);
+      shareUrl.hash = shareFragment.startsWith("#") ? shareFragment.slice(1) : shareFragment;
+      await navigator.clipboard.writeText(shareUrl.toString());
+      setError(undefined);
+      setMessage("Share link copied. The scenario remains encoded only in the URL fragment.");
+    } catch {
+      setError("The browser could not copy the share link. Use Advanced / raw data instead.");
     }
   }
 
@@ -145,6 +179,23 @@ export function ScenarioTransfer({
         <span className="badge">No server persistence</span>
       </div>
 
+      <p className="transfer-intro">
+        Move a scenario between browsers without an account. Player identity stays excluded unless
+        you explicitly include it.
+      </p>
+
+      <div className="transfer-actions" aria-label="Scenario actions">
+        <button type="button" onClick={exportJson} disabled={!document || exportedJson === ""}>
+          Export JSON
+        </button>
+        <button type="button" onClick={() => void copyShareLink()} disabled={shareFragment === ""}>
+          Copy share link
+        </button>
+        <button type="button" onClick={applyShareFragment} disabled={shareFragment === ""}>
+          Put scenario in URL
+        </button>
+      </div>
+
       <label className="identity-choice">
         <input
           type="checkbox"
@@ -155,44 +206,48 @@ export function ScenarioTransfer({
         Include source player identity in this export/share
       </label>
       <p className="field-help">
-        Player identity is excluded by default. Calculation inputs and version metadata remain
-        portable without it.
+        Calculation inputs and version metadata remain portable without player identity.
       </p>
 
-      {document ? (
-        <div className="transfer-grid">
-          <label>
-            <span>JSON export</span>
-            <textarea readOnly value={exportedJson} rows={7} />
+      <details className="scenario-import-details">
+        <summary>Import scenario</summary>
+        <div className="scenario-import-body">
+          <label className="scenario-import">
+            <span>Import scenario JSON</span>
+            <textarea
+              value={importText}
+              onChange={(event) => setImportText(event.currentTarget.value)}
+              rows={7}
+              placeholder='{"version":"warera-lab-scenario-v1",...}'
+            />
           </label>
-          <div className="share-box">
-            <strong>URL fragment share</strong>
-            <code tabIndex={0} aria-label="Scenario URL fragment">
-              {shareFragment || "Scenario exceeds the share boundary."}
-            </code>
-            <button type="button" onClick={applyShareFragment} disabled={shareFragment === ""}>
-              Put scenario in URL
-            </button>
-          </div>
+          <button type="button" onClick={importJson} disabled={importText.trim() === ""}>
+            Import JSON
+          </button>
         </div>
-      ) : (
-        <p className="muted">
-          Import a scenario below or import a player workspace before exporting.
-        </p>
-      )}
+      </details>
 
-      <label className="scenario-import">
-        <span>Import scenario JSON</span>
-        <textarea
-          value={importText}
-          onChange={(event) => setImportText(event.currentTarget.value)}
-          rows={7}
-          placeholder='{"version":"warera-lab-scenario-v1",...}'
-        />
-      </label>
-      <button type="button" onClick={importJson} disabled={importText.trim() === ""}>
-        Import JSON
-      </button>
+      <details className="transfer-advanced">
+        <summary>Advanced / raw data</summary>
+        {document ? (
+          <div className="transfer-grid">
+            <label>
+              <span>JSON export</span>
+              <textarea readOnly value={exportedJson} rows={7} />
+            </label>
+            <div className="share-box">
+              <strong>URL fragment share</strong>
+              <code tabIndex={0} aria-label="Scenario URL fragment">
+                {shareFragment || "Scenario exceeds the share boundary."}
+              </code>
+            </div>
+          </div>
+        ) : (
+          <p className="muted">
+            Import a scenario or player workspace to inspect raw portable data.
+          </p>
+        )}
+      </details>
 
       {message ? (
         <p className="message" role="status">
@@ -207,7 +262,6 @@ export function ScenarioTransfer({
     </section>
   );
 }
-
 export function ScenarioWorkspace({
   document,
   onDocumentChange,
@@ -390,29 +444,53 @@ export function ScenarioWorkspace({
         <summary>How is this calculated?</summary>
         <div>
           <p>
-            Scenario inputs are evaluated by the versioned pure calculation modules. Observed live
-            values, explicit overrides, assumptions, and derived outputs keep textual provenance.
+            Scenario inputs are evaluated by versioned pure calculation modules. Observed values,
+            explicit overrides, assumptions, and derived outputs keep textual provenance.
           </p>
-          <h4>Active scenario inputs</h4>
-          <pre>{JSON.stringify(activeState, null, 2)}</pre>
-          {context ? (
-            <>
-              <h4>Current live references</h4>
-              <pre>
-                {JSON.stringify(
-                  {
-                    itemCode: context.itemCode,
-                    recipe: context.item?.productionNeeds ?? {},
-                    marketPrices: context.marketPrices,
-                    configRevision: context.configRevision,
-                    freshness: context.freshness,
-                  },
-                  null,
-                  2,
-                )}
-              </pre>
-            </>
-          ) : null}
+
+          <div className="calculation-summary-grid" aria-label="Active scenario summary">
+            <article>
+              <strong>Skills</strong>
+              <span>
+                {Object.entries(activeState.skills)
+                  .map(([name, level]) => `${humanizeKey(name)} level ${level}`)
+                  .join(" · ") || "No skill inputs"}
+              </span>
+            </article>
+            <article>
+              <strong>Company upgrades</strong>
+              <span>
+                {Object.entries(activeState.companyUpgrades ?? {})
+                  .map(([name, level]) => `${humanizeKey(name)} level ${level}`)
+                  .join(" · ") || "No company upgrade inputs"}
+              </span>
+            </article>
+            <article>
+              <strong>Market scenario</strong>
+              <span>
+                {activeState.market
+                  ? `${activeState.market.itemCode} · quantity ${activeState.market.quantity} · ${
+                      activeState.market.outputPriceOverride === undefined
+                        ? "live output price"
+                        : `output override ${activeState.market.outputPriceOverride}`
+                    }`
+                  : "No market scenario"}
+              </span>
+            </article>
+            {context ? (
+              <article>
+                <strong>Current live references</strong>
+                <span>
+                  {context.itemCode} · {Object.keys(context.marketPrices).length} market price
+                  {Object.keys(context.marketPrices).length === 1 ? "" : "s"} ·{" "}
+                  {Object.keys(context.item?.productionNeeds ?? {}).length} recipe input
+                  {Object.keys(context.item?.productionNeeds ?? {}).length === 1 ? "" : "s"}
+                </span>
+              </article>
+            ) : null}
+          </div>
+
+          <h4>Versions & retrieval</h4>
           <dl>
             <div>
               <dt>Skill planner</dt>
@@ -443,6 +521,30 @@ export function ScenarioWorkspace({
               <dd>{document.source?.snapshotRetrievedAt ?? "not recorded"}</dd>
             </div>
           </dl>
+
+          <details className="raw-details">
+            <summary>Advanced / raw data</summary>
+            <h4>Active scenario inputs</h4>
+            <pre>{JSON.stringify(activeState, null, 2)}</pre>
+            {context ? (
+              <>
+                <h4>Current live references</h4>
+                <pre>
+                  {JSON.stringify(
+                    {
+                      itemCode: context.itemCode,
+                      recipe: context.item?.productionNeeds ?? {},
+                      marketPrices: context.marketPrices,
+                      configRevision: context.configRevision,
+                      freshness: context.freshness,
+                    },
+                    null,
+                    2,
+                  )}
+                </pre>
+              </>
+            ) : null}
+          </details>
         </div>
       </details>
     </section>

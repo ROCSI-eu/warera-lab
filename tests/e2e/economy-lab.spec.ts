@@ -12,6 +12,11 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
   await expect(page.getByText("Observed snapshot")).toBeVisible();
   await expect(page.getByText("Current snapshot").first()).toBeVisible();
+  await expect(page.getByText(/View source details/).first()).toBeVisible();
+  await expect(page.locator(".freshness-list").first()).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Export JSON" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy share link" })).toBeVisible();
+  await expect(page.getByLabel("JSON export")).not.toBeVisible();
 
   const production = productionSelect(page);
   await production.selectOption("2");
@@ -23,9 +28,13 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   await expect(page.getByLabel("Derived output changes")).toContainText("Gross margin Δ");
 
   await page.getByText("How is this calculated?").click();
+  await expect(page.getByText(/Production level 2/)).toBeVisible();
+  await expect(page.getByText(/steel · quantity 1/)).toBeVisible();
   await expect(page.locator("dd").filter({ hasText: "fnv1a-testcfg-123" })).toBeVisible();
   await expect(page.locator("dd").filter({ hasText: "skill-planner-v1" })).toBeVisible();
+  await expect(page.locator(".calculation-details .raw-details")).not.toHaveAttribute("open", "");
 
+  await page.locator(".transfer-advanced > summary").click();
   const exportedJson = await page.getByLabel("JSON export").inputValue();
   expect(exportedJson).toContain('"production":2');
   expect(exportedJson).not.toContain("player-1");
@@ -93,6 +102,7 @@ test("@journey shared scenario reloads without a live player lookup", async ({ p
   ).toBeVisible();
   expect(state.apiRequests).toEqual([]);
 
+  await page.locator(".transfer-advanced > summary").click();
   const json = await page.getByLabel("JSON export").inputValue();
   expect(json).toContain('"production":2');
   expect(json).not.toContain("player-1");
@@ -122,6 +132,7 @@ test("@a11y integrated workspace has no automated axe violations and visible key
 
   await expectKeyboardFocusRing(page.getByRole("button", { name: "Scenario B" }));
   await expectKeyboardFocusRing(page.getByLabel("Comparison pair"));
+  await page.locator(".scenario-import-details > summary").click();
   await expectKeyboardFocusRing(page.getByLabel("Import scenario JSON"));
 
   await expect(page.getByText("observed").first()).toBeVisible();
