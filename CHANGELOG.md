@@ -6,13 +6,13 @@ Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documente
 
 ## v0.0.2 — 2026-10-02
 
-**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Production commit:** `0a8e3f9593ef34d22540c25853326af1d6600631`
 **Previous version:** `v0.0.1`
 **Environment:** Production — `https://warera-lab.rocsi.eu/`
 
 ### Summary
 
-Introduces WarEra Lab's explicit release-version and changelog system before Company Lab development begins. The deployment will make the current release visible in the public UI while retaining exact Git-SHA deployment traceability.
+Introduces WarEra Lab's explicit release-version and changelog system before Company Lab development begins. The deployed application now exposes its release version in the public footer while retaining exact Git-SHA deployment traceability.
 
 ### Added
 
@@ -34,23 +34,24 @@ None.
 
 ### Verification
 
-Pre-deployment verification for this release requires:
-
-- canonical `VERSION`, changelog, README, and built UI to agree on `v0.0.2`;
-- `npm run verify:release` to pass;
-- complete `npm run verify` to pass on the exact proposed tree;
-- desktop, mobile, exact-320, and reduced-motion visual review of the footer/version presentation;
-- exact-320 document overflow to remain zero.
-
-Production SHA, tag mapping, health checks, and live version verification will be finalized after the exact tested tree is merged and deployed.
+- Proposed PR tree `e696eb37bde1cdcaa9de46e3bcd61af6a871fbb6` passed `npm run verify`: release consistency, formatting, lint, production build, typecheck, 99 Vitest tests, and 34 Playwright tests.
+- GitHub CI run #57 passed on the PR head before merge.
+- Squash-merged production commit `0a8e3f9593ef34d22540c25853326af1d6600631` has the identical tested tree `e696eb37bde1cdcaa9de46e3bcd61af6a871fbb6`.
+- Exact-SHA production deployment completed successfully from `0a8e3f9593ef34d22540c25853326af1d6600631`.
+- Deployment metadata, the active release symlink, and root `VERSION` agree on the deployed SHA and `v0.0.2`.
+- Local and public `/api/health` returned healthy responses.
+- `warera-lab-api.service` remained active with `NRestarts=0` and no recent warning-level service log entries.
+- Public desktop and exact-320 browser checks showed visible `v0.0.2`, the expected changelog link, and zero horizontal overflow.
+- Production install/build reported zero npm vulnerabilities.
 
 ### Known limitations
 
-- The exact v0.0.2 production commit cannot be recorded until the merge/deploy commit exists; it is finalized after deployment in a documentation-only follow-up.
-- GitHub Release objects are not required yet; immutable Git tags plus this changelog are the release record.
+- The required lightweight Git tag `v0.0.2` is pending because the connected GitHub write surface does not expose tag-ref creation and the production VM intentionally has no GitHub push credential.
+- GitHub Release objects remain optional.
 
 ### References
 
+- PR #61 — release versioning and changelog implementation
 - #60 — Introduce release versioning and changelog before Company Lab
 - #46 — Company Lab start gate
 
