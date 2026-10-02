@@ -383,9 +383,7 @@ export function App() {
                     >
                       <span>
                         <strong>{match.username}</strong>
-                        <small>
-                          Level {match.level} · country {match.countryId}
-                        </small>
+                        <small>Level {match.level}</small>
                       </span>
                       <span aria-hidden="true">
                         {state.isImporting && state.pendingPlayerId === match.id

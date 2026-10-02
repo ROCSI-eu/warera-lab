@@ -1,7 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-import { importPlannerWorkspace, installApiMocks, productionSelect } from "./fixtures.js";
+import {
+  importPlannerWorkspace,
+  installApiMocks,
+  longOpaqueCountryId,
+  productionSelect,
+} from "./fixtures.js";
 
 test("@journey complete MVP flow preserves hypotheticals across refresh and failures", async ({
   page,
@@ -120,6 +125,39 @@ test("@journey public shell prioritizes search and exposes project context", asy
   await expect(
     page.getByText(/Not affiliated with, endorsed by, sponsored by, or operated by WarEra/i),
   ).toBeVisible();
+});
+
+test("@journey player search hides opaque IDs and fits exact 320 px before and after import", async ({
+  page,
+}) => {
+  await installApiMocks(page);
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/");
+
+  await page.getByLabel("WarEra player name").fill("Planner");
+  const searchButton = page.getByRole("button", { name: "Search" });
+  await searchButton.click();
+
+  const resultButton = page.getByRole("button", { name: /Planner Level 12/ });
+  await expect(resultButton).toBeVisible();
+  await expect(resultButton).not.toContainText(longOpaqueCountryId);
+  await expect(resultButton).not.toContainText(/country/i);
+
+  const searchOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(searchOverflow).toBe(0);
+
+  await searchButton.focus();
+  await page.keyboard.press("Tab");
+  await expect(resultButton).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
+
+  const loadedOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(loadedOverflow).toBe(0);
 });
 
 test("@journey duplicate company names remain unambiguous before and after selection", async ({

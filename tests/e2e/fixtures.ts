@@ -22,6 +22,8 @@ const baseFreshness = {
   ],
 };
 
+export const longOpaqueCountryId = "6813b6d446e731854c7ac7b6";
+
 const player = {
   id: "player-1",
   username: "Planner",
@@ -235,7 +237,14 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
       const matches =
         state.searchMode === "empty"
           ? []
-          : [{ id: player.id, username: player.username, countryId: player.countryId, level: 12 }];
+          : [
+              {
+                id: player.id,
+                username: player.username,
+                countryId: longOpaqueCountryId,
+                level: 12,
+              },
+            ];
 
       await route.fulfill({
         status: 200,
