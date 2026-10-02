@@ -80,4 +80,15 @@ describe("describeCompany", () => {
     expect(describeCompany(baseCompany, current).fallbackId).toBeUndefined();
     expect(describeCompany(other, current).fallbackId).toBeUndefined();
   });
+
+  it("uses the fallback ID when raw production differs but the displayed value is identical", () => {
+    const first = { ...baseCompany, production: Number("19.440000000000006") };
+    const second = { ...baseCompany, id: "company-beta-7654321", production: 19.4401 };
+    const current = { ...snapshot, companies: [first, second] };
+
+    expect(describeCompany(first, current).operations).toContain("Production 19.44");
+    expect(describeCompany(second, current).operations).toContain("Production 19.44");
+    expect(describeCompany(first, current).fallbackId).toBe("…1234567");
+    expect(describeCompany(second, current).fallbackId).toBe("…7654321");
+  });
 });

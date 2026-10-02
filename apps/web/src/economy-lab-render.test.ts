@@ -88,4 +88,20 @@ describe("Economy Lab rendering", () => {
     expect(html).toContain("derived");
     expect(html).toContain("observed");
   });
+
+  it("formats precise live market values without changing the source context", () => {
+    const precisePrice = 0.091656566856831;
+    const preciseContext: EconomyPlannerContextResponse = {
+      ...context,
+      marketPrices: { steel: precisePrice },
+    };
+
+    const html = renderToStaticMarkup(
+      createElement(EconomyLab, { player, company, context: preciseContext }),
+    );
+
+    expect(html).toContain("0.0917");
+    expect(html).not.toContain("0.091656566856831");
+    expect(preciseContext.marketPrices.steel).toBe(precisePrice);
+  });
 });

@@ -9,6 +9,7 @@ import type { ScenarioDocumentV1 } from "@warera-lab/simulation-core";
 import { type FormEvent, useMemo, useReducer, useState } from "react";
 
 import { ScenarioTransfer, ScenarioWorkspace } from "./ScenarioWorkspace.js";
+import { formatDisplayNumber, formatOptionalDisplayNumber } from "./display-format.js";
 import { describeCompany, type CompanyPresentation } from "./company-display.js";
 import {
   PublicApiClientError,
@@ -438,19 +439,25 @@ export function App() {
           <div className="metric-grid" aria-label="Player economy summary">
             <article>
               <span>Available skill points</span>
-              <strong>{state.snapshot.player.availableSkillPoints}</strong>
+              <strong>
+                {formatDisplayNumber(state.snapshot.player.availableSkillPoints, "points")}
+              </strong>
             </article>
             <article>
               <span>Spent skill points</span>
-              <strong>{state.snapshot.player.spentSkillPoints}</strong>
+              <strong>
+                {formatDisplayNumber(state.snapshot.player.spentSkillPoints, "points")}
+              </strong>
             </article>
             <article>
               <span>Total skill points</span>
-              <strong>{state.snapshot.player.totalSkillPoints}</strong>
+              <strong>
+                {formatDisplayNumber(state.snapshot.player.totalSkillPoints, "points")}
+              </strong>
             </article>
             <article>
               <span>Owned companies</span>
-              <strong>{state.snapshot.companies.length}</strong>
+              <strong>{formatDisplayNumber(state.snapshot.companies.length, "integer")}</strong>
             </article>
           </div>
 
@@ -464,7 +471,7 @@ export function App() {
                     <dt>{skillLabels[key as keyof typeof skillLabels]}</dt>
                     <dd>
                       <strong>Level {skill.level}</strong>
-                      <span>Configured value {skill.value}</span>
+                      <span>Configured value {formatDisplayNumber(skill.value, "number")}</span>
                     </dd>
                   </div>
                 ))}
@@ -518,12 +525,16 @@ export function App() {
                   </div>
                   <div>
                     <span>Observed production</span>
-                    <strong>{selectedCompany.production ?? "—"}</strong>
+                    <strong>
+                      {formatOptionalDisplayNumber(selectedCompany.production, "production")}
+                    </strong>
                     <small>Public snapshot field</small>
                   </div>
                   <div>
                     <span>Workers</span>
-                    <strong>{selectedCompany.workerCount ?? "—"}</strong>
+                    <strong>
+                      {formatOptionalDisplayNumber(selectedCompany.workerCount, "integer")}
+                    </strong>
                     <small>Public snapshot field</small>
                   </div>
                   <div className="upgrade-detail">
