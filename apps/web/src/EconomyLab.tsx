@@ -9,6 +9,11 @@ import type {
 import { useMemo, useState } from "react";
 
 import {
+  formatDisplayDelta,
+  formatDisplayNumber,
+  type DisplayNumberKind,
+} from "./display-format.js";
+import {
   createEconomyLabForm,
   evaluateEconomyLab,
   type EconomyLabFormState,
@@ -31,8 +36,14 @@ function provenance(kind: ProvenanceKind) {
   return <span className={"provenance provenance--" + kind}>{kind}</span>;
 }
 
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
+function upgradeStatKind(stat: string): DisplayNumberKind {
+  if (stat === "maxWorkers" || stat === "dailyHires") return "integer";
+  if (stat === "dailyProd" || stat === "maxProduction") return "production";
+  return "number";
+}
+
+function pricePlaceholder(value: number | undefined, fallback: string): string {
+  return value === undefined ? fallback : formatDisplayNumber(value, "price");
 }
 
 export function EconomyLab({
@@ -136,10 +147,10 @@ export function EconomyLab({
                   </select>
                   {entry ? (
                     <span className="control-result">
-                      value {formatNumber(entry.proposedConfiguredValue.value)}
-                      {" · "}Δ {formatNumber(entry.valueDelta.value)}
-                      {" · "}+{formatNumber(entry.additionalPointCost.value)} points{" "}
-                      {provenance(entry.proposedLevel.provenance)}
+                      value {formatDisplayNumber(entry.proposedConfiguredValue.value, "number")}
+                      {" · "}Δ {formatDisplayDelta(entry.valueDelta.value, "number")}
+                      {" · "}+{formatDisplayNumber(entry.additionalPointCost.value, "points")}{" "}
+                      points {provenance(entry.proposedLevel.provenance)}
                     </span>
                   ) : null}
                 </label>
@@ -152,16 +163,23 @@ export function EconomyLab({
               <span>
                 Additional points{" "}
                 <strong>
-                  {formatNumber(evaluation.skillPlan.additionalSkillPointsRequired.value)}
+                  {formatDisplayNumber(
+                    evaluation.skillPlan.additionalSkillPointsRequired.value,
+                    "points",
+                  )}
                 </strong>
               </span>
               <span>
                 Remaining{" "}
-                <strong>{formatNumber(evaluation.skillPlan.remainingSkillPoints.value)}</strong>
+                <strong>
+                  {formatDisplayNumber(evaluation.skillPlan.remainingSkillPoints.value, "points")}
+                </strong>
               </span>
               <span>
                 Overspent{" "}
-                <strong>{formatNumber(evaluation.skillPlan.overspentSkillPoints.value)}</strong>
+                <strong>
+                  {formatDisplayNumber(evaluation.skillPlan.overspentSkillPoints.value, "points")}
+                </strong>
               </span>
               <span>
                 Unlocks{" "}
@@ -231,10 +249,13 @@ export function EconomyLab({
                   </select>
                   {entry ? (
                     <span className="control-result">
-                      steel Δ {formatNumber(entry.configuredSteelCostDelta.value)}
+                      steel Δ {formatDisplayDelta(entry.configuredSteelCostDelta.value, "cost")}
                       {entry.configuredConstructionPointsCostDelta
-                        ? " · construction Δ " +
-                          formatNumber(entry.configuredConstructionPointsCostDelta.value)
+                        ? " · construction points Δ " +
+                          formatDisplayDelta(
+                            entry.configuredConstructionPointsCostDelta.value,
+                            "points",
+                          )
                         : ""}{" "}
                       {provenance(entry.proposedLevel.provenance)}
                     </span>
@@ -244,7 +265,9 @@ export function EconomyLab({
                       {Object.entries(entry.configuredStats)
                         .map(([stat, comparison]) =>
                           comparison?.delta
-                            ? stat + " Δ " + formatNumber(comparison.delta.value)
+                            ? stat +
+                              " Δ " +
+                              formatDisplayDelta(comparison.delta.value, upgradeStatKind(stat))
                             : stat + " configured",
                         )
                         .join(" · ")}
@@ -309,7 +332,10 @@ export function EconomyLab({
                 type="number"
                 min="0"
                 step="any"
-                placeholder={context.marketPrices[context.itemCode]?.toString() ?? "No live price"}
+                placeholder={pricePlaceholder(
+                  context.marketPrices[context.itemCode],
+                  "No live price",
+                )}
                 value={form.outputPriceOverride}
                 onChange={(event) =>
                   updateForm((current) => ({
@@ -367,9 +393,10 @@ export function EconomyLab({
                       type="number"
                       min="0"
                       step="any"
-                      placeholder={
-                        context.marketPrices[itemCode]?.toString() ?? "Required override"
-                      }
+                      placeholder={pricePlaceholder(
+                        context.marketPrices[itemCode],
+                        "Required override",
+                      )}
                       value={form.inputPriceOverrides[itemCode] ?? ""}
                       onChange={(event) =>
                         updateForm((current) => ({
@@ -391,40 +418,59 @@ export function EconomyLab({
             <div className="margin-results" aria-label="Market margin result">
               <article>
                 <span>Gross revenue {provenance("derived")}</span>
-                <strong>{formatNumber(evaluation.marketResult.grossRevenue.value)}</strong>
+                <strong>
+                  {formatDisplayNumber(evaluation.marketResult.grossRevenue.value, "cost")}
+                </strong>
               </article>
               <article>
                 <span>Recipe input cost {provenance("derived")}</span>
-                <strong>{formatNumber(evaluation.marketResult.recipeInputCost.value)}</strong>
+                <strong>
+                  {formatDisplayNumber(evaluation.marketResult.recipeInputCost.value, "cost")}
+                </strong>
               </article>
               <article>
                 <span>Assumed costs {provenance("derived")}</span>
                 <strong>
-                  {formatNumber(evaluation.marketResult.explicitAssumedCostTotal.value)}
+                  {formatDisplayNumber(
+                    evaluation.marketResult.explicitAssumedCostTotal.value,
+                    "cost",
+                  )}
                 </strong>
               </article>
               <article>
                 <span>Gross margin {provenance("derived")}</span>
-                <strong>{formatNumber(evaluation.marketResult.grossMargin.value)}</strong>
+                <strong>
+                  {formatDisplayNumber(evaluation.marketResult.grossMargin.value, "margin")}
+                </strong>
               </article>
               <article>
                 <span>Margin / unit {provenance("derived")}</span>
-                <strong>{formatNumber(evaluation.marketResult.marginPerUnit.value)}</strong>
+                <strong>
+                  {formatDisplayNumber(evaluation.marketResult.marginPerUnit.value, "margin")}
+                </strong>
               </article>
               <article>
                 <span>Break-even price {provenance("derived")}</span>
-                <strong>{formatNumber(evaluation.marketResult.breakEvenOutputPrice.value)}</strong>
+                <strong>
+                  {formatDisplayNumber(evaluation.marketResult.breakEvenOutputPrice.value, "price")}
+                </strong>
               </article>
               <article>
                 <span>Live output price {provenance("observed")}</span>
                 <strong>
-                  {formatNumber(evaluation.marketResult.liveOutputPriceBaseline.value)}
+                  {formatDisplayNumber(
+                    evaluation.marketResult.liveOutputPriceBaseline.value,
+                    "price",
+                  )}
                 </strong>
               </article>
               <article>
                 <span>Margin Δ vs live price {provenance("derived")}</span>
                 <strong>
-                  {formatNumber(evaluation.marketResult.grossMarginDeltaVsLiveOutputPrice.value)}
+                  {formatDisplayDelta(
+                    evaluation.marketResult.grossMarginDeltaVsLiveOutputPrice.value,
+                    "margin",
+                  )}
                 </strong>
               </article>
             </div>

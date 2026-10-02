@@ -1,5 +1,7 @@
 import type { PublicCompanySnapshot, PublicPlayerSnapshotResponse } from "@warera-lab/domain";
 
+import { formatDisplayNumber } from "./display-format.js";
+
 const upgradeLabels = {
   automatedEngine: "Automated Engine",
   storage: "Storage",
@@ -38,8 +40,14 @@ function humanSignature(
     itemCode: company.itemCode,
     region: region?.name,
     country: country?.name ?? region?.countryCode,
-    workerCount: company.workerCount,
-    production: company.production,
+    workerCount:
+      company.workerCount === undefined
+        ? undefined
+        : formatDisplayNumber(company.workerCount, "integer"),
+    production:
+      company.production === undefined
+        ? undefined
+        : formatDisplayNumber(company.production, "production"),
     upgrades: Object.entries(company.activeUpgradeLevels).sort(([left], [right]) =>
       left.localeCompare(right),
     ),
@@ -56,10 +64,10 @@ export function describeCompany(
   const operations = [
     company.workerCount === undefined
       ? "Workers not reported"
-      : `${company.workerCount} ${company.workerCount === 1 ? "worker" : "workers"}`,
+      : `${formatDisplayNumber(company.workerCount, "integer")} ${company.workerCount === 1 ? "worker" : "workers"}`,
     company.production === undefined
       ? "Production not reported"
-      : `Production ${company.production}`,
+      : `Production ${formatDisplayNumber(company.production, "production")}`,
   ].join(" · ");
 
   const signature = humanSignature(company, snapshot);

@@ -14,6 +14,11 @@ import {
 import { useMemo, useState } from "react";
 
 import { EconomyLab } from "./EconomyLab.js";
+import {
+  formatDisplayDelta,
+  formatDisplayNumber,
+  type DisplayNumberKind,
+} from "./display-format.js";
 import type { EconomyLabFormState } from "./economy-lab-model.js";
 import {
   buildScenarioComparisons,
@@ -39,12 +44,26 @@ const pairLabels: Record<ComparisonPair, string> = {
   scenarioAToB: "A → B",
 };
 
-function formatValue(value: string | number | undefined): string {
-  if (value === undefined) return "—";
-  if (typeof value === "number") {
-    return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
+function scenarioValueKind(path: string): DisplayNumberKind {
+  if (path.startsWith("skills.") || path.startsWith("companyUpgrades.")) return "integer";
+  if (path === "market.quantity") return "quantity";
+  if (path === "market.outputPriceOverride" || path.startsWith("market.inputPriceOverrides.")) {
+    return "price";
   }
+  if (path === "market.assumedLabourCostTotal" || path === "market.assumedOtherCostTotal") {
+    return "cost";
+  }
+  return "number";
+}
+
+function formatScenarioValue(path: string, value: string | number | undefined): string {
+  if (value === undefined) return "—";
+  if (typeof value === "number") return formatDisplayNumber(value, scenarioValueKind(path));
   return value;
+}
+
+function formatDerivedDelta(value: number | undefined, kind: DisplayNumberKind): string {
+  return value === undefined ? "—" : formatDisplayDelta(value, kind);
 }
 
 function readablePath(path: string): string {
@@ -72,7 +91,8 @@ function ScenarioInputSummary({ changes }: { changes: ScenarioChangeV1[] }) {
         <li key={change.path}>
           <strong>{readablePath(change.path)}</strong>
           <span>
-            {formatValue(change.from)} → {formatValue(change.to)}
+            {formatScenarioValue(change.path, change.from)} →{" "}
+            {formatScenarioValue(change.path, change.to)}
           </span>
         </li>
       ))}
@@ -414,27 +434,27 @@ export function ScenarioWorkspace({
         <div className="derived-comparison" aria-label="Derived output changes">
           <article>
             <span>Skill points required Δ</span>
-            <strong>{formatValue(derived.skillPointDelta)}</strong>
+            <strong>{formatDerivedDelta(derived.skillPointDelta, "points")}</strong>
           </article>
           <article>
             <span>Remaining skill points Δ</span>
-            <strong>{formatValue(derived.remainingSkillPointDelta)}</strong>
+            <strong>{formatDerivedDelta(derived.remainingSkillPointDelta, "points")}</strong>
           </article>
           <article>
             <span>Upgrade steel cost Δ</span>
-            <strong>{formatValue(derived.upgradeSteelCostDelta)}</strong>
+            <strong>{formatDerivedDelta(derived.upgradeSteelCostDelta, "cost")} steel</strong>
           </article>
           <article>
             <span>Gross margin Δ</span>
-            <strong>{formatValue(derived.grossMarginDelta)}</strong>
+            <strong>{formatDerivedDelta(derived.grossMarginDelta, "margin")}</strong>
           </article>
           <article>
             <span>Margin / unit Δ</span>
-            <strong>{formatValue(derived.marginPerUnitDelta)}</strong>
+            <strong>{formatDerivedDelta(derived.marginPerUnitDelta, "margin")}</strong>
           </article>
           <article>
             <span>Break-even price Δ</span>
-            <strong>{formatValue(derived.breakEvenPriceDelta)}</strong>
+            <strong>{formatDerivedDelta(derived.breakEvenPriceDelta, "price")}</strong>
           </article>
         </div>
         {derived.note ? <p className="muted">{derived.note}</p> : null}
@@ -469,10 +489,10 @@ export function ScenarioWorkspace({
               <strong>Market scenario</strong>
               <span>
                 {activeState.market
-                  ? `${activeState.market.itemCode} · quantity ${activeState.market.quantity} · ${
+                  ? `${activeState.market.itemCode} · quantity ${formatDisplayNumber(activeState.market.quantity, "quantity")} · ${
                       activeState.market.outputPriceOverride === undefined
                         ? "live output price"
-                        : `output override ${activeState.market.outputPriceOverride}`
+                        : `output override ${formatDisplayNumber(activeState.market.outputPriceOverride, "price")}`
                     }`
                   : "No market scenario"}
               </span>
