@@ -43,11 +43,12 @@ None.
 - `warera-lab-api.service` remained active with `NRestarts=0` and no recent warning-level service log entries.
 - Public desktop and exact-320 browser checks showed visible `v0.0.2`, the expected changelog link, and zero horizontal overflow.
 - Production install/build reported zero npm vulnerabilities.
+- Lightweight tag `v0.0.2` was created and verified to resolve directly to production commit `0a8e3f9593ef34d22540c25853326af1d6600631`.
+- GitHub Release `v0.0.2 — Release versioning and changelog` was published and verified as the repository's latest release.
 
 ### Known limitations
 
-- The required lightweight Git tag `v0.0.2` is pending because the connected GitHub write surface does not expose tag-ref creation and the production VM intentionally has no GitHub push credential.
-- GitHub Release objects remain optional.
+- None specific to the release-version/changelog system.
 
 ### References
 
