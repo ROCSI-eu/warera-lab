@@ -2,9 +2,11 @@
 
 WarEra Lab is an independent, open-source toolkit for **WarEra simulation, analytics, and game-data exploration**, developed by ROCSI.
 
-> **Status:** initial implementation scaffold. The first public MVP is defined, but no public application has been released yet.
+> **Status:** Economy Lab MVP is live in production.
 
-The planned canonical deployment is **`warera-lab.rocsi.eu`**.
+Production: <https://warera-lab.rocsi.eu/>
+
+The canonical current release is defined in [VERSION](VERSION). See [CHANGELOG.md](CHANGELOG.md) for production history and [docs/RELEASES.md](docs/RELEASES.md) for the version/deployment policy.
 
 ## What we are building
 
@@ -35,7 +37,7 @@ See [docs/DECISIONS.md](docs/DECISIONS.md) for the current decision record and [
 
 ## Development
 
-The initial scaffold uses Node.js 22, npm workspaces, a Vite + React web application, a small Hono API service, and pure shared TypeScript packages.
+The project uses Node.js 22, npm workspaces, a Vite + React web application, a small Hono API service, and pure shared TypeScript packages.
 
 ```bash
 npm ci
@@ -49,7 +51,7 @@ npm run dev:api
 npm run dev:web
 ```
 
-The API binds to `127.0.0.1:3220` by default and Vite proxies local `/api` requests to it. The scaffold does **not** call the WarEra API yet.
+The API binds to `127.0.0.1:3220` by default and Vite proxies local `/api` requests to it. The browser uses the same-origin API boundary; the backend adapter accesses the documented public WarEra API without requesting a player credential.
 
 ## Independence and attribution
 

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -7,6 +9,8 @@ import {
   longOpaqueCountryId,
   productionSelect,
 } from "./fixtures.js";
+
+const releaseVersion = readFileSync(new URL("../../VERSION", import.meta.url), "utf8").trim();
 
 test("@journey complete MVP flow preserves hypotheticals across refresh and failures", async ({
   page,
@@ -199,10 +203,16 @@ test("@journey public shell prioritizes search and exposes project context", asy
     expect(searchBox!.y).toBeLessThan(620);
   }
 
+  await expect(page.getByText(releaseVersion, { exact: true })).toBeVisible();
+
   const projectLinks = page.getByRole("navigation", { name: "Project links" });
   await expect(projectLinks.getByRole("link", { name: "GitHub repository" })).toHaveAttribute(
     "href",
     "https://github.com/ROCSI-eu/warera-lab",
+  );
+  await expect(projectLinks.getByRole("link", { name: "Changelog" })).toHaveAttribute(
+    "href",
+    "https://github.com/ROCSI-eu/warera-lab/blob/main/CHANGELOG.md",
   );
   await expect(projectLinks.getByRole("link", { name: "ROCSI website" })).toHaveAttribute(
     "href",
@@ -404,6 +414,14 @@ test("@a11y invalid share and empty states remain understandable", async ({ page
   await expect(page.getByText(/Economy Lab starts with an imported snapshot/i)).toBeVisible();
 });
 
+test("@visual release footer", async ({ page }) => {
+  await page.goto("/");
+
+  const footer = page.locator(".site-footer");
+  await expect(footer).toContainText(releaseVersion);
+  await expect(footer).toHaveScreenshot("release-footer.png");
+});
+
 test("@visual nine-company selector", async ({ page }) => {
   const state = await installApiMocks(page);
   state.largePortfolio = true;
@@ -457,5 +475,6 @@ test("@visual representative loaded Economy Lab", async ({ page }) => {
 
   await expect(page).toHaveScreenshot("economy-lab-release-candidate.png", {
     fullPage: true,
+    timeout: 15_000,
   });
 });

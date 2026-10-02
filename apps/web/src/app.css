@@ -504,6 +504,21 @@ button:disabled {
 .footer-summary {
   max-width: 44rem;
 }
+.footer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.footer-version {
+  padding: 0.1rem 0.36rem;
+  border: 1px solid rgba(159, 178, 201, 0.2);
+  border-radius: 999px;
+  color: #8797aa;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
 .footer-summary strong {
   color: #aebdce;
   font-size: 0.86rem;
