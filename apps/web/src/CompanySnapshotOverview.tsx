@@ -1,4 +1,9 @@
-import type { PublicCompanySnapshot, PublicPlayerSnapshotResponse } from "@warera-lab/domain";
+import {
+  companyUpgradeAvailability,
+  type CompanyUpgradeKey,
+  type PublicCompanySnapshot,
+  type PublicPlayerSnapshotResponse,
+} from "@warera-lab/domain";
 
 import type { CompanyPresentation } from "./company-display.js";
 import { formatDisplayNumber } from "./display-format.js";
@@ -85,11 +90,18 @@ export function CompanySnapshotOverview({
           <span>Active upgrades</span>
           {activeUpgrades.length > 0 ? (
             <ul>
-              {activeUpgrades.map(([key, level]) => (
-                <li key={key}>
-                  {upgradeLabels[key as keyof typeof upgradeLabels] ?? key}: level {level}
-                </li>
-              ))}
+              {activeUpgrades.map(([key, level]) => {
+                const upgradeKey = key as CompanyUpgradeKey;
+                const availability = companyUpgradeAvailability[upgradeKey];
+                return (
+                  <li key={key}>
+                    {upgradeLabels[upgradeKey] ?? key}: level {level}
+                    {availability.gameplay === "production"
+                      ? ""
+                      : " · dev preview, not currently available in production"}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <strong>None reported</strong>
