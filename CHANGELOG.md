@@ -4,6 +4,49 @@ All production deployments of WarEra Lab are recorded here.
 
 Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documented in [docs/RELEASES.md](docs/RELEASES.md). One version corresponds to one production deployment and one exact deployed Git commit.
 
+## v0.0.3 — 2026-10-06
+
+**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Previous version:** `v0.0.2`
+**Environment:** Production — `https://warera-lab.rocsi.eu/`
+
+### Summary
+
+Establishes WarEra Lab's multi-lab application shell and a reload-safe Company Lab context contract. Users can move between Economy Lab and Company Lab while carrying a selected public player/company identity, without introducing a routing dependency or prematurely adding Company Lab analytics.
+
+### Added
+
+- Public Economy Lab / Company Lab module navigation.
+- Stable query-string lab context using `lab`, `player`, and `company` parameters.
+- Company Lab context-only entry and company-selection shell.
+- Recovery states for missing, invalid, or no-longer-available player/company link context.
+- Focused unit and browser coverage for URL parsing, reload, back/forward navigation, exact-320 px layout, and accessibility.
+
+### Changed
+
+- Player snapshot import is shared between interactive search and direct lab-link rehydration rather than duplicated per lab.
+- The existing company selector is shared by Economy Lab and Company Lab.
+- Portable scenario links explicitly remove live lab/player/company query context so `#wl=…` shares remain detached and reload without live API lookup.
+
+### Fixed
+
+None.
+
+### Verification
+
+- Pre-merge repository verification pending final review of the exact proposed tree.
+
+### Known limitations
+
+- Company Lab intentionally establishes only shell, navigation, and selected-company context in this release; analytical company content remains scoped to #47–#50.
+- Company Lab's complete responsive/accessibility/E2E release gate remains scoped to #51.
+- Market Lab and Player Lab remain future modules.
+
+### References
+
+- #46 — Establish the multi-lab shell and Company Lab context contract
+- #43 — Plan and deliver Company Lab MVP
+
 ## v0.0.2 — 2026-10-02
 
 **Production commit:** `0a8e3f9593ef34d22540c25853326af1d6600631`
