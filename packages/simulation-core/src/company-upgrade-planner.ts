@@ -1,4 +1,5 @@
 import {
+  companyUpgradeAvailability,
   companyUpgradeKeys,
   type CompanyUpgradeConfig,
   type CompanyUpgradeKey,
@@ -21,7 +22,10 @@ export type CompanyUpgradeStatKey = (typeof companyUpgradeStatKeys)[number];
 export type CompanyUpgradeDirection = "no-op" | "upgrade" | "downgrade";
 
 export type CompanyUpgradePlannerErrorCode =
-  "CURRENT_LEVEL_UNAVAILABLE" | "PROPOSED_LEVEL_UNAVAILABLE" | "DOWNGRADE_NOT_ALLOWED";
+  | "CURRENT_LEVEL_UNAVAILABLE"
+  | "PROPOSED_LEVEL_UNAVAILABLE"
+  | "DOWNGRADE_NOT_ALLOWED"
+  | "FEATURE_NOT_PRODUCTION";
 
 export class CompanyUpgradePlannerError extends Error {
   readonly code: CompanyUpgradePlannerErrorCode;
@@ -151,6 +155,14 @@ export function planCompanyUpgrades(
       "PROPOSED_LEVEL_UNAVAILABLE",
     );
     const changeDirection = direction(currentLevel, proposedLevel);
+    const availability = companyUpgradeAvailability[upgrade];
+
+    if (changeDirection !== "no-op" && availability.gameplay !== "production") {
+      throw new CompanyUpgradePlannerError(
+        `${upgrade} is exposed by the API/config but is not currently verified as production-live gameplay, so WarEra Lab will not plan a level change for it.`,
+        { code: "FEATURE_NOT_PRODUCTION", upgrade, level: proposedLevel },
+      );
+    }
 
     if (changeDirection === "downgrade" && config.canDowngrade !== true) {
       throw new CompanyUpgradePlannerError(
