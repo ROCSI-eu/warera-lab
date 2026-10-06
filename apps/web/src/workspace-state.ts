@@ -155,7 +155,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         economyContextItemCode: action.itemCode,
         message: {
           kind: "status",
-          text: "Loading live Economy Lab configuration and market references…",
+          text: "Loading normalized game configuration and market references…",
         },
       };
     case "economy-context-succeeded":

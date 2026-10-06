@@ -230,12 +230,12 @@ export function App() {
 
         replaceLabContext(snapshot.player.id, targetCompany?.id);
 
-        if (activeLab === "economy" && targetCompany) {
+        if (targetCompany) {
           const context = await loadEconomyContext(targetCompany.itemCode);
-          if (context) {
+          if (activeLab === "economy" && context) {
             establishScenarioDocument(snapshot, targetCompany, context);
           }
-        } else if (!targetCompany) {
+        } else {
           setScenarioCompanyId(undefined);
         }
       } catch (error) {
@@ -280,9 +280,8 @@ export function App() {
     setNavigationMessage(undefined);
     replaceLabContext(state.snapshot?.player.id, company.id);
 
-    if (activeLab !== "economy") return;
     const context = await loadEconomyContext(company.itemCode);
-    if (context && state.snapshot) {
+    if (activeLab === "economy" && context && state.snapshot) {
       establishScenarioDocument(state.snapshot, company, context);
     }
   }
@@ -552,8 +551,11 @@ export function App() {
           snapshot={state.snapshot}
           selectedCompany={selectedCompany}
           companyPresentations={companyPresentations}
+          economyContext={state.economyContext}
+          economyContextItemCode={state.economyContextItemCode}
           navigationMessage={navigationMessage}
-          isBusy={state.isImporting || state.isRefreshing}
+          isBusy={state.isImporting || state.isRefreshing || state.isLoadingEconomyContext}
+          isLoadingEconomyContext={state.isLoadingEconomyContext}
           onCompanySelect={(company) => void handleCompanySelect(company)}
         />
       ) : state.snapshot ? (

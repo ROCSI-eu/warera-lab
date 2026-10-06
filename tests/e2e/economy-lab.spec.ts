@@ -214,9 +214,18 @@ test("@journey Company Lab restores player and company context through reload an
   await expect(overview).toContainText("2");
   await expect(overview).toContainText("Automated Engine: level 1");
   await expect(overview.getByRole("heading", { name: "Snapshot freshness" })).toBeVisible();
+  const operatingContext = page.locator(".company-operating-context");
+  await expect(
+    operatingContext.getByRole("heading", { name: "Production & operating context" }),
+  ).toBeVisible();
+  await expect(operatingContext).toContainText("iron");
+  await expect(operatingContext).toContainText("coal");
+  await expect(operatingContext).toContainText("Configured daily production: 24");
+  await expect(operatingContext).toContainText("Configured production capacity: 200");
+  await expect(operatingContext).toContainText("No production-live reference");
   await expect(page).toHaveURL(/lab=company.*player=player-1.*company=company-1/);
   expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
-    false,
+    true,
   );
 
   state.apiRequests.length = 0;
@@ -227,7 +236,7 @@ test("@journey Company Lab restores player and company context through reload an
     true,
   );
   expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
-    false,
+    true,
   );
 
   await economyLabLink.click();
