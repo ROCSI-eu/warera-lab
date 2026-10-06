@@ -18,7 +18,7 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   const state = await installApiMocks(page);
   await importPlannerWorkspace(page);
 
-  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
   await expect(page.getByText("Observed snapshot")).toBeVisible();
   await expect(page.getByText("Current snapshot").first()).toBeVisible();
   await expect(page.getByText(/View source details/).first()).toBeVisible();
@@ -116,7 +116,7 @@ test("@journey complete MVP flow preserves hypotheticals across refresh and fail
   await page.getByLabel("WarEra player name").fill("Nobody");
   await page.getByRole("button", { name: "Search" }).click();
   await expect(page.getByRole("heading", { name: "0 matches" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
 
   expect(state.apiRequests.length).toBeGreaterThan(0);
   expect(state.externalRequests).toEqual([]);
@@ -201,8 +201,19 @@ test("@journey Company Lab restores player and company context through reload an
   const selectedCompany = page.getByRole("button", { name: /Planner Steel/ });
 
   await expect(companyLabLink).toHaveAttribute("aria-current", "page");
-  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
   await expect(selectedCompany).toHaveAttribute("aria-pressed", "true");
+  const overview = page.locator(".company-snapshot-overview");
+  await expect(overview.getByRole("heading", { name: "Planner Steel" })).toBeVisible();
+  await expect(overview).toContainText("Owned by Planner · Level 12");
+  await expect(overview).toContainText("Prahova");
+  await expect(overview).toContainText("Romania");
+  await expect(overview).toContainText("Observed production");
+  await expect(overview).toContainText("24");
+  await expect(overview).toContainText("Workers");
+  await expect(overview).toContainText("2");
+  await expect(overview).toContainText("Automated Engine: level 1");
+  await expect(overview.getByRole("heading", { name: "Snapshot freshness" })).toBeVisible();
   await expect(page).toHaveURL(/lab=company.*player=player-1.*company=company-1/);
   expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
     false,
@@ -210,7 +221,7 @@ test("@journey Company Lab restores player and company context through reload an
 
   state.apiRequests.length = 0;
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
   await expect(selectedCompany).toHaveAttribute("aria-pressed", "true");
   expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
     true,
@@ -343,7 +354,7 @@ test("@journey player search hides opaque IDs and fits exact 320 px before and a
   await page.keyboard.press("Tab");
   await expect(resultButton).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
 
   const loadedOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

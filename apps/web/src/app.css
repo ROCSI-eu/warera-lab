@@ -521,7 +521,7 @@ button:disabled {
 }
 .company-lab-context-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   gap: 0.8rem;
   margin-top: 1rem;
 }
