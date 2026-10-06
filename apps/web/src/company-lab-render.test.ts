@@ -115,6 +115,23 @@ describe("Company Lab snapshot overview", () => {
     expect(html).toContain("ID …2222222");
   });
 
+  it("labels observed Break Room state as a dev preview rather than production-live", () => {
+    const devCompany: PublicCompanySnapshot = {
+      ...company,
+      activeUpgradeLevels: { breakRoom: 1 },
+    };
+    const current: PublicPlayerSnapshotResponse = {
+      ...snapshot,
+      companies: [devCompany],
+    };
+    const html = renderShell(current, devCompany);
+
+    expect(html).toContain(
+      "Break Room: level 1 · dev preview, not currently available in production",
+    );
+    expect(html).toContain("Break Room L1 (dev preview)");
+  });
+
   it("renders calm unavailable states for partial normalized snapshots", () => {
     const partialCompany: PublicCompanySnapshot = {
       id: company.id,
