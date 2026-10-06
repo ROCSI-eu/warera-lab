@@ -20,6 +20,7 @@ import {
   type DisplayNumberKind,
 } from "./display-format.js";
 import type { EconomyLabFormState } from "./economy-lab-model.js";
+import { buildPortableScenarioHref } from "./lab-navigation.js";
 import {
   buildScenarioComparisons,
   evaluateScenario,
@@ -169,8 +170,10 @@ export function ScenarioTransfer({
       return;
     }
     try {
-      const shareUrl = new URL(window.location.href);
-      shareUrl.hash = shareFragment.startsWith("#") ? shareFragment.slice(1) : shareFragment;
+      const shareUrl = new URL(
+        buildPortableScenarioHref(window.location, shareFragment),
+        window.location.origin,
+      );
       await navigator.clipboard.writeText(shareUrl.toString());
       setError(undefined);
       setMessage("Share link copied. The scenario remains encoded only in the URL fragment.");
@@ -184,7 +187,11 @@ export function ScenarioTransfer({
       setError("This scenario is too large or invalid for URL-fragment sharing.");
       return;
     }
-    window.history.replaceState(null, "", shareFragment);
+    window.history.replaceState(
+      null,
+      "",
+      buildPortableScenarioHref(window.location, shareFragment),
+    );
     setError(undefined);
     setMessage("The current scenario is now encoded in this page URL.");
   }

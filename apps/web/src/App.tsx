@@ -6,11 +6,28 @@ import type {
   SnapshotFreshnessSource,
 } from "@warera-lab/domain";
 import type { ScenarioDocumentV1 } from "@warera-lab/simulation-core";
-import { type FormEvent, useMemo, useReducer, useState } from "react";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 
+import { CompanyLabShell } from "./CompanyLabShell.js";
+import { CompanySelector } from "./CompanySelector.js";
 import { ScenarioTransfer, ScenarioWorkspace } from "./ScenarioWorkspace.js";
 import { formatDisplayNumber, formatOptionalDisplayNumber } from "./display-format.js";
 import { describeCompany, type CompanyPresentation } from "./company-display.js";
+import {
+  buildLabHref,
+  buildPortableScenarioHref,
+  parseLabLocation,
+  type LabId,
+  type LabRoute,
+} from "./lab-navigation.js";
 import {
   PublicApiClientError,
   getEconomyContext,
@@ -108,46 +125,6 @@ function FreshnessPanel({ freshness, title }: { freshness: SnapshotFreshness; ti
   );
 }
 
-function CompanyButton({
-  company,
-  presentation,
-  selected,
-  onSelect,
-  disabled,
-}: {
-  company: PublicCompanySnapshot;
-  presentation: CompanyPresentation;
-  selected: boolean;
-  onSelect: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className={"company-card" + (selected ? " company-card--selected" : "")}
-      aria-pressed={selected}
-      onClick={onSelect}
-      disabled={disabled}
-    >
-      <span className="company-card__heading">
-        <strong>{company.name}</strong>
-        {presentation.fallbackId ? (
-          <small className="company-card__id">ID {presentation.fallbackId}</small>
-        ) : presentation.compactFallbackId ? (
-          <small className="company-card__id company-card__id--compact">
-            ID {presentation.compactFallbackId}
-          </small>
-        ) : null}
-      </span>
-      <span className="company-card__context">
-        {company.itemCode} · {presentation.location}
-      </span>
-      <span className="company-card__operations">{presentation.operations}</span>
-      <small className="company-card__upgrades">{presentation.upgrades}</small>
-    </button>
-  );
-}
-
 function describeClientError(error: unknown): string {
   if (!(error instanceof PublicApiClientError)) {
     return "Something unexpected happened. Your imported workspace has been preserved.";
@@ -175,7 +152,17 @@ function initialScenarioFromLocation(): {
 
 export function App() {
   const [state, dispatch] = useReducer(workspaceReducer, initialWorkspaceState);
+  const [initialLocation] = useState(() =>
+    typeof window === "undefined"
+      ? { route: { lab: "economy" as const } }
+      : parseLabLocation(window.location.search),
+  );
   const [initialScenario] = useState(initialScenarioFromLocation);
+  const activeLab: LabId = initialScenario.document ? "economy" : initialLocation.route.lab;
+  const [navigationMessage, setNavigationMessage] = useState(
+    initialScenario.document ? undefined : initialLocation.message,
+  );
+  const initialRouteLoadStarted = useRef(false);
   const [scenarioDocument, setScenarioDocument] = useState<ScenarioDocumentV1 | undefined>(
     initialScenario.document,
   );
@@ -196,22 +183,43 @@ export function App() {
     scenarioImportMessage !== undefined &&
     /malformed|invalid|exceeds|unsupported|could not/i.test(scenarioImportMessage);
 
-  function establishScenarioDocument(
-    snapshot: PublicPlayerSnapshotResponse,
-    company: PublicCompanySnapshot,
-    context: EconomyPlannerContextResponse,
-    options: { preserveHypotheticals?: boolean } = {},
-  ) {
-    const preserveHypotheticals = options.preserveHypotheticals ?? true;
-    setScenarioDocument((current) =>
-      preserveHypotheticals && current && scenarioCompanyId === company.id
-        ? refreshWorkspaceScenarioDocument(current, snapshot, company, context)
-        : createWorkspaceScenarioDocument(snapshot, company, context),
-    );
-    setScenarioCompanyId(company.id);
-    setScenarioImportMessage(undefined);
-    setScenarioSessionKey((current) => current + 1);
-  }
+  const replaceLabContext = useCallback(
+    (playerId?: string, companyId?: string) => {
+      if (typeof window === "undefined") return;
+      const route: LabRoute = {
+        lab: activeLab,
+        ...(playerId ? { playerId } : {}),
+        ...(playerId && companyId ? { companyId } : {}),
+      };
+      const liveLocation = {
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash.startsWith("#wl=") ? "" : window.location.hash,
+      };
+      window.history.replaceState(window.history.state, "", buildLabHref(route, liveLocation));
+    },
+    [activeLab],
+  );
+
+  const establishScenarioDocument = useCallback(
+    (
+      snapshot: PublicPlayerSnapshotResponse,
+      company: PublicCompanySnapshot,
+      context: EconomyPlannerContextResponse,
+      options: { preserveHypotheticals?: boolean } = {},
+    ) => {
+      const preserveHypotheticals = options.preserveHypotheticals ?? true;
+      setScenarioDocument((current) =>
+        preserveHypotheticals && current && scenarioCompanyId === company.id
+          ? refreshWorkspaceScenarioDocument(current, snapshot, company, context)
+          : createWorkspaceScenarioDocument(snapshot, company, context),
+      );
+      setScenarioCompanyId(company.id);
+      setScenarioImportMessage(undefined);
+      setScenarioSessionKey((current) => current + 1);
+    },
+    [scenarioCompanyId],
+  );
 
   function handleScenarioImport(document: ScenarioDocumentV1) {
     setScenarioDocument(document);
@@ -242,49 +250,107 @@ export function App() {
     }
   }
 
-  async function loadEconomyContext(
-    itemCode: string,
-  ): Promise<EconomyPlannerContextResponse | undefined> {
-    dispatch({ type: "economy-context-started", itemCode });
-    try {
-      const context = await getEconomyContext(itemCode);
-      dispatch({ type: "economy-context-succeeded", itemCode, context });
-      return context;
-    } catch (error) {
-      dispatch({
-        type: "economy-context-failed",
-        itemCode,
-        message: describeClientError(error),
-      });
-      return undefined;
-    }
-  }
+  const loadEconomyContext = useCallback(
+    async (itemCode: string): Promise<EconomyPlannerContextResponse | undefined> => {
+      dispatch({ type: "economy-context-started", itemCode });
+      try {
+        const context = await getEconomyContext(itemCode);
+        dispatch({ type: "economy-context-succeeded", itemCode, context });
+        return context;
+      } catch (error) {
+        dispatch({
+          type: "economy-context-failed",
+          itemCode,
+          message: describeClientError(error),
+        });
+        return undefined;
+      }
+    },
+    [],
+  );
 
-  async function handleImport(playerId: string) {
-    dispatch({ type: "import-started", playerId });
-    try {
-      const snapshot = await getPlayerSnapshot(playerId);
-      dispatch({ type: "import-succeeded", snapshot });
-      const targetCompany =
-        (scenarioCompanyId
-          ? snapshot.companies.find((company) => company.id === scenarioCompanyId)
-          : undefined) ?? snapshot.companies[0];
-      if (targetCompany) {
-        if (targetCompany.id !== snapshot.companies[0]?.id) {
+  const importPlayerContext = useCallback(
+    async (
+      playerId: string,
+      requestedCompanyId?: string,
+      options: { clearNavigationMessage?: boolean } = {},
+    ) => {
+      dispatch({ type: "import-started", playerId });
+      if (options.clearNavigationMessage ?? true) setNavigationMessage(undefined);
+      try {
+        const snapshot = await getPlayerSnapshot(playerId);
+        dispatch({ type: "import-succeeded", snapshot });
+
+        const requestedCompany = requestedCompanyId
+          ? snapshot.companies.find((company) => company.id === requestedCompanyId)
+          : undefined;
+        const targetCompany = requestedCompany ?? snapshot.companies[0];
+
+        if (requestedCompanyId && !requestedCompany) {
+          setNavigationMessage(
+            targetCompany
+              ? `The company from this link is no longer available. Switched to ${targetCompany.name}; choose another company if needed.`
+              : "The company from this link is no longer available, and this player has no public companies to select.",
+          );
+        }
+
+        if (targetCompany && targetCompany.id !== snapshot.companies[0]?.id) {
           dispatch({ type: "company-selected", companyId: targetCompany.id });
         }
-        const context = await loadEconomyContext(targetCompany.itemCode);
-        if (context) establishScenarioDocument(snapshot, targetCompany, context);
-      } else {
-        setScenarioCompanyId(undefined);
+
+        replaceLabContext(snapshot.player.id, targetCompany?.id);
+
+        if (activeLab === "economy" && targetCompany) {
+          const context = await loadEconomyContext(targetCompany.itemCode);
+          if (context) {
+            establishScenarioDocument(snapshot, targetCompany, context);
+          }
+        } else if (!targetCompany) {
+          setScenarioCompanyId(undefined);
+        }
+      } catch (error) {
+        dispatch({ type: "import-failed", message: describeClientError(error) });
       }
-    } catch (error) {
-      dispatch({ type: "import-failed", message: describeClientError(error) });
+    },
+    [activeLab, establishScenarioDocument, loadEconomyContext, replaceLabContext],
+  );
+
+  useEffect(() => {
+    if (initialRouteLoadStarted.current) return;
+    initialRouteLoadStarted.current = true;
+
+    if (initialScenario.document) {
+      if (typeof window !== "undefined") {
+        window.history.replaceState(
+          window.history.state,
+          "",
+          buildPortableScenarioHref(window.location, window.location.hash),
+        );
+      }
+      return;
     }
+
+    const { playerId, companyId } = initialLocation.route;
+    if (!playerId) return;
+    queueMicrotask(() => {
+      void importPlayerContext(playerId, companyId, {
+        clearNavigationMessage: false,
+      });
+    });
+  }, [importPlayerContext, initialLocation.route, initialScenario.document]);
+
+  async function handleImport(playerId: string) {
+    await importPlayerContext(playerId, undefined, {
+      clearNavigationMessage: true,
+    });
   }
 
   async function handleCompanySelect(company: PublicCompanySnapshot) {
     dispatch({ type: "company-selected", companyId: company.id });
+    setNavigationMessage(undefined);
+    replaceLabContext(state.snapshot?.player.id, company.id);
+
+    if (activeLab !== "economy") return;
     const context = await loadEconomyContext(company.itemCode);
     if (context && state.snapshot) {
       establishScenarioDocument(state.snapshot, company, context);
@@ -334,6 +400,7 @@ export function App() {
         context,
         message: refreshMessage,
       });
+      replaceLabContext(snapshot.player.id, targetCompany?.id);
 
       if (targetCompany && context) {
         establishScenarioDocument(snapshot, targetCompany, context, {
@@ -365,6 +432,45 @@ export function App() {
     : undefined;
   const region = selectedCompany ? state.snapshot?.regions[selectedCompany.regionId] : undefined;
   const companyCountry = region ? state.snapshot?.countries[region.countryId] : undefined;
+  const navigationPlayerId =
+    state.snapshot?.player.id ??
+    (initialScenario.document ? undefined : initialLocation.route.playerId);
+  const navigationCompanyId =
+    selectedCompany?.id ??
+    (navigationPlayerId === initialLocation.route.playerId
+      ? initialLocation.route.companyId
+      : undefined);
+  const labHref = (lab: LabId) => {
+    if (typeof window === "undefined") return "/";
+
+    if (initialScenario.document && !state.snapshot) {
+      if (lab === "economy") {
+        return buildPortableScenarioHref(window.location, window.location.hash);
+      }
+      return buildLabHref(
+        { lab },
+        {
+          pathname: window.location.pathname,
+          search: window.location.search,
+          hash: "",
+        },
+      );
+    }
+
+    return buildLabHref(
+      {
+        lab,
+        ...(navigationPlayerId ? { playerId: navigationPlayerId } : {}),
+        ...(navigationPlayerId && navigationCompanyId ? { companyId: navigationCompanyId } : {}),
+      },
+      {
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash:
+          lab === "company" && window.location.hash.startsWith("#wl=") ? "" : window.location.hash,
+      },
+    );
+  };
 
   return (
     <main className="shell">
@@ -375,15 +481,36 @@ export function App() {
           </span>
           <span>WarEra Lab</span>
         </a>
-        <span className="status-pill">Public MVP · Economy Lab</span>
+        <div className="site-header__actions">
+          <nav className="lab-navigation" aria-label="WarEra Lab modules">
+            <a
+              href={labHref("economy")}
+              aria-current={activeLab === "economy" ? "page" : undefined}
+            >
+              Economy Lab
+            </a>
+            <a
+              href={labHref("company")}
+              aria-current={activeLab === "company" ? "page" : undefined}
+            >
+              Company Lab
+            </a>
+          </nav>
+          <span className="status-pill">Public MVP</span>
+        </div>
       </header>
 
       <section className="hero" id="top" aria-labelledby="warera-lab-title">
         <p className="eyebrow">ROCSI · independent open-source project</p>
-        <h1 id="warera-lab-title">Import the present. Model the what-if.</h1>
+        <h1 id="warera-lab-title">
+          {activeLab === "economy"
+            ? "Import the present. Model the what-if."
+            : "Carry company context into a dedicated lab."}
+        </h1>
         <p className="lede">
-          Search a public WarEra player, inspect a normalized economy snapshot, and carry that
-          observed state into transparent scenarios without credentials or in-game actions.
+          {activeLab === "economy"
+            ? "Search a public WarEra player, inspect a normalized economy snapshot, and carry that observed state into transparent scenarios without credentials or in-game actions."
+            : "Company Lab now has a stable public entry point and reload-safe player/company selection. Detailed company analysis follows in the next focused releases."}
         </p>
       </section>
 
@@ -467,20 +594,39 @@ export function App() {
         ) : null}
       </section>
 
-      <ScenarioTransfer
-        document={scenarioDocument}
-        onImport={(document) => handleScenarioImport(document)}
-      />
-      {scenarioImportMessage ? (
-        <p
-          className={scenarioImportIsError ? "message message--error" : "message"}
-          role={scenarioImportIsError ? "alert" : "status"}
-        >
-          {scenarioImportMessage}
+      {activeLab === "economy" && navigationMessage ? (
+        <p className="message message--warning" role="status">
+          {navigationMessage}
         </p>
       ) : null}
 
-      {state.snapshot ? (
+      {activeLab === "economy" ? (
+        <>
+          <ScenarioTransfer
+            document={scenarioDocument}
+            onImport={(document) => handleScenarioImport(document)}
+          />
+          {scenarioImportMessage ? (
+            <p
+              className={scenarioImportIsError ? "message message--error" : "message"}
+              role={scenarioImportIsError ? "alert" : "status"}
+            >
+              {scenarioImportMessage}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+
+      {activeLab === "company" ? (
+        <CompanyLabShell
+          snapshot={state.snapshot}
+          selectedCompany={selectedCompany}
+          companyPresentations={companyPresentations}
+          navigationMessage={navigationMessage}
+          isBusy={state.isImporting || state.isRefreshing}
+          onCompanySelect={(company) => void handleCompanySelect(company)}
+        />
+      ) : state.snapshot ? (
         <section className="workspace" aria-labelledby="workspace-title">
           <div className="workspace-heading">
             <div>
@@ -569,22 +715,13 @@ export function App() {
             <section className="workspace-panel" aria-labelledby="companies-title">
               <p className="section-kicker">Choose context</p>
               <h3 id="companies-title">Companies</h3>
-              {state.snapshot.companies.length > 0 ? (
-                <div className="company-list">
-                  {state.snapshot.companies.map((company) => (
-                    <CompanyButton
-                      key={company.id}
-                      company={company}
-                      presentation={companyPresentations.get(company.id)!}
-                      selected={company.id === selectedCompany?.id}
-                      onSelect={() => void handleCompanySelect(company)}
-                      disabled={state.isRefreshing}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="muted">No public company records were returned for this player.</p>
-              )}
+              <CompanySelector
+                companies={state.snapshot.companies}
+                presentations={companyPresentations}
+                selectedCompanyId={selectedCompany?.id}
+                onSelect={(company) => void handleCompanySelect(company)}
+                disabled={state.isRefreshing}
+              />
             </section>
 
             <section
@@ -681,7 +818,7 @@ export function App() {
         </section>
       )}
 
-      {scenarioDocument ? (
+      {activeLab === "economy" && scenarioDocument ? (
         <ScenarioWorkspace
           key={scenarioSessionKey}
           document={scenarioDocument}

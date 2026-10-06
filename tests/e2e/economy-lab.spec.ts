@@ -187,6 +187,93 @@ test("@journey refresh falls back safely when the selected company disappears", 
   expect(overflow).toBe(0);
 });
 
+test("@journey Company Lab restores player and company context through reload and browser history", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+  await page.setViewportSize({ width: 320, height: 800 });
+
+  await page.goto("/?lab=company&player=player-1&company=company-1");
+
+  const labNavigation = page.getByRole("navigation", { name: "WarEra Lab modules" });
+  const companyLabLink = labNavigation.getByRole("link", { name: "Company Lab" });
+  const economyLabLink = labNavigation.getByRole("link", { name: "Economy Lab" });
+  const selectedCompany = page.getByRole("button", { name: /Planner Steel/ });
+
+  await expect(companyLabLink).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
+  await expect(selectedCompany).toHaveAttribute("aria-pressed", "true");
+  await expect(page).toHaveURL(/lab=company.*player=player-1.*company=company-1/);
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
+    false,
+  );
+
+  state.apiRequests.length = 0;
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Planner" })).toBeVisible();
+  await expect(selectedCompany).toHaveAttribute("aria-pressed", "true");
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
+    true,
+  );
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
+    false,
+  );
+
+  await economyLabLink.click();
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "WarEra Lab modules" }).getByRole("link", {
+      name: "Economy Lab",
+    }),
+  ).toHaveAttribute("aria-current", "page");
+
+  await page.goBack();
+  await expect(
+    page.getByRole("navigation", { name: "WarEra Lab modules" }).getByRole("link", {
+      name: "Company Lab",
+    }),
+  ).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("button", { name: /Planner Steel/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(0);
+
+  const accessibility = await new AxeBuilder({ page }).include(".company-lab-entry").analyze();
+  expect(accessibility.violations).toEqual([]);
+
+  await page.goForward();
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+});
+
+test("@journey invalid Company Lab links recover into usable player and company selection", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+
+  await page.goto("/?lab=company&player=player-1&company=missing-company");
+  await expect(page.getByText(/company from this link is no longer available/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Planner Steel/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page).toHaveURL(/lab=company.*player=player-1.*company=company-1/);
+
+  state.apiRequests.length = 0;
+  await page.goto("/?lab=company&company=orphan-company");
+  await expect(page.getByText(/company link also needs a player context/i)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Choose a player to establish company context" }),
+  ).toBeVisible();
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
+    false,
+  );
+});
+
 test("@journey public shell prioritizes search and exposes project context", async ({ page }) => {
   await page.goto("/");
 
@@ -353,6 +440,7 @@ test("@journey shared scenario reloads without a live player lookup", async ({ p
 
   const sharedUrl = page.url();
   expect(sharedUrl).toContain("#wl=");
+  expect(new URL(sharedUrl).search).toBe("");
   state.apiRequests.length = 0;
   await page.reload();
 
@@ -367,6 +455,27 @@ test("@journey shared scenario reloads without a live player lookup", async ({ p
   const json = await page.getByLabel("JSON export").inputValue();
   expect(json).toContain('"production":2');
   expect(json).not.toContain("player-1");
+
+  const mixedUrl = new URL(sharedUrl);
+  mixedUrl.search = "?lab=company&player=player-1&company=company-1";
+  state.apiRequests.length = 0;
+  await page.goto(mixedUrl.toString());
+
+  await expect(page.getByText(/Shared scenario imported from the URL/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  const mixedNavigation = page.getByRole("navigation", { name: "WarEra Lab modules" });
+  await expect(mixedNavigation.getByRole("link", { name: "Economy Lab" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  const companyLabHref = await mixedNavigation
+    .getByRole("link", { name: "Company Lab" })
+    .getAttribute("href");
+  expect(companyLabHref).not.toContain("player=");
+  expect(companyLabHref).not.toContain("company=");
+  expect(companyLabHref).not.toContain("#wl=");
+  expect(new URL(page.url()).search).toBe("");
+  expect(state.apiRequests).toEqual([]);
 });
 
 test("@a11y integrated workspace has no automated axe violations and visible keyboard focus", async ({
