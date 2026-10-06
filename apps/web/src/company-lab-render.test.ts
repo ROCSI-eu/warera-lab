@@ -102,7 +102,10 @@ describe("Company Lab snapshot overview", () => {
     expect(html).toContain(">24<");
     expect(html).toContain("Workers");
     expect(html).toContain(">2<");
-    expect(html).toContain("Estimated value");
+    expect(html).toContain("Estimated company value");
+    expect(html).toContain(
+      "Estimated current value of invested construction materials and upgrades",
+    );
     expect(html).toContain("1,200");
     expect(html).toContain("Automated Engine: level 1");
     expect(html).toContain("Storage: level 2");
@@ -136,7 +139,7 @@ describe("Company Lab snapshot overview", () => {
     expect(html).toContain("Country unavailable");
     expect(html).toContain("None reported");
     expect(html).toContain("No replacement values were invented");
-    expect(html).not.toContain("Estimated value");
+    expect(html).not.toContain("Estimated company value");
     expect(html).toContain("No individual source timestamps were returned");
   });
 });
