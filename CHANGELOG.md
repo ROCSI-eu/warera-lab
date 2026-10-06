@@ -6,7 +6,7 @@ Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documente
 
 ## v0.0.4 — 2026-10-06
 
-**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Production commit:** `d70736f349453fe3d4fa89bfee8994301d9f3e73`
 **Previous version:** `v0.0.3`
 **Environment:** Production — `https://warera-lab.rocsi.eu/`
 
@@ -33,7 +33,18 @@ None.
 
 ### Verification
 
+- The exact PR head tree and squash-merged production commit tree were verified identical: `a164df45cb3245cd115a7e837926a91123860eac`.
+- GitHub CI run #69 passed on PR head `ce9dfb56efd3e3a622300a6b970cfca22cd8119c` before merge.
 - Local pre-merge verification passed: release consistency, formatting, lint, production build, typecheck, 108 Vitest tests, and 38 Playwright tests across desktop, mobile, exact-320, visual, reduced-motion, and accessibility coverage.
+- Exact-SHA production deployment completed successfully from `d70736f349453fe3d4fa89bfee8994301d9f3e73`.
+- Deployment metadata, the active release symlink, and root `VERSION` agree on the deployed SHA and `v0.0.4`.
+- Local and public `/api/health` returned healthy responses; the public root returned HTTP 200.
+- `warera-lab-api.service` remained active with `NRestarts=0`.
+- Live `MihaiROCSI` regression returned 9 companies; the Company Lab overview rendered the selected company, normalized operations, upgrades, and snapshot provenance on desktop and exact 320 px.
+- Selected Company Lab context survived reload at desktop and exact 320 px with zero horizontal overflow.
+- Production install/build reported zero npm vulnerabilities.
+- Tag `v0.0.4` was verified to resolve directly to production commit `d70736f349453fe3d4fa89bfee8994301d9f3e73`.
+- GitHub Release `v0.0.4 — Company Lab company snapshot overview` was published and verified as the repository's latest release.
 
 ### Known limitations
 
