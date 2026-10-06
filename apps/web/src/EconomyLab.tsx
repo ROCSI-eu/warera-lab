@@ -1,11 +1,11 @@
 import {
   companyUpgradeAvailability,
   type CompanyUpgradeKey,
-  EconomyPlannerContextResponse,
-  EconomySkillKey,
-  ProvenanceKind,
-  PublicCompanySnapshot,
-  PublicPlayerEconomySnapshot,
+  type EconomyPlannerContextResponse,
+  type EconomySkillKey,
+  type ProvenanceKind,
+  type PublicCompanySnapshot,
+  type PublicPlayerEconomySnapshot,
 } from "@warera-lab/domain";
 import { useMemo, useState } from "react";
 
