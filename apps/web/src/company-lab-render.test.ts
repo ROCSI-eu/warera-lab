@@ -1,4 +1,8 @@
-import type { PublicCompanySnapshot, PublicPlayerSnapshotResponse } from "@warera-lab/domain";
+import type {
+  EconomyPlannerContextResponse,
+  PublicCompanySnapshot,
+  PublicPlayerSnapshotResponse,
+} from "@warera-lab/domain";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -6,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import { CompanyLabShell } from "./CompanyLabShell.js";
 import { describeCompany } from "./company-display.js";
 
-const company = {
+const company: PublicCompanySnapshot = {
   id: "company-alpha-1111111",
   ownerId: "player-1",
   regionId: "region-ph",
@@ -53,6 +57,7 @@ const snapshot: PublicPlayerSnapshotResponse = {
       id: "country-ro",
       code: "RO",
       name: "Romania",
+      productionBonusPercent: 5,
     },
   },
   contextGaps: { regionIds: [], countryIds: [] },
@@ -71,7 +76,96 @@ const snapshot: PublicPlayerSnapshotResponse = {
   },
 };
 
-function renderShell(current: PublicPlayerSnapshotResponse, selected = current.companies[0]) {
+const economyContext: EconomyPlannerContextResponse = {
+  itemCode: "steel",
+  configRevision: "test-company-config",
+  item: {
+    code: "steel",
+    type: "resource",
+    rarity: "common",
+    productionPoints: 10,
+    productionNeeds: { iron: 2, coal: 1 },
+    isTradable: true,
+  },
+  skills: {
+    production: {
+      key: "production",
+      levels: { 1: { level: 1, value: 12, totalCost: 1, unlockAtLevel: 1 } },
+    },
+    entrepreneurship: {
+      key: "entrepreneurship",
+      levels: { 1: { level: 1, value: 35, totalCost: 2, unlockAtLevel: 1 } },
+    },
+    management: {
+      key: "management",
+      levels: { 1: { level: 1, value: 6, totalCost: 1, unlockAtLevel: 1 } },
+    },
+    companies: {
+      key: "companies",
+      levels: { 1: { level: 1, value: 3, totalCost: 2, unlockAtLevel: 1 } },
+    },
+  },
+  companyUpgrades: {
+    automatedEngine: {
+      key: "automatedEngine",
+      canDowngrade: true,
+      levels: {
+        1: { level: 1, steelCost: 10, constructionPointsCost: 5, stats: { dailyProd: 24 } },
+      },
+    },
+    storage: {
+      key: "storage",
+      canDowngrade: true,
+      levels: {
+        2: {
+          level: 2,
+          steelCost: 35,
+          constructionPointsCost: 14,
+          stats: { maxProduction: 350 },
+        },
+      },
+    },
+    breakRoom: {
+      key: "breakRoom",
+      canDowngrade: false,
+      levels: {
+        1: { level: 1, steelCost: 15, stats: { maxWorkers: 2, dailyHires: 1 } },
+      },
+    },
+  },
+  marketPrices: { steel: 10, iron: 2, coal: 3 },
+  contextGaps: { itemCodes: [], marketPriceItemCodes: [] },
+  freshness: {
+    generatedAt: "2026-10-06T12:00:01.000Z",
+    hasStaleData: false,
+    sources: [
+      {
+        source: "gameConfig",
+        retrievedAt: "2026-10-06T12:00:00.000Z",
+        ageMs: 1000,
+        state: "live",
+      },
+      {
+        source: "marketPrices",
+        retrievedAt: "2026-10-06T12:00:00.000Z",
+        ageMs: 1000,
+        state: "live",
+      },
+    ],
+  },
+};
+
+interface RenderOptions {
+  selected?: PublicCompanySnapshot | undefined;
+  context?: EconomyPlannerContextResponse | undefined;
+  contextProvided?: boolean;
+  isLoading?: boolean;
+}
+
+function renderShell(current: PublicPlayerSnapshotResponse, options: RenderOptions = {}) {
+  const selected = options.selected ?? current.companies[0];
+  const currentContext =
+    options.contextProvided || "context" in options ? options.context : economyContext;
   const presentations = new Map(
     current.companies.map((candidate) => [candidate.id, describeCompany(candidate, current)]),
   );
@@ -80,8 +174,11 @@ function renderShell(current: PublicPlayerSnapshotResponse, selected = current.c
       snapshot: current,
       selectedCompany: selected,
       companyPresentations: presentations,
+      economyContext: currentContext,
+      economyContextItemCode: selected?.itemCode,
       navigationMessage: undefined,
       isBusy: false,
+      isLoadingEconomyContext: options.isLoading ?? false,
       onCompanySelect: () => undefined,
     }),
   );
@@ -91,7 +188,7 @@ describe("Company Lab snapshot overview", () => {
   it("renders complete normalized company context and existing duplicate disambiguation", () => {
     const duplicate = { ...company, id: "company-beta-2222222" };
     const current = { ...snapshot, companies: [company, duplicate] };
-    const html = renderShell(current, company);
+    const html = renderShell(current, { selected: company });
 
     expect(html).toContain("Owned by Planner · Level 12");
     expect(html).toContain("Planner Steel");
@@ -115,7 +212,34 @@ describe("Company Lab snapshot overview", () => {
     expect(html).toContain("ID …2222222");
   });
 
-  it("labels observed Break Room state as a dev preview rather than production-live", () => {
+  it("shows recipe, production-live operating references, and configured active-upgrade stats", () => {
+    const html = renderShell(snapshot);
+
+    expect(html).toContain("Production &amp; operating context");
+    expect(html).toContain("Reference, not simulation");
+    expect(html).toContain("Production recipe");
+    expect(html).toContain("Configured production points: 10");
+    expect(html).toContain(">iron<");
+    expect(html).toContain(">2<");
+    expect(html).toContain(">coal<");
+    expect(html).toContain(">1<");
+    expect(html).toContain("Daily production reference");
+    expect(html).toContain("Production capacity reference");
+    expect(html).toContain(">350<");
+    expect(html).toContain("Worker-capacity reference");
+    expect(html).toContain("No production-live reference");
+    expect(html).toContain("Automated Engine · observed level 1");
+    expect(html).toContain("Configured daily production: 24");
+    expect(html).toContain("Storage · observed level 2");
+    expect(html).toContain("Configured production capacity: 350");
+    expect(html).toContain("10 current · 8 base");
+    expect(html).toContain("Linked to capital");
+    expect(html).toContain("5%");
+    expect(html).toContain("Configuration context freshness");
+    expect(html).not.toContain("Market prices freshness");
+  });
+
+  it("labels observed Break Room state and config as dev-only instead of a production constraint", () => {
     const devCompany: PublicCompanySnapshot = {
       ...company,
       activeUpgradeLevels: { breakRoom: 1 },
@@ -124,22 +248,27 @@ describe("Company Lab snapshot overview", () => {
       ...snapshot,
       companies: [devCompany],
     };
-    const html = renderShell(current, devCompany);
+    const html = renderShell(current, { selected: devCompany });
 
     expect(html).toContain(
       "Break Room: level 1 · dev preview, not currently available in production",
     );
     expect(html).toContain("Break Room L1 (dev preview)");
+    expect(html).toContain("Break Room · observed level 1");
+    expect(html).toContain("Dev preview, not currently available in production");
+    expect(html).toContain("Configured worker capacity: 2");
+    expect(html).toContain("Configured daily hires: 1");
+    expect(html).toContain("No production-live reference");
   });
 
-  it("renders calm unavailable states for partial normalized snapshots", () => {
+  it("renders calm unavailable states for partial normalized snapshots and config", () => {
     const partialCompany: PublicCompanySnapshot = {
       id: company.id,
       ownerId: company.ownerId,
       regionId: "region-missing",
       itemCode: company.itemCode,
       name: company.name,
-      activeUpgradeLevels: {},
+      activeUpgradeLevels: { storage: 2 },
     };
     const current: PublicPlayerSnapshotResponse = {
       ...snapshot,
@@ -149,14 +278,49 @@ describe("Company Lab snapshot overview", () => {
       contextGaps: { regionIds: ["region-missing"], countryIds: [] },
       freshness: { ...snapshot.freshness, sources: [] },
     };
-    const html = renderShell(current, partialCompany);
+    const partialContext: EconomyPlannerContextResponse = {
+      ...economyContext,
+      companyUpgrades: {
+        ...economyContext.companyUpgrades,
+        storage: { ...economyContext.companyUpgrades.storage, levels: {} },
+      },
+      contextGaps: { ...economyContext.contextGaps, itemCodes: ["steel"] },
+    };
+    delete partialContext.item;
+    const html = renderShell(current, { selected: partialCompany, context: partialContext });
 
-    expect(html.match(/Not reported/g)).toHaveLength(2);
+    expect(html.match(/Not reported/g)).toHaveLength(3);
     expect(html).toContain("Region unavailable");
     expect(html).toContain("Country unavailable");
-    expect(html).toContain("None reported");
     expect(html).toContain("No replacement values were invented");
     expect(html).not.toContain("Estimated company value");
     expect(html).toContain("No individual source timestamps were returned");
+    expect(html).toContain("steel is absent from the normalized game configuration");
+    expect(html).toContain(
+      "The observed level is not present in the current normalized configuration",
+    );
+    expect(html).toContain("Item configuration is incomplete for steel");
+    expect(html).toContain("Not available");
+    expect(html).not.toContain("NaN");
+  });
+
+  it("keeps the observed snapshot usable when normalized configuration cannot be loaded", () => {
+    const html = renderShell(snapshot, { contextProvided: true, context: undefined });
+
+    expect(html).toContain("Planner Steel");
+    expect(html).toContain("Observed production");
+    expect(html).toContain("Normalized game configuration is unavailable");
+    expect(html).toContain("no recipe, configured upgrade stats, or operating limits are inferred");
+  });
+
+  it("renders an explicit loading state while selected-company config is being fetched", () => {
+    const html = renderShell(snapshot, {
+      contextProvided: true,
+      context: undefined,
+      isLoading: true,
+    });
+
+    expect(html).toContain("Loading normalized production configuration for steel");
+    expect(html).not.toContain("Normalized game configuration is unavailable");
   });
 });

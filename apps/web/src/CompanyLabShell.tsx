@@ -1,5 +1,10 @@
-import type { PublicCompanySnapshot, PublicPlayerSnapshotResponse } from "@warera-lab/domain";
+import type {
+  EconomyPlannerContextResponse,
+  PublicCompanySnapshot,
+  PublicPlayerSnapshotResponse,
+} from "@warera-lab/domain";
 
+import { CompanyOperatingContext } from "./CompanyOperatingContext.js";
 import { CompanySelector } from "./CompanySelector.js";
 import { CompanySnapshotOverview } from "./CompanySnapshotOverview.js";
 import type { CompanyPresentation } from "./company-display.js";
@@ -8,15 +13,21 @@ export function CompanyLabShell({
   snapshot,
   selectedCompany,
   companyPresentations,
+  economyContext,
+  economyContextItemCode,
   navigationMessage,
   isBusy,
+  isLoadingEconomyContext,
   onCompanySelect,
 }: {
   snapshot: PublicPlayerSnapshotResponse | undefined;
   selectedCompany: PublicCompanySnapshot | undefined;
   companyPresentations: Map<string, CompanyPresentation>;
+  economyContext: EconomyPlannerContextResponse | undefined;
+  economyContextItemCode: string | undefined;
   navigationMessage: string | undefined;
   isBusy: boolean;
+  isLoadingEconomyContext: boolean;
   onCompanySelect: (company: PublicCompanySnapshot) => void;
 }) {
   if (!snapshot) {
@@ -97,6 +108,19 @@ export function CompanyLabShell({
             </p>
           </section>
         )}
+
+        {selectedCompany ? (
+          <CompanyOperatingContext
+            snapshot={snapshot}
+            company={selectedCompany}
+            context={
+              economyContextItemCode === selectedCompany.itemCode ? economyContext : undefined
+            }
+            isLoading={
+              isLoadingEconomyContext && economyContextItemCode === selectedCompany.itemCode
+            }
+          />
+        ) : null}
       </div>
     </section>
   );
