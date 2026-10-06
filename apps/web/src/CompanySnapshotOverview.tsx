@@ -76,9 +76,9 @@ export function CompanySnapshotOverview({
         </div>
         {company.estimatedValue !== undefined ? (
           <div>
-            <span>Estimated value</span>
+            <span>Estimated company value</span>
             <strong>{formatDisplayNumber(company.estimatedValue, "number")}</strong>
-            <small>Reported normalized estimate</small>
+            <small>Estimated current value of invested construction materials and upgrades</small>
           </div>
         ) : null}
         <div className="upgrade-detail">
