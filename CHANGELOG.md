@@ -6,7 +6,7 @@ Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documente
 
 ## v0.0.3 — 2026-10-06
 
-**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Production commit:** `139e5396d69f2045cb4dd8dd29a7ee457ae40242`
 **Previous version:** `v0.0.2`
 **Environment:** Production — `https://warera-lab.rocsi.eu/`
 
@@ -34,7 +34,19 @@ None.
 
 ### Verification
 
-- Pre-merge repository verification pending final review of the exact proposed tree.
+- Proposed PR tree `8a00db3680c3d4b03ae4152d1ae905c506e14da9` passed the complete `npm run verify` gate: release consistency, formatting, lint, production build, typecheck, 106 Vitest tests, and 38 Playwright tests.
+- GitHub CI run #64 passed on PR head `c5b53cb94006e21990bea0d7e832f32dfd2c1f01` before merge.
+- Squash-merged production commit `139e5396d69f2045cb4dd8dd29a7ee457ae40242` has the identical tested tree `8a00db3680c3d4b03ae4152d1ae905c506e14da9`.
+- Post-merge GitHub CI run #65 passed on the exact production commit.
+- Exact-SHA production deployment completed successfully from `139e5396d69f2045cb4dd8dd29a7ee457ae40242`.
+- Deployment metadata, the active release symlink, and root `VERSION` agree on the deployed SHA and `v0.0.3`.
+- Local and public `/api/health` returned healthy responses; the public root returned HTTP 200.
+- `warera-lab-api.service` remained active with `NRestarts=0`.
+- Live `MihaiROCSI` regression returned 9 companies; Company Lab preserved selected player/company context across reload at exact 320 px with zero horizontal overflow and without unnecessary Economy-context requests.
+- Portable `#wl` scenarios remained detached from live identity: mixed live-context/scenario URLs canonicalized to the portable Economy Lab URL with zero live API requests.
+- Production install/build reported zero npm vulnerabilities.
+- Lightweight tag `v0.0.3` was verified to resolve directly to production commit `139e5396d69f2045cb4dd8dd29a7ee457ae40242`.
+- GitHub Release `v0.0.3 — Multi-lab shell and Company Lab context` was published and verified as the repository's latest release.
 
 ### Known limitations
 
