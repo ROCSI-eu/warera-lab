@@ -82,6 +82,10 @@ describe("Economy Lab rendering", () => {
 
     expect(html).toContain("Economy skills");
     expect(html).toContain("Company upgrades");
+    expect(html).toContain("Break Room");
+    expect(html).toContain("dev preview, not currently available in production");
+    expect(html).toContain("API/config exposed · production planning disabled");
+    expect(html.match(/disabled=""/g)).toHaveLength(1);
     expect(html).toContain("Market &amp; margin");
     expect(html).toContain("Gross revenue");
     expect(html).toContain("Break-even price");

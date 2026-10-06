@@ -81,11 +81,13 @@ The planner must not claim a downstream production/profit effect unless the form
 
 #### B. Company and upgrade planner
 
-For a selected company, the visitor can inspect and change planned levels of the company upgrades exposed in the public configuration, initially:
+For a selected company, the visitor can inspect the company upgrades exposed in the public configuration. Hypothetical level changes are enabled only for mechanics verified as production-live.
 
-- Automated Engine;
-- Storage;
-- Break Room.
+Current availability is tracked separately from API/config exposure:
+
+- Automated Engine — production-live and plannable;
+- Storage — production-live and plannable;
+- Break Room — API/config exposed, but currently marked `dev-not-production`; observed API state may be shown with a disclosure, while hypothetical production planning is disabled.
 
 The documented game configuration currently exposes values such as:
 
@@ -95,13 +97,15 @@ The documented game configuration currently exposes values such as:
 - upgrade steel and construction-point costs;
 - upgrade timing/configuration where provided.
 
-WarEra Lab calculates and compares:
+For production-live upgrades, WarEra Lab calculates and compares:
 
 - current versus proposed configured upgrade stats;
 - steel cost of the planned change;
 - construction-point cost of the planned change;
-- configured capacity/daily-production/max-worker deltas;
+- configured capacity/daily-production deltas;
 - whether the selected level is present in the current official game configuration.
+
+API/config presence alone is not treated as proof that a mechanic is available in production gameplay. See [Feature availability and provenance](FEATURE_AVAILABILITY.md).
 
 This module does not silently invent a formula combining upgrades, player skills, workers, region modifiers, or other factors into a final production number.
 

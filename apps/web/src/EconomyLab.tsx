@@ -1,10 +1,11 @@
-import type {
-  CompanyUpgradeKey,
-  EconomyPlannerContextResponse,
-  EconomySkillKey,
-  ProvenanceKind,
-  PublicCompanySnapshot,
-  PublicPlayerEconomySnapshot,
+import {
+  companyUpgradeAvailability,
+  type CompanyUpgradeKey,
+  type EconomyPlannerContextResponse,
+  type EconomySkillKey,
+  type ProvenanceKind,
+  type PublicCompanySnapshot,
+  type PublicPlayerEconomySnapshot,
 } from "@warera-lab/domain";
 import { useMemo, useState } from "react";
 
@@ -209,6 +210,8 @@ export function EconomyLab({
           <div className="control-list">
             {(Object.keys(upgradeLabels) as CompanyUpgradeKey[]).map((key) => {
               const config = context.companyUpgrades[key];
+              const availability = companyUpgradeAvailability[key];
+              const productionLive = availability.gameplay === "production";
               const currentLevel = company.activeUpgradeLevels[key] ?? 0;
               const configuredLevels = [
                 0,
@@ -225,11 +228,15 @@ export function EconomyLab({
                     <strong>{upgradeLabels[key]}</strong>
                     <small>
                       Observed level {currentLevel}
-                      {config.canDowngrade === true ? "" : " · downgrade not verified"}
+                      {productionLive
+                        ? config.canDowngrade === true
+                          ? ""
+                          : " · downgrade not verified"
+                        : " · dev preview, not currently available in production"}
                     </small>
                   </span>
                   <select
-                    disabled={readOnly}
+                    disabled={readOnly || !productionLive}
                     value={form.upgradeLevels[key]}
                     onChange={(event) =>
                       updateForm((current) => ({
@@ -247,7 +254,12 @@ export function EconomyLab({
                       </option>
                     ))}
                   </select>
-                  {entry ? (
+                  {!productionLive ? (
+                    <span className="control-result">
+                      API/config exposed · production planning disabled · checked{" "}
+                      {availability.checkedAt}
+                    </span>
+                  ) : entry ? (
                     <span className="control-result">
                       steel Δ {formatDisplayDelta(entry.configuredSteelCostDelta.value, "cost")}
                       {entry.configuredConstructionPointsCostDelta
@@ -260,7 +272,7 @@ export function EconomyLab({
                       {provenance(entry.proposedLevel.provenance)}
                     </span>
                   ) : null}
-                  {entry && Object.keys(entry.configuredStats).length > 0 ? (
+                  {productionLive && entry && Object.keys(entry.configuredStats).length > 0 ? (
                     <span className="control-result">
                       {Object.entries(entry.configuredStats)
                         .map(([stat, comparison]) =>

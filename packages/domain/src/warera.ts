@@ -41,6 +41,42 @@ export interface PublicCompanySnapshot {
 export const companyUpgradeKeys = ["automatedEngine", "storage", "breakRoom"] as const;
 export type CompanyUpgradeKey = (typeof companyUpgradeKeys)[number];
 
+export const gameplayAvailabilityStates = [
+  "production",
+  "dev-not-production",
+  "unverified",
+] as const;
+export type GameplayAvailabilityState = (typeof gameplayAvailabilityStates)[number];
+
+export interface FeatureAvailabilityRecord {
+  api: "exposed";
+  gameplay: GameplayAvailabilityState;
+  evidence: string;
+  checkedAt: string;
+}
+
+export const companyUpgradeAvailability: Record<CompanyUpgradeKey, FeatureAvailabilityRecord> = {
+  automatedEngine: {
+    api: "exposed",
+    gameplay: "production",
+    evidence: "Observed as a production company upgrade.",
+    checkedAt: "2026-10-06",
+  },
+  storage: {
+    api: "exposed",
+    gameplay: "production",
+    evidence: "Observed as a production company upgrade.",
+    checkedAt: "2026-10-06",
+  },
+  breakRoom: {
+    api: "exposed",
+    gameplay: "dev-not-production",
+    evidence:
+      "Exposed by the production API/config, but not currently available as production gameplay.",
+    checkedAt: "2026-10-06",
+  },
+};
+
 export interface EconomySkillLevelConfig {
   level: number;
   value: number;

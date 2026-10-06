@@ -169,7 +169,7 @@ describe("Economy Lab integration model", () => {
     const result = evaluateEconomyLab(player, company, context, form);
 
     expect(result.skillError).toContain("absent from the current game configuration");
-    expect(result.upgradeError).toContain("downgrade support is not enabled");
+    expect(result.upgradeError).toContain("not currently verified as production-live gameplay");
     expect(result.marketError).toContain("quantity must be a finite positive number");
   });
 

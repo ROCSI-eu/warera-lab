@@ -1,4 +1,9 @@
-import type { PublicCompanySnapshot, PublicPlayerSnapshotResponse } from "@warera-lab/domain";
+import {
+  companyUpgradeAvailability,
+  type CompanyUpgradeKey,
+  type PublicCompanySnapshot,
+  type PublicPlayerSnapshotResponse,
+} from "@warera-lab/domain";
 
 import { formatDisplayNumber } from "./display-format.js";
 
@@ -24,7 +29,12 @@ function shortIdentifier(id: string): string {
 function upgradeSummary(company: PublicCompanySnapshot): string {
   const entries = Object.entries(company.activeUpgradeLevels)
     .filter(([, level]) => level !== undefined && level > 0)
-    .map(([key, level]) => `${upgradeLabels[key as keyof typeof upgradeLabels] ?? key} L${level}`);
+    .map(([key, level]) => {
+      const upgradeKey = key as CompanyUpgradeKey;
+      const availability = companyUpgradeAvailability[upgradeKey];
+      const availabilityNote = availability.gameplay === "production" ? "" : " (dev preview)";
+      return `${upgradeLabels[upgradeKey] ?? key} L${level}${availabilityNote}`;
+    });
 
   return entries.length > 0 ? entries.join(" · ") : "No active upgrades";
 }

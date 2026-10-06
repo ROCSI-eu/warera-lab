@@ -126,25 +126,44 @@ describe("planCompanyUpgrades", () => {
     });
   });
 
-  it("supports configured downgrades without describing negative deltas as refunds", () => {
+  it("supports configured production downgrades without describing negative deltas as refunds", () => {
     const result = planCompanyUpgrades({
       company: {
         ...company,
-        activeUpgradeLevels: { ...company.activeUpgradeLevels, breakRoom: 2 },
+        activeUpgradeLevels: { ...company.activeUpgradeLevels, automatedEngine: 2 },
       },
       upgradeConfig,
-      proposedLevels: { breakRoom: 1 },
+      proposedLevels: { automatedEngine: 1 },
     });
 
-    expect(result.upgrades.breakRoom).toMatchObject({
+    expect(result.upgrades.automatedEngine).toMatchObject({
       direction: { value: "downgrade", provenance: "derived" },
       configuredSteelCostDelta: { value: -15, provenance: "derived" },
+      configuredConstructionPointsCostDelta: { value: -5, provenance: "derived" },
       configuredStats: {
-        maxWorkers: { delta: { value: -2, provenance: "derived" } },
-        dailyHires: { delta: { value: -1, provenance: "derived" } },
+        dailyProd: { delta: { value: -16, provenance: "derived" } },
       },
     });
-    expect(result.upgrades.breakRoom.configuredConstructionPointsCostDelta).toBeUndefined();
+  });
+
+  it("keeps observed Break Room state but rejects hypothetical level changes while it is not production-live", () => {
+    const observed = planCompanyUpgrades({ company, upgradeConfig });
+    expect(observed.upgrades.breakRoom.direction.value).toBe("no-op");
+
+    try {
+      planCompanyUpgrades({
+        company,
+        upgradeConfig,
+        proposedLevels: { breakRoom: 2 },
+      });
+      throw new Error("Expected non-production Break Room planning to fail");
+    } catch (error) {
+      expect(error).toMatchObject({
+        code: "FEATURE_NOT_PRODUCTION",
+        upgrade: "breakRoom",
+        level: 2,
+      });
+    }
   });
 
   it("rejects downgrades when the current configuration does not explicitly allow them", () => {
