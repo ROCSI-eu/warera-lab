@@ -4,6 +4,49 @@ All production deployments of WarEra Lab are recorded here.
 
 Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documented in [docs/RELEASES.md](docs/RELEASES.md). One version corresponds to one production deployment and one exact deployed Git commit.
 
+## v0.0.4 — 2026-10-06
+
+**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Previous version:** `v0.0.3`
+**Environment:** Production — `https://warera-lab.rocsi.eu/`
+
+### Summary
+
+Delivers the first useful Company Lab company snapshot overview from the existing normalized public player snapshot. The selected company is now presented with its owner, output, geographic context, observed operations, active upgrades, optional estimated value, and the same freshness/provenance disclosure used by Economy Lab.
+
+### Added
+
+- Selected-company overview for Company Lab with owner/player context, output item, region/country, observed production, workers, active upgrades, and optional estimated value.
+- Explicit calm unavailable states for missing normalized production, workforce, and geographic context.
+- Focused server-render tests covering complete and partial normalized snapshots.
+- Company Lab browser assertions for overview content, freshness disclosure, accessibility, and exact-320 px overflow behavior.
+
+### Changed
+
+- Snapshot freshness/provenance rendering is now a shared component reused by Economy Lab and Company Lab instead of a parallel Company Lab implementation.
+- Company Lab copy now describes the available snapshot overview rather than the previous context-only foundation state.
+- The Company Lab desktop grid gives the selected-company overview more room while preserving the existing compact mobile selector behavior and reload-safe URL contract.
+
+### Fixed
+
+None.
+
+### Verification
+
+- Local pre-merge verification passed: release consistency, formatting, lint, production build, typecheck, 108 Vitest tests, and 38 Playwright tests across desktop, mobile, exact-320, visual, reduced-motion, and accessibility coverage.
+
+### Known limitations
+
+- Production/operating-constraint interpretation remains scoped to #48.
+- Current market context remains scoped to #49.
+- Company Lab to Economy Lab handoff remains scoped to #50.
+- The final Company Lab responsive/accessibility/E2E release gate remains scoped to #51.
+
+### References
+
+- #47 — Build the Company Lab company snapshot overview
+- #43 — Plan and deliver Company Lab MVP
+
 ## v0.0.3 — 2026-10-06
 
 **Production commit:** `139e5396d69f2045cb4dd8dd29a7ee457ae40242`
@@ -183,3 +226,5 @@ First versioned production baseline for WarEra Lab. This release establishes Eco
 - PR #58
 - PR #59
 - #60 — Release versioning and changelog
+
+[executed on device: wordpress-vm.europe-central2-a.c.rocsi-website-hosting.internal (cf7b7a3c-8ae4-4a25-9de1-9e3d5dde425e)]

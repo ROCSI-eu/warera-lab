@@ -1,6 +1,7 @@
 import type { PublicCompanySnapshot, PublicPlayerSnapshotResponse } from "@warera-lab/domain";
 
 import { CompanySelector } from "./CompanySelector.js";
+import { CompanySnapshotOverview } from "./CompanySnapshotOverview.js";
 import type { CompanyPresentation } from "./company-display.js";
 
 export function CompanyLabShell({
@@ -44,12 +45,11 @@ export function CompanyLabShell({
     <section className="workspace company-lab-entry" aria-labelledby="company-lab-title">
       <div className="workspace-heading">
         <div>
-          <p className="section-kicker">Company Lab · context foundation</p>
+          <p className="section-kicker">Company Lab · public snapshot</p>
           <h2 id="company-lab-title">{snapshot.player.username}</h2>
           <p className="muted">
-            Choose a company below. This release establishes navigation and reload-safe identity
-            only; the Company Lab analytical overview is intentionally deferred to the next
-            implementation ticket.
+            Select a company to inspect its normalized identity, location, observed operations,
+            active upgrades, and snapshot provenance before modelling any changes.
           </p>
         </div>
         <span className="badge badge--observed">Public snapshot context</span>
@@ -58,6 +58,13 @@ export function CompanyLabShell({
       {navigationMessage ? (
         <p className="message message--warning" role="status">
           {navigationMessage}
+        </p>
+      ) : null}
+
+      {snapshot.freshness.hasStaleData ? (
+        <p className="message message--warning" role="status">
+          Some imported values are stale. They remain visible so the lab never hides which data it
+          is using.
         </p>
       ) : null}
 
@@ -74,26 +81,22 @@ export function CompanyLabShell({
           />
         </section>
 
-        <section className="workspace-panel" aria-labelledby="company-lab-selection-title">
-          <p className="section-kicker">Reload-safe selection</p>
-          <h3 id="company-lab-selection-title">Selected company</h3>
-          {selectedCompany ? (
-            <div className="company-lab-selected">
-              <strong>{selectedCompany.name}</strong>
-              <span>{selectedCompany.itemCode}</span>
-              <small>{selectedPresentation?.location ?? "Location unavailable"}</small>
-              <p className="muted">
-                The URL now carries this player/company identity. Detailed company facts and
-                analysis remain out of scope for this foundation release.
-              </p>
-            </div>
-          ) : (
+        {selectedCompany ? (
+          <CompanySnapshotOverview
+            snapshot={snapshot}
+            company={selectedCompany}
+            presentation={selectedPresentation}
+          />
+        ) : (
+          <section className="workspace-panel" aria-labelledby="company-lab-selection-title">
+            <p className="section-kicker">Selected company</p>
+            <h3 id="company-lab-selection-title">No company available</h3>
             <p className="muted">
               This player has no selectable public company context. Search for another player to
               continue.
             </p>
-          )}
-        </section>
+          </section>
+        )}
       </div>
     </section>
   );
