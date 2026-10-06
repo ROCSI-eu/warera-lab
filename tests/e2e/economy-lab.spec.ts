@@ -455,6 +455,27 @@ test("@journey shared scenario reloads without a live player lookup", async ({ p
   const json = await page.getByLabel("JSON export").inputValue();
   expect(json).toContain('"production":2');
   expect(json).not.toContain("player-1");
+
+  const mixedUrl = new URL(sharedUrl);
+  mixedUrl.search = "?lab=company&player=player-1&company=company-1";
+  state.apiRequests.length = 0;
+  await page.goto(mixedUrl.toString());
+
+  await expect(page.getByText(/Shared scenario imported from the URL/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  const mixedNavigation = page.getByRole("navigation", { name: "WarEra Lab modules" });
+  await expect(mixedNavigation.getByRole("link", { name: "Economy Lab" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  const companyLabHref = await mixedNavigation
+    .getByRole("link", { name: "Company Lab" })
+    .getAttribute("href");
+  expect(companyLabHref).not.toContain("player=");
+  expect(companyLabHref).not.toContain("company=");
+  expect(companyLabHref).not.toContain("#wl=");
+  expect(new URL(page.url()).search).toBe("");
+  expect(state.apiRequests).toEqual([]);
 });
 
 test("@a11y integrated workspace has no automated axe violations and visible keyboard focus", async ({

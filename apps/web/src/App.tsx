@@ -21,7 +21,13 @@ import { CompanySelector } from "./CompanySelector.js";
 import { ScenarioTransfer, ScenarioWorkspace } from "./ScenarioWorkspace.js";
 import { formatDisplayNumber, formatOptionalDisplayNumber } from "./display-format.js";
 import { describeCompany, type CompanyPresentation } from "./company-display.js";
-import { buildLabHref, parseLabLocation, type LabId, type LabRoute } from "./lab-navigation.js";
+import {
+  buildLabHref,
+  buildPortableScenarioHref,
+  parseLabLocation,
+  type LabId,
+  type LabRoute,
+} from "./lab-navigation.js";
 import {
   PublicApiClientError,
   getEconomyContext,
@@ -151,10 +157,12 @@ export function App() {
       ? { route: { lab: "economy" as const } }
       : parseLabLocation(window.location.search),
   );
-  const activeLab = initialLocation.route.lab;
-  const [navigationMessage, setNavigationMessage] = useState(initialLocation.message);
-  const initialRouteLoadStarted = useRef(false);
   const [initialScenario] = useState(initialScenarioFromLocation);
+  const activeLab: LabId = initialScenario.document ? "economy" : initialLocation.route.lab;
+  const [navigationMessage, setNavigationMessage] = useState(
+    initialScenario.document ? undefined : initialLocation.message,
+  );
+  const initialRouteLoadStarted = useRef(false);
   const [scenarioDocument, setScenarioDocument] = useState<ScenarioDocumentV1 | undefined>(
     initialScenario.document,
   );
@@ -183,7 +191,12 @@ export function App() {
         ...(playerId ? { playerId } : {}),
         ...(playerId && companyId ? { companyId } : {}),
       };
-      window.history.replaceState(window.history.state, "", buildLabHref(route, window.location));
+      const liveLocation = {
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash.startsWith("#wl=") ? "" : window.location.hash,
+      };
+      window.history.replaceState(window.history.state, "", buildLabHref(route, liveLocation));
     },
     [activeLab],
   );
@@ -260,7 +273,7 @@ export function App() {
     async (
       playerId: string,
       requestedCompanyId?: string,
-      options: { attachScenario?: boolean; clearNavigationMessage?: boolean } = {},
+      options: { clearNavigationMessage?: boolean } = {},
     ) => {
       dispatch({ type: "import-started", playerId });
       if (options.clearNavigationMessage ?? true) setNavigationMessage(undefined);
@@ -289,7 +302,7 @@ export function App() {
 
         if (activeLab === "economy" && targetCompany) {
           const context = await loadEconomyContext(targetCompany.itemCode);
-          if (context && (options.attachScenario ?? true)) {
+          if (context) {
             establishScenarioDocument(snapshot, targetCompany, context);
           }
         } else if (!targetCompany) {
@@ -305,11 +318,22 @@ export function App() {
   useEffect(() => {
     if (initialRouteLoadStarted.current) return;
     initialRouteLoadStarted.current = true;
+
+    if (initialScenario.document) {
+      if (typeof window !== "undefined") {
+        window.history.replaceState(
+          window.history.state,
+          "",
+          buildPortableScenarioHref(window.location, window.location.hash),
+        );
+      }
+      return;
+    }
+
     const { playerId, companyId } = initialLocation.route;
     if (!playerId) return;
     queueMicrotask(() => {
       void importPlayerContext(playerId, companyId, {
-        attachScenario: initialScenario.document === undefined,
         clearNavigationMessage: false,
       });
     });
@@ -317,7 +341,6 @@ export function App() {
 
   async function handleImport(playerId: string) {
     await importPlayerContext(playerId, undefined, {
-      attachScenario: true,
       clearNavigationMessage: true,
     });
   }
@@ -409,25 +432,45 @@ export function App() {
     : undefined;
   const region = selectedCompany ? state.snapshot?.regions[selectedCompany.regionId] : undefined;
   const companyCountry = region ? state.snapshot?.countries[region.countryId] : undefined;
-  const navigationPlayerId = state.snapshot?.player.id ?? initialLocation.route.playerId;
+  const navigationPlayerId =
+    state.snapshot?.player.id ??
+    (initialScenario.document ? undefined : initialLocation.route.playerId);
   const navigationCompanyId =
     selectedCompany?.id ??
     (navigationPlayerId === initialLocation.route.playerId
       ? initialLocation.route.companyId
       : undefined);
-  const labHref = (lab: LabId) =>
-    typeof window === "undefined"
-      ? "/"
-      : buildLabHref(
-          {
-            lab,
-            ...(navigationPlayerId ? { playerId: navigationPlayerId } : {}),
-            ...(navigationPlayerId && navigationCompanyId
-              ? { companyId: navigationCompanyId }
-              : {}),
-          },
-          window.location,
-        );
+  const labHref = (lab: LabId) => {
+    if (typeof window === "undefined") return "/";
+
+    if (initialScenario.document && !state.snapshot) {
+      if (lab === "economy") {
+        return buildPortableScenarioHref(window.location, window.location.hash);
+      }
+      return buildLabHref(
+        { lab },
+        {
+          pathname: window.location.pathname,
+          search: window.location.search,
+          hash: "",
+        },
+      );
+    }
+
+    return buildLabHref(
+      {
+        lab,
+        ...(navigationPlayerId ? { playerId: navigationPlayerId } : {}),
+        ...(navigationPlayerId && navigationCompanyId ? { companyId: navigationCompanyId } : {}),
+      },
+      {
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash:
+          lab === "company" && window.location.hash.startsWith("#wl=") ? "" : window.location.hash,
+      },
+    );
+  };
 
   return (
     <main className="shell">
