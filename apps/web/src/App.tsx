@@ -441,10 +441,7 @@ export function App() {
             >
               Company Lab
             </a>
-            <a
-              href={labHref("market")}
-              aria-current={activeLab === "market" ? "page" : undefined}
-            >
+            <a href={labHref("market")} aria-current={activeLab === "market" ? "page" : undefined}>
               Market Lab
             </a>
           </nav>
@@ -472,83 +469,83 @@ export function App() {
 
       {activeLab !== "market" ? (
         <section className="search-panel" aria-labelledby="player-search-title">
-        <div className="section-heading">
-          <div>
-            <p className="section-kicker">Step 1 · public data</p>
-            <h2 id="player-search-title">Find a player</h2>
-          </div>
-          <span className="badge">Documented API only</span>
-        </div>
-
-        <form className="search-form" onSubmit={handleSearch}>
-          <label htmlFor="player-query">WarEra player name</label>
-          <div className="search-row">
-            <input
-              id="player-query"
-              type="search"
-              minLength={2}
-              maxLength={80}
-              autoComplete="off"
-              value={state.query}
-              onChange={(event) =>
-                dispatch({ type: "query-changed", query: event.currentTarget.value })
-              }
-              placeholder="Search by player name"
-            />
-            <button type="submit" disabled={state.isSearching}>
-              {state.isSearching ? "Searching…" : "Search"}
-            </button>
-          </div>
-          <p className="field-help">Same-origin public API only. No WarEra token is requested.</p>
-        </form>
-
-        {state.message ? (
-          <p
-            className={"message message--" + state.message.kind}
-            role={state.message.kind === "error" ? "alert" : "status"}
-          >
-            {state.message.text}
-          </p>
-        ) : null}
-
-        {state.search ? (
-          <div className="results-block" aria-live="polite">
-            <div className="results-heading">
-              <h3>
-                {state.search.matches.length}{" "}
-                {state.search.matches.length === 1 ? "match" : "matches"}
-              </h3>
-              {state.search.truncated ? (
-                <span className="badge badge--warn">More exist</span>
-              ) : null}
+          <div className="section-heading">
+            <div>
+              <p className="section-kicker">Step 1 · public data</p>
+              <h2 id="player-search-title">Find a player</h2>
             </div>
-            {state.search.matches.length > 0 ? (
-              <ul className="search-results">
-                {state.search.matches.map((match) => (
-                  <li key={match.id}>
-                    <button
-                      type="button"
-                      className="result-button"
-                      onClick={() => handleImport(match.id)}
-                      disabled={state.isImporting || state.isRefreshing}
-                    >
-                      <span>
-                        <strong>{match.username}</strong>
-                        <small>Level {match.level}</small>
-                      </span>
-                      <span aria-hidden="true">
-                        {state.isImporting && state.pendingPlayerId === match.id
-                          ? "Importing…"
-                          : "Import →"}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <FreshnessPanel freshness={state.search.freshness} title="Search" />
+            <span className="badge">Documented API only</span>
           </div>
-        ) : null}
+
+          <form className="search-form" onSubmit={handleSearch}>
+            <label htmlFor="player-query">WarEra player name</label>
+            <div className="search-row">
+              <input
+                id="player-query"
+                type="search"
+                minLength={2}
+                maxLength={80}
+                autoComplete="off"
+                value={state.query}
+                onChange={(event) =>
+                  dispatch({ type: "query-changed", query: event.currentTarget.value })
+                }
+                placeholder="Search by player name"
+              />
+              <button type="submit" disabled={state.isSearching}>
+                {state.isSearching ? "Searching…" : "Search"}
+              </button>
+            </div>
+            <p className="field-help">Same-origin public API only. No WarEra token is requested.</p>
+          </form>
+
+          {state.message ? (
+            <p
+              className={"message message--" + state.message.kind}
+              role={state.message.kind === "error" ? "alert" : "status"}
+            >
+              {state.message.text}
+            </p>
+          ) : null}
+
+          {state.search ? (
+            <div className="results-block" aria-live="polite">
+              <div className="results-heading">
+                <h3>
+                  {state.search.matches.length}{" "}
+                  {state.search.matches.length === 1 ? "match" : "matches"}
+                </h3>
+                {state.search.truncated ? (
+                  <span className="badge badge--warn">More exist</span>
+                ) : null}
+              </div>
+              {state.search.matches.length > 0 ? (
+                <ul className="search-results">
+                  {state.search.matches.map((match) => (
+                    <li key={match.id}>
+                      <button
+                        type="button"
+                        className="result-button"
+                        onClick={() => handleImport(match.id)}
+                        disabled={state.isImporting || state.isRefreshing}
+                      >
+                        <span>
+                          <strong>{match.username}</strong>
+                          <small>Level {match.level}</small>
+                        </span>
+                        <span aria-hidden="true">
+                          {state.isImporting && state.pendingPlayerId === match.id
+                            ? "Importing…"
+                            : "Import →"}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <FreshnessPanel freshness={state.search.freshness} title="Search" />
+            </div>
+          ) : null}
         </section>
       ) : null}
 
