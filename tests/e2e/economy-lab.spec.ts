@@ -883,6 +883,30 @@ test("@visual representative loaded Company Lab", async ({ page }) => {
   );
   if (test.info().project.name === "visual-reduced-motion") {
     expect(reduced).toBe(true);
+
+    const motionDurations = await page.locator(".company-lab-entry").evaluate((element) => {
+      function maximumDurationMs(value: string): number {
+        return Math.max(
+          ...value.split(",").map((duration) => {
+            const normalized = duration.trim();
+            if (normalized.endsWith("ms")) return Number.parseFloat(normalized);
+            if (normalized.endsWith("s")) return Number.parseFloat(normalized) * 1000;
+            return Number.NaN;
+          }),
+        );
+      }
+
+      const style = getComputedStyle(element);
+      return {
+        transitionMs: maximumDurationMs(style.transitionDuration),
+        animationMs: maximumDurationMs(style.animationDuration),
+      };
+    });
+
+    expect(motionDurations.transitionMs).toBeGreaterThan(0);
+    expect(motionDurations.transitionMs).toBeLessThanOrEqual(0.01);
+    expect(motionDurations.animationMs).toBeGreaterThan(0);
+    expect(motionDurations.animationMs).toBeLessThanOrEqual(0.01);
   }
 
   await expect(page).toHaveScreenshot("company-lab-release-candidate.png", {
