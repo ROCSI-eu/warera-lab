@@ -659,9 +659,10 @@ button:disabled {
     width: 100%;
     justify-content: space-between;
     gap: 0.45rem;
+    flex-wrap: wrap;
   }
   .lab-navigation {
-    flex: 1 1 auto;
+    flex: 1 1 100%;
   }
   .lab-navigation a {
     flex: 1 1 0;
