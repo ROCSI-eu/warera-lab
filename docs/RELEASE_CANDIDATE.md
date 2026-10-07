@@ -87,7 +87,7 @@ Before deployment:
 2. prepare the next deployment version and changelog entry according to [RELEASES.md](RELEASES.md);
 3. run `npm run verify` on the exact commit intended for production;
 4. deploy that exact tested commit;
-5. verify `/health` and service health;
+5. verify `/api/health` and service health;
 6. verify the visible application version and deployed SHA agree with the release record.
 
 After deployment, smoke the public site using the same release candidate:

@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test";
 export interface MockApiState {
   searchMode: "ok" | "empty" | "rate-limit";
   snapshotMode: "ok" | "unavailable" | "rate-limit";
-  economyContextMode: "ok" | "unavailable" | "rate-limit" | "partial";
+  economyContextMode: "ok" | "unavailable" | "rate-limit" | "missing-price" | "missing-item";
   staleSnapshot: boolean;
   duplicateCompanies: boolean;
   largePortfolio: boolean;
@@ -509,11 +509,16 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
       }
 
       const response = structuredClone(economyContextResponse) as EconomyPlannerContextResponse;
-      if (state.economyContextMode === "partial") {
+      if (state.economyContextMode === "missing-price") {
         delete response.marketPrices.coal;
-        response.contextGaps.itemCodes = ["steel"];
         response.contextGaps.marketPriceItemCodes = ["coal"];
         response.companyUpgrades.storage.levels = {};
+      }
+      if (state.economyContextMode === "missing-item") {
+        delete response.item;
+        response.marketPrices = { steel: response.marketPrices.steel! };
+        response.contextGaps.itemCodes = ["steel"];
+        response.contextGaps.marketPriceItemCodes = [];
       }
       if (state.snapshotRevision > 0) {
         response.marketPrices.steel = 11;

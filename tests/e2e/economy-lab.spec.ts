@@ -411,18 +411,31 @@ test("@journey Company Lab exposes partial context and survives upstream context
   page,
 }) => {
   const state = await installApiMocks(page);
-  state.economyContextMode = "partial";
+  state.economyContextMode = "missing-price";
 
   await page.goto("/?lab=company&player=player-1&company=company-1");
 
   const overview = page.locator(".company-snapshot-overview");
   await expect(overview.getByRole("heading", { name: "Planner Steel" })).toBeVisible();
-  await expect(page.getByText(/Item configuration is incomplete for steel/i)).toBeVisible();
   await expect(page.getByText(/Missing current price references: coal/i)).toBeVisible();
   await expect(
     page.getByText(/observed level is not present in the current normalized configuration/i),
   ).toBeVisible();
   await expect(page.getByText(/No replacement values were invented/i)).toBeVisible();
+  await expect(page.getByText(/Item configuration is incomplete for steel/i)).toHaveCount(0);
+
+  state.economyContextMode = "missing-item";
+  await page.reload();
+
+  await expect(overview.getByRole("heading", { name: "Planner Steel" })).toBeVisible();
+  await expect(
+    page.getByText(/steel is absent from the normalized game configuration/i),
+  ).toBeVisible();
+  await expect(page.getByText(/Item configuration is incomplete for steel/i)).toBeVisible();
+  await expect(
+    page.getByText(/Required input-price context cannot be listed because steel is absent/i),
+  ).toBeVisible();
+  await expect(page.getByText(/Missing current price references:/i)).toHaveCount(0);
 
   state.economyContextMode = "unavailable";
   await page.reload();
