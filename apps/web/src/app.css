@@ -226,6 +226,30 @@ h3 {
   border-color: rgba(155, 183, 220, 0.55);
   background: rgba(155, 183, 220, 0.15);
 }
+.company-lab-handoff {
+  display: inline-flex;
+  min-height: 2.35rem;
+  align-items: center;
+  padding: 0.45rem 0.72rem;
+  border: 1px solid rgba(155, 183, 220, 0.38);
+  border-radius: 0.7rem;
+  background: rgba(155, 183, 220, 0.14);
+  color: #eef3f9;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+.company-lab-handoff:hover {
+  border-color: rgba(155, 183, 220, 0.65);
+  background: rgba(155, 183, 220, 0.22);
+}
+.company-lab-handoff-note {
+  max-width: 58rem;
+  margin: 0.85rem 0 0;
+  color: #8794a5;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
 
 .search-form {
   margin-top: 1.75rem;

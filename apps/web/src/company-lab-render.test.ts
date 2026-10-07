@@ -177,6 +177,7 @@ function renderShell(current: PublicPlayerSnapshotResponse, options: RenderOptio
       economyContext: currentContext,
       economyContextItemCode: selected?.itemCode,
       navigationMessage: undefined,
+      economyLabHref: "/?lab=economy&player=player-1&company=" + (selected?.id ?? ""),
       isBusy: false,
       isLoadingEconomyContext: options.isLoading ?? false,
       onCompanySelect: () => undefined,
@@ -210,6 +211,14 @@ describe("Company Lab snapshot overview", () => {
     expect(html).toContain('aria-pressed="true"');
     expect(html).toContain("ID …1111111");
     expect(html).toContain("ID …2222222");
+    expect(html).toContain("Model in Economy Lab →");
+    expect(html).toContain(
+      'href="/?lab=economy&amp;player=player-1&amp;company=company-alpha-1111111"',
+    );
+    expect(html).toContain("carries only the current player and company identifiers");
+    expect(html).toContain("reloads the current public snapshot and normalized economy context");
+    expect(html).not.toContain("production=24");
+    expect(html).not.toContain("name=Planner");
   });
 
   it("shows recipe, production-live operating references, and configured active-upgrade stats", () => {

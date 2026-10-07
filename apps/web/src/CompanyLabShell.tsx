@@ -17,6 +17,7 @@ export function CompanyLabShell({
   economyContext,
   economyContextItemCode,
   navigationMessage,
+  economyLabHref,
   isBusy,
   isLoadingEconomyContext,
   onCompanySelect,
@@ -27,6 +28,7 @@ export function CompanyLabShell({
   economyContext: EconomyPlannerContextResponse | undefined;
   economyContextItemCode: string | undefined;
   navigationMessage: string | undefined;
+  economyLabHref: string;
   isBusy: boolean;
   isLoadingEconomyContext: boolean;
   onCompanySelect: (company: PublicCompanySnapshot) => void;
@@ -64,8 +66,23 @@ export function CompanyLabShell({
             active upgrades, and snapshot provenance before modelling any changes.
           </p>
         </div>
-        <span className="badge badge--observed">Public snapshot context</span>
+        <div className="workspace-header-actions">
+          <span className="badge badge--observed">Public snapshot context</span>
+          {selectedCompany ? (
+            <a className="company-lab-handoff" href={economyLabHref}>
+              Model in Economy Lab →
+            </a>
+          ) : null}
+        </div>
       </div>
+
+      {selectedCompany ? (
+        <p className="company-lab-handoff-note">
+          The handoff carries only the current player and company identifiers. Economy Lab reloads
+          the current public snapshot and normalized economy context before creating its observed
+          baseline.
+        </p>
+      ) : null}
 
       {navigationMessage ? (
         <p className="message message--warning" role="status">

@@ -197,8 +197,8 @@ test("@journey Company Lab restores player and company context through reload an
 
   const labNavigation = page.getByRole("navigation", { name: "WarEra Lab modules" });
   const companyLabLink = labNavigation.getByRole("link", { name: "Company Lab" });
-  const economyLabLink = labNavigation.getByRole("link", { name: "Economy Lab" });
   const selectedCompany = page.getByRole("button", { name: /Planner Steel/ });
+  const economyHandoff = page.getByRole("link", { name: "Model in Economy Lab" });
 
   await expect(companyLabLink).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
@@ -257,8 +257,30 @@ test("@journey Company Lab restores player and company context through reload an
     true,
   );
 
-  await economyLabLink.click();
+  await expect(economyHandoff).toHaveAttribute(
+    "href",
+    "/?lab=economy&player=player-1&company=company-1",
+  );
+  await expect(
+    page.getByText(/handoff carries only the current player and company identifiers/i),
+  ).toBeVisible();
+
+  state.apiRequests.length = 0;
+  await economyHandoff.click();
   await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  await expect(
+    page.getByText(/reloaded the current public snapshot and normalized economy context/i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/URL carried player\/company identifiers only, not company data/i),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/lab=economy.*player=player-1.*company=company-1/);
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
+    true,
+  );
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
+    true,
+  );
   await expect(
     page.getByRole("navigation", { name: "WarEra Lab modules" }).getByRole("link", {
       name: "Economy Lab",
@@ -286,6 +308,100 @@ test("@journey Company Lab restores player and company context through reload an
 
   await page.goForward();
   await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+});
+
+test("@journey Company Lab handoff preserves duplicate-name identity and recovers from a stale company", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+  state.duplicateCompanies = true;
+  await page.setViewportSize({ width: 320, height: 800 });
+
+  await page.goto("/?lab=company&player=player-1&company=company-duplicate-2");
+
+  const companyCards = page.locator(".company-card").filter({ hasText: "Iron Inc" });
+  await expect(companyCards).toHaveCount(2);
+  await expect(companyCards.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-snapshot-overview")).toContainText("Cluj");
+
+  const handoff = page.getByRole("link", { name: "Model in Economy Lab" });
+  await expect(handoff).toHaveAttribute(
+    "href",
+    "/?lab=economy&player=player-1&company=company-duplicate-2",
+  );
+
+  state.apiRequests.length = 0;
+  await handoff.click();
+
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  await expect(page).toHaveURL(/lab=economy.*player=player-1.*company=company-duplicate-2/);
+  const economyCards = page.locator(".company-card").filter({ hasText: "Iron Inc" });
+  await expect(economyCards).toHaveCount(2);
+  await expect(economyCards.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-detail")).toContainText("Cluj");
+  await expect(page.locator(".company-detail")).toContainText("31");
+  await expect(page.locator(".company-detail")).toContainText("4");
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
+    true,
+  );
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
+    true,
+  );
+
+  await page.goBack();
+  await expect(
+    page.getByRole("navigation", { name: "WarEra Lab modules" }).getByRole("link", {
+      name: "Company Lab",
+    }),
+  ).toHaveAttribute("aria-current", "page");
+  await expect(
+    page.locator(".company-card").filter({ hasText: "Iron Inc" }).nth(1),
+  ).toHaveAttribute("aria-pressed", "true");
+
+  state.removedCompanyId = "company-duplicate-2";
+  state.apiRequests.length = 0;
+  await page.getByRole("link", { name: "Model in Economy Lab" }).click();
+
+  await expect(page.getByText(/company from this link is no longer available/i)).toBeVisible();
+  await expect(page).toHaveURL(/lab=economy.*player=player-1.*company=company-duplicate-1/);
+  const recoveredCompany = page.locator(".company-card").filter({ hasText: "Iron Inc" });
+  await expect(recoveredCompany).toHaveCount(1);
+  await expect(recoveredCompany).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-detail")).toContainText("Prahova");
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBe(0);
+});
+
+test("@journey unknown lab fallback preserves its recovery warning after Economy context reload", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+
+  await page.goto("/?lab=unknown&player=player-1&company=company-1");
+
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  await expect(
+    page.getByText(/Unknown lab link\. Economy Lab was opened instead\./i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      /Economy Lab reloaded the current public snapshot and normalized economy context/i,
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/URL carried player\/company identifiers only, not company data/i),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/lab=economy.*player=player-1.*company=company-1/);
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
+    true,
+  );
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
+    true,
+  );
 });
 
 test("@journey invalid Company Lab links recover into usable player and company selection", async ({

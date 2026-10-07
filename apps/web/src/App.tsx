@@ -234,6 +234,16 @@ export function App() {
           const context = await loadEconomyContext(targetCompany.itemCode);
           if (activeLab === "economy" && context) {
             establishScenarioDocument(snapshot, targetCompany, context);
+            if (requestedCompanyId && requestedCompany) {
+              setNavigationMessage((current) =>
+                [
+                  current,
+                  "Economy Lab reloaded the current public snapshot and normalized economy context for the company identified by this link. The URL carried player/company identifiers only, not company data.",
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+              );
+            }
           }
         } else {
           setScenarioCompanyId(undefined);
@@ -554,6 +564,7 @@ export function App() {
           economyContext={state.economyContext}
           economyContextItemCode={state.economyContextItemCode}
           navigationMessage={navigationMessage}
+          economyLabHref={labHref("economy")}
           isBusy={state.isImporting || state.isRefreshing || state.isLoadingEconomyContext}
           isLoadingEconomyContext={state.isLoadingEconomyContext}
           onCompanySelect={(company) => void handleCompanySelect(company)}
