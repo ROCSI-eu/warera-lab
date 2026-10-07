@@ -385,13 +385,15 @@ test("@journey Company Lab navigation entry and duplicate-name switching keep co
   await importPlannerWorkspace(page);
 
   const labNavigation = page.getByRole("navigation", { name: "WarEra Lab modules" });
-  await labNavigation.getByRole("link", { name: "Company Lab" }).click();
+  const companyLabLink = labNavigation.getByRole("link", { name: "Company Lab" });
+  for (let step = 0; step < 30; step += 1) {
+    await page.keyboard.press("Tab");
+    if (await companyLabLink.evaluate((element) => document.activeElement === element)) break;
+  }
+  await expect(companyLabLink).toBeFocused();
+  await page.keyboard.press("Enter");
 
-  await expect(
-    page.getByRole("navigation", { name: "WarEra Lab modules" }).getByRole("link", {
-      name: "Company Lab",
-    }),
-  ).toHaveAttribute("aria-current", "page");
+  await expect(companyLabLink).toHaveAttribute("aria-current", "page");
   await expect(page).toHaveURL(/lab=company.*player=player-1.*company=company-duplicate-1/);
 
   const companyCards = page.locator(".company-card").filter({ hasText: "Iron Inc" });
