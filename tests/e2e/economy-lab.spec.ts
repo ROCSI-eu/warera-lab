@@ -477,8 +477,20 @@ test("@a11y Company Lab keyboard flow preserves privacy and same-origin boundari
   const accessibility = await new AxeBuilder({ page }).include(".company-lab-entry").analyze();
   expect(accessibility.violations).toEqual([]);
 
+  async function reachByKeyboard(
+    locator: ReturnType<typeof page.locator>,
+    direction: "forward" | "backward",
+  ) {
+    const key = direction === "forward" ? "Tab" : "Shift+Tab";
+    for (let step = 0; step < 30; step += 1) {
+      await page.keyboard.press(key);
+      if (await locator.evaluate((element) => document.activeElement === element)) return;
+    }
+    throw new Error(`Could not reach target with ${key} within 30 steps`);
+  }
+
   const secondCompany = companyCards.nth(1);
-  await secondCompany.focus();
+  await reachByKeyboard(secondCompany, "forward");
   await expect(secondCompany).toBeFocused();
   expect(
     await secondCompany.evaluate((element) => {
@@ -492,7 +504,7 @@ test("@a11y Company Lab keyboard flow preserves privacy and same-origin boundari
   await expect(page).toHaveURL(/lab=company.*company=company-duplicate-2/);
 
   const handoff = page.getByRole("link", { name: "Model in Economy Lab" });
-  await handoff.focus();
+  await reachByKeyboard(handoff, "backward");
   await expect(handoff).toBeFocused();
   expect(
     await handoff.evaluate((element) => {
