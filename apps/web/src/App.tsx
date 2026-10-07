@@ -587,9 +587,7 @@ export function App() {
         />
       ) : activeLab === "market" ? (
         <MarketLabShell
-          {...(initialLocation.route.itemCode
-            ? { itemCode: initialLocation.route.itemCode }
-            : {})}
+          {...(initialLocation.route.itemCode ? { itemCode: initialLocation.route.itemCode } : {})}
           {...(navigationMessage ? { navigationMessage } : {})}
         />
       ) : state.snapshot ? (
