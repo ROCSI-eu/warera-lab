@@ -4,6 +4,64 @@ All production deployments of WarEra Lab are recorded here.
 
 Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documented in [docs/RELEASES.md](docs/RELEASES.md). One version corresponds to one production deployment and one exact deployed Git commit.
 
+## v0.0.5 — 2026-10-07
+
+**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Previous version:** `v0.0.4`
+**Environment:** Production — `https://warera-lab.rocsi.eu/`
+
+### Summary
+
+Completes the remaining Company Lab MVP work on top of the v0.0.4 snapshot overview. This release adds production and operating context, current market context, a deliberate Company Lab → Economy Lab handoff, production-availability guardrails for game features, and the final responsive/accessibility/E2E release gate.
+
+### Added
+
+- Company Lab production and operating context covering normalized production recipes, configured production points, current upgrade references, location references, and freshness/provenance.
+- Company Lab current market context for the selected output and required recipe inputs, including current observed prices, recipe quantities, freshness, and explicit partial/unavailable states.
+- **Model in Economy Lab** handoff that carries only player/company identity, reloads current normalized context, and establishes the intended selected company as the Economy Lab observed baseline.
+- Minimal production-availability metadata for game features so production and development-only capabilities can be distinguished explicitly.
+- Company Lab release-candidate visual coverage for desktop, representative mobile, exactly 320 px, reduced motion, and the real 12-company maximum portfolio.
+- Cross-lab release-candidate documentation and feature-availability documentation.
+
+### Changed
+
+- Non-production/development-only upgrades are disclosed explicitly in company summaries and are not presented as valid production planning options.
+- Company Lab duplicate-name selection, context switching, and Economy Lab handoff preserve exact company identity and refresh the matching normalized economy context.
+- The estimated company-value copy is clearer about the value being an estimate rather than an observed market valuation.
+- Company Lab responsive behavior, keyboard navigation, same-origin/privacy assertions, degraded-state recovery, and reduced-motion checks are now part of the formal release gate.
+- The release checklist now validates the registered `/api/health` route and the 12-company maximum-portfolio boundary.
+
+### Fixed
+
+- Prevented development-only upgrade definitions from being treated as production-available planning capabilities.
+- Removed ambiguous estimated-value wording that could overstate what the normalized snapshot represents.
+- Hardened Company Lab context recovery and handoff verification against stale selection, loading-state, timing, and duplicate-company regressions.
+
+### Verification
+
+- The final Company Lab release-gate PR head `cadf87f1fcf16544b894cf9cd28f17fbe10e712e` and squash-merged main commit `d4600508094297d363704e190c648e67799dd63a` have the identical Git tree `916979e2fb374097a65f5fd90668b5c6178210c2`.
+- GitHub CI run #102 passed on the final release-gate PR head with 116/116 Vitest tests and 56/56 Playwright tests.
+- The focused 12-company maximum-portfolio journey passed on desktop and mobile.
+- Company Lab representative and 12-company visual coverage passed across desktop, mobile, exactly 320 px, and reduced-motion projects, with no horizontal overflow at 320 px.
+- The v0.0.5 release-preparation tree must pass the complete release verification gate before merge.
+- Exact-SHA deployment, public production smoke checks, tag creation, and final deployed-SHA changelog evidence remain pending until this release-preparation PR is merged.
+
+### Known limitations
+
+- Historical company analytics are not part of the Company Lab MVP.
+- Continuous monitoring/alerts and authenticated/private War Era data remain out of scope.
+- Market Lab and Player Lab remain future modules.
+
+### References
+
+- #43 — Plan and deliver Company Lab MVP
+- #48 — Add Company Lab production and operating-constraint context
+- #49 — Add current market context to Company Lab
+- #50 — Add Company Lab to Economy Lab handoff
+- #51 — Complete Company Lab responsive, accessibility, E2E, and release gate
+- #69 — Track production availability and provenance for game features
+- PR #68 — Clarify estimated company value copy
+
 ## v0.0.4 — 2026-10-06
 
 **Production commit:** `d70736f349453fe3d4fa89bfee8994301d9f3e73`
