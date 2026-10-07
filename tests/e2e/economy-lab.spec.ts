@@ -402,7 +402,13 @@ test("@journey Company Lab navigation entry and duplicate-name switching keep co
   );
 
   state.economyContextItemCodes.length = 0;
+  const ironContextRequest = page.waitForRequest((request) => {
+    if (new URL(request.url()).pathname !== "/api/economy/context") return false;
+    const body = request.postDataJSON() as { itemCode?: string } | null;
+    return body?.itemCode === "iron";
+  });
   await companyCards.nth(1).click();
+  await ironContextRequest;
 
   await expect(companyCards.nth(1)).toHaveAttribute("aria-pressed", "true");
   await expect(page).toHaveURL(/lab=company.*player=player-1.*company=company-duplicate-2/);
