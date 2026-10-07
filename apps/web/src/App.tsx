@@ -587,8 +587,10 @@ export function App() {
         />
       ) : activeLab === "market" ? (
         <MarketLabShell
-          itemCode={initialLocation.route.itemCode}
-          navigationMessage={navigationMessage}
+          {...(initialLocation.route.itemCode
+            ? { itemCode: initialLocation.route.itemCode }
+            : {})}
+          {...(navigationMessage ? { navigationMessage } : {})}
         />
       ) : state.snapshot ? (
         <section className="workspace" aria-labelledby="workspace-title">
