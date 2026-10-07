@@ -35,7 +35,10 @@ export function MarketLabShell({
         </div>
       ) : null}
 
-      <section className="workspace-panel workspace-panel--wide" aria-labelledby="market-next-title">
+      <section
+        className="workspace-panel workspace-panel--wide"
+        aria-labelledby="market-next-title"
+      >
         <p className="section-kicker">Foundation</p>
         <h3 id="market-next-title">Market context is intentionally not loaded yet</h3>
         <p className="muted">
