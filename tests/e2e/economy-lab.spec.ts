@@ -223,6 +223,24 @@ test("@journey Company Lab restores player and company context through reload an
   await expect(operatingContext).toContainText("Configured daily production: 24");
   await expect(operatingContext).toContainText("Configured production capacity: 200");
   await expect(operatingContext).toContainText("No production-live reference");
+
+  const marketContext = page.locator(".company-market-context");
+  await expect(
+    marketContext.getByRole("heading", { name: "Current market context" }),
+  ).toBeVisible();
+  await expect(marketContext).toContainText("Current prices only");
+  await expect(marketContext).toContainText("steel");
+  await expect(marketContext).toContainText("Current observed price");
+  await expect(
+    marketContext.locator(".market-price-list").getByText("iron", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    marketContext.locator(".market-price-list").getByText("coal", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    marketContext.getByRole("heading", { name: "Market prices freshness" }),
+  ).toBeVisible();
+
   await expect(page).toHaveURL(/lab=company.*player=player-1.*company=company-1/);
   expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
     true,

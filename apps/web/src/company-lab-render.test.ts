@@ -236,7 +236,68 @@ describe("Company Lab snapshot overview", () => {
     expect(html).toContain("Linked to capital");
     expect(html).toContain("5%");
     expect(html).toContain("Configuration context freshness");
-    expect(html).not.toContain("Market prices freshness");
+  });
+
+  it("shows current output/input prices with market-only provenance", () => {
+    const html = renderShell(snapshot);
+
+    expect(html).toContain("Current market context");
+    expect(html).toContain("Current prices only");
+    expect(html).toContain("A concise current-price reference");
+    expect(html).toContain("Output item");
+    expect(html).toContain("<strong>steel</strong>");
+    expect(html).toContain("<dt>Current observed price</dt><dd>10</dd>");
+    expect(html).toContain("Required production inputs");
+    expect(html).toContain("<strong>iron</strong>");
+    expect(html).toContain("Recipe quantity 2");
+    expect(html).toContain("<strong>coal</strong>");
+    expect(html).toContain("Recipe quantity 1");
+    expect(html).toContain("Market prices freshness");
+    expect(html).toContain("<span>marketPrices</span>");
+  });
+
+  it("keeps partial current-price context explicit without substituting values", () => {
+    const partialMarketContext: EconomyPlannerContextResponse = {
+      ...economyContext,
+      marketPrices: { steel: 10, iron: 2 },
+      contextGaps: {
+        ...economyContext.contextGaps,
+        marketPriceItemCodes: ["coal"],
+      },
+    };
+    const html = renderShell(snapshot, { context: partialMarketContext });
+
+    expect(html).toContain("<dt>Current observed price</dt><dd>10</dd>");
+    expect(html).toContain("Missing current price references: coal");
+    expect(html).toContain("No replacement values were invented");
+    expect(html.match(/No current price/g)).toHaveLength(1);
+    expect(html).toContain("Market prices freshness");
+  });
+
+  it("renders an absent current-price state without inventing market data", () => {
+    const absentMarketContext: EconomyPlannerContextResponse = {
+      ...economyContext,
+      marketPrices: {},
+      contextGaps: {
+        ...economyContext.contextGaps,
+        marketPriceItemCodes: ["steel", "iron", "coal"],
+      },
+      freshness: {
+        ...economyContext.freshness,
+        sources: economyContext.freshness.sources.filter(
+          (source) => source.source !== "marketPrices",
+        ),
+      },
+    };
+    const html = renderShell(snapshot, { context: absentMarketContext });
+
+    expect(html.match(/No current price/g)).toHaveLength(3);
+    expect(html).toContain(
+      "No normalized current prices are available for this company&#x27;s output or required inputs",
+    );
+    expect(html).toContain("instead of substituting assumptions");
+    expect(html).toContain("Market prices freshness");
+    expect(html).toContain("No individual source timestamps were returned");
   });
 
   it("labels observed Break Room state and config as dev-only instead of a production constraint", () => {

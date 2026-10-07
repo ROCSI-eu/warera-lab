@@ -4,6 +4,7 @@ import type {
   PublicPlayerSnapshotResponse,
 } from "@warera-lab/domain";
 
+import { CompanyMarketContext } from "./CompanyMarketContext.js";
 import { CompanyOperatingContext } from "./CompanyOperatingContext.js";
 import { CompanySelector } from "./CompanySelector.js";
 import { CompanySnapshotOverview } from "./CompanySnapshotOverview.js";
@@ -110,16 +111,27 @@ export function CompanyLabShell({
         )}
 
         {selectedCompany ? (
-          <CompanyOperatingContext
-            snapshot={snapshot}
-            company={selectedCompany}
-            context={
-              economyContextItemCode === selectedCompany.itemCode ? economyContext : undefined
-            }
-            isLoading={
-              isLoadingEconomyContext && economyContextItemCode === selectedCompany.itemCode
-            }
-          />
+          <>
+            <CompanyOperatingContext
+              snapshot={snapshot}
+              company={selectedCompany}
+              context={
+                economyContextItemCode === selectedCompany.itemCode ? economyContext : undefined
+              }
+              isLoading={
+                isLoadingEconomyContext && economyContextItemCode === selectedCompany.itemCode
+              }
+            />
+            <CompanyMarketContext
+              company={selectedCompany}
+              context={
+                economyContextItemCode === selectedCompany.itemCode ? economyContext : undefined
+              }
+              isLoading={
+                isLoadingEconomyContext && economyContextItemCode === selectedCompany.itemCode
+              }
+            />
+          </>
         ) : null}
       </div>
     </section>
