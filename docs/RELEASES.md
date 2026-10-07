@@ -70,7 +70,7 @@ A documentation-only changelog finalization commit is permitted after deployment
 
 ## Tags and GitHub Releases
 
-A Git tag named exactly like the canonical version (for example `v0.0.2`) is required for every versioned production deployment.
+A Git tag named exactly like the canonical version (for example `v0.0.5`) is required for every versioned production deployment.
 
 The historical Economy Lab MVP baseline is:
 
@@ -78,4 +78,30 @@ The historical Economy Lab MVP baseline is:
 - production commit `b6cc71df304847af8e2e063ea5f8c547039b509e`
 - production date 2026-10-02
 
-GitHub Release objects are optional for now. They can be introduced later if they add useful distribution or release-note functionality beyond the repository changelog and immutable Git tags.
+Starting with `v0.0.5`, every production deployment should also have a published GitHub Release using one consistent format.
+
+### Release title
+
+Use:
+
+`<version> — <short release name>`
+
+Example:
+
+`v0.0.5 — Company Lab MVP`
+
+### Release body
+
+Use these sections, in this order:
+
+1. `## Summary`
+2. `## Highlights`
+3. `## Production verification`
+4. `## Known limitations`
+5. `## Contributors`
+
+Keep the release body concise and production-facing. Do not reproduce the full changelog entry.
+
+The **Production verification** section should record the exact deployed commit and the most important release-specific smoke evidence. The **Contributors** section should list the human contributors to that release by GitHub handle. As of `v0.0.5`, the sole contributor is `@mihaibarbulescu`; expand the list when that changes.
+
+Publish the release as **Latest** unless it is intentionally a prerelease. Do not attach binaries for ordinary website-only releases unless the release has a distributable artifact that users need to download.

@@ -6,7 +6,7 @@ Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documente
 
 ## v0.0.5 — 2026-10-07
 
-**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Production commit:** `3db462a4c144bc3ad2214d116a186679e216e3c0`
 **Previous version:** `v0.0.4`
 **Environment:** Production — `https://warera-lab.rocsi.eu/`
 
@@ -43,8 +43,13 @@ Completes the remaining Company Lab MVP work on top of the v0.0.4 snapshot overv
 - GitHub CI run #102 passed on the final release-gate PR head with 116/116 Vitest tests and 56/56 Playwright tests.
 - The focused 12-company maximum-portfolio journey passed on desktop and mobile.
 - Company Lab representative and 12-company visual coverage passed across desktop, mobile, exactly 320 px, and reduced-motion projects, with no horizontal overflow at 320 px.
-- The v0.0.5 release-preparation tree must pass the complete release verification gate before merge.
-- Exact-SHA deployment, public production smoke checks, tag creation, and final deployed-SHA changelog evidence remain pending until this release-preparation PR is merged.
+- Release-preparation PR #75 head `bacaae35413162cd37164d70d7ff0925a40fded7` passed GitHub CI run #104 with release consistency verified as `v0.0.5`, 116/116 Vitest tests, and 56/56 Playwright tests.
+- The exact merged release commit `3db462a4c144bc3ad2214d116a186679e216e3c0` was built and deployed to production; `current`, root `VERSION`, `.deployment-sha`, and the visible frontend version all agree on `v0.0.5` and that SHA.
+- Local and public `/api/health` checks passed, the public root returned HTTP 200, and `warera-lab-api.service` remained active with `NRestarts=0`.
+- Live `MihaiROCSI` production smoke returned 9 companies; Company Lab selection and loaded operating/market context passed, and the Company Lab → Economy Lab handoff preserved the exact selected company identity.
+- Exact 320 px production smoke measured `scrollWidth === clientWidth === 320`, with no horizontal overflow and no browser console/page errors observed during the smoke flow.
+- Production `npm ci` reported 0 vulnerabilities.
+- Tag `v0.0.5` resolves directly to production commit `3db462a4c144bc3ad2214d116a186679e216e3c0`, and GitHub Release `v0.0.5 — Company Lab MVP` is published as the repository's latest release.
 
 ### Known limitations
 
