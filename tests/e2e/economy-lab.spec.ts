@@ -187,6 +187,48 @@ test("@journey refresh falls back safely when the selected company disappears", 
   expect(overflow).toBe(0);
 });
 
+test("@journey Market Lab preserves item context without loading live workspace data", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+
+  await page.goto("/?lab=market&item=steel&player=player-1&company=company-1");
+
+  const labNavigation = page.getByRole("navigation", { name: "WarEra Lab modules" });
+  const marketLabLink = labNavigation.getByRole("link", { name: "Market Lab" });
+  const economyLabLink = labNavigation.getByRole("link", { name: "Economy Lab" });
+
+  await expect(marketLabLink).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("heading", { name: "Market Lab", exact: true })).toBeVisible();
+  await expect(page.getByText("Selected item")).toBeVisible();
+  await expect(page.getByText("steel", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("WarEra player name")).toHaveCount(0);
+  expect(state.apiRequests).toEqual([]);
+  expect(state.externalRequests).toEqual([]);
+
+  await page.reload();
+
+  await expect(marketLabLink).toHaveAttribute("aria-current", "page");
+  await expect(page.getByText("steel", { exact: true })).toBeVisible();
+  expect(state.apiRequests).toEqual([]);
+
+  await economyLabLink.click();
+  await expect(page).toHaveURL(/lab=economy.*player=player-1.*company=company-1/);
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  const requestsAfterEconomyEntry = state.apiRequests.length;
+  expect(requestsAfterEconomyEntry).toBeGreaterThan(0);
+
+  await page.goBack();
+
+  await expect(page).toHaveURL(/lab=market.*item=steel.*player=player-1.*company=company-1/);
+  await expect(page.getByRole("link", { name: "Market Lab" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(page.getByText("steel", { exact: true })).toBeVisible();
+  expect(state.apiRequests.length).toBe(requestsAfterEconomyEntry);
+});
+
 test("@journey Company Lab restores player and company context through reload and browser history", async ({
   page,
 }) => {

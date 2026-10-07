@@ -274,6 +274,8 @@ export function App() {
       return;
     }
 
+    if (activeLab === "market") return;
+
     const { playerId, companyId } = initialLocation.route;
     if (!playerId) return;
     queueMicrotask(() => {
@@ -281,7 +283,7 @@ export function App() {
         clearNavigationMessage: false,
       });
     });
-  }, [importPlayerContext, initialLocation.route, initialScenario.document]);
+  }, [activeLab, importPlayerContext, initialLocation.route, initialScenario.document]);
 
   async function handleImport(playerId: string) {
     await importPlayerContext(playerId, undefined, {
