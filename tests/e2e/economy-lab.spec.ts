@@ -386,10 +386,20 @@ test("@journey Company Lab navigation entry and duplicate-name switching keep co
 
   const labNavigation = page.getByRole("navigation", { name: "WarEra Lab modules" });
   const companyLabLink = labNavigation.getByRole("link", { name: "Company Lab" });
-  for (let step = 0; step < 30; step += 1) {
+  const potentialTabStops = await page
+    .locator(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [contenteditable="true"], [tabindex]:not([tabindex="-1"])',
+    )
+    .count();
+  let reachedCompanyLab = false;
+  for (let step = 0; step <= potentialTabStops + 1; step += 1) {
     await page.keyboard.press("Tab");
-    if (await companyLabLink.evaluate((element) => document.activeElement === element)) break;
+    if (await companyLabLink.evaluate((element) => document.activeElement === element)) {
+      reachedCompanyLab = true;
+      break;
+    }
   }
+  expect(reachedCompanyLab).toBe(true);
   await expect(companyLabLink).toBeFocused();
   await page.keyboard.press("Enter");
 
