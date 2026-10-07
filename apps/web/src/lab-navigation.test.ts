@@ -27,9 +27,7 @@ describe("lab navigation", () => {
   });
 
   it("preserves optional live identity alongside Market Lab item context", () => {
-    expect(
-      parseLabLocation("?lab=market&item=steel&player=player-1&company=company-2"),
-    ).toEqual({
+    expect(parseLabLocation("?lab=market&item=steel&player=player-1&company=company-2")).toEqual({
       route: {
         lab: "market",
         itemCode: "steel",
