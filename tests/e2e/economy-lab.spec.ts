@@ -961,6 +961,11 @@ test("@visual Company Lab twelve-company max portfolio", async ({ page }) => {
   await expect(page.locator(".company-operating-context")).toContainText(
     "steel · resource · common",
   );
+  const maxPortfolioMarketContext = page.locator(".company-market-context");
+  await expect(maxPortfolioMarketContext).toContainText("Current observed price");
+  await expect(
+    maxPortfolioMarketContext.getByRole("heading", { name: "Market prices freshness" }),
+  ).toBeVisible();
 
   const selectorBox = await page.locator(".company-list").boundingBox();
   expect(selectorBox).not.toBeNull();
@@ -992,7 +997,11 @@ test("@visual representative loaded Company Lab", async ({ page }) => {
   await page.goto("/?lab=company&player=player-1&company=company-1");
 
   await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Current market context" })).toBeVisible();
+  const loadedMarketContext = page.locator(".company-market-context");
+  await expect(loadedMarketContext).toContainText("Current observed price");
+  await expect(
+    loadedMarketContext.getByRole("heading", { name: "Market prices freshness" }),
+  ).toBeVisible();
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
