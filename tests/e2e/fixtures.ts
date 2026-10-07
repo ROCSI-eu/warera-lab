@@ -11,7 +11,7 @@ export interface MockApiState {
   snapshotRevision: number;
   removedCompanyId?: string;
   apiRequests: string[];
-  apiRequestMethods: string[];
+  apiRequestDetails: Array<{ method: string; pathname: string; origin: string }>;
   externalRequests: string[];
 }
 
@@ -348,7 +348,7 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     largePortfolio: false,
     snapshotRevision: 0,
     apiRequests: [],
-    apiRequestMethods: [],
+    apiRequestDetails: [],
     externalRequests: [],
   };
 
@@ -356,7 +356,11 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     const url = new URL(request.url());
     if (url.pathname.startsWith("/api/")) {
       state.apiRequests.push(request.url());
-      state.apiRequestMethods.push(`${request.method()} ${url.pathname}`);
+      state.apiRequestDetails.push({
+        method: request.method(),
+        pathname: url.pathname,
+        origin: url.origin,
+      });
     }
     if (url.hostname !== "127.0.0.1") state.externalRequests.push(request.url());
   });

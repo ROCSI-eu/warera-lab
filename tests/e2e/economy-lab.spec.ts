@@ -507,10 +507,14 @@ test("@a11y Company Lab keyboard flow preserves privacy and same-origin boundari
   });
 
   expect(state.externalRequests).toEqual([]);
-  expect(state.apiRequestMethods.length).toBeGreaterThan(0);
+  expect(state.apiRequestDetails.length).toBeGreaterThan(0);
+  const pageOrigin = new URL(page.url()).origin;
   expect(
-    state.apiRequestMethods.every((entry) =>
-      ["POST /api/players/snapshot", "POST /api/economy/context"].includes(entry),
+    state.apiRequestDetails.every(
+      ({ method, pathname, origin }) =>
+        origin === pageOrigin &&
+        method === "POST" &&
+        ["/api/players/snapshot", "/api/economy/context"].includes(pathname),
     ),
   ).toBe(true);
   expect(
