@@ -341,6 +341,36 @@ test("@journey Company Lab handoff preserves duplicate-name identity and recover
   await expect(page.locator(".company-detail")).toContainText("Cluj");
   await expect(page.locator(".company-detail")).toContainText("31");
   await expect(page.locator(".company-detail")).toContainText("4");
+
+  await page.locator(".transfer-advanced > summary").click();
+  const exportedScenario = JSON.parse(await page.getByLabel("JSON export").inputValue()) as {
+    scenarios: {
+      baseline: {
+        companyItemCode?: string;
+        market?: { itemCode?: string };
+      };
+    };
+  };
+  expect(exportedScenario.scenarios.baseline.companyItemCode).toBe("iron");
+  expect(exportedScenario.scenarios.baseline.market?.itemCode).toBe("iron");
+
+  const baselineTab = page.getByRole("button", { name: "Baseline" });
+  await baselineTab.click();
+  await expect(baselineTab).toHaveAttribute("aria-pressed", "true");
+
+  const baselineMarketPlanner = page
+    .locator(".planner-panel")
+    .filter({ has: page.getByRole("heading", { name: "Market & margin" }) });
+  await expect(baselineMarketPlanner.locator(".badge")).toHaveText("iron");
+
+  await page.locator(".calculation-details > summary").click();
+  await expect(
+    page.locator(".calculation-summary-grid article").filter({ hasText: "Market scenario" }),
+  ).toContainText("iron");
+  await expect(
+    page.locator(".calculation-summary-grid article").filter({ hasText: "Current live references" }),
+  ).toContainText("iron · 2 market prices · 1 recipe input");
+
   expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
     true,
   );
