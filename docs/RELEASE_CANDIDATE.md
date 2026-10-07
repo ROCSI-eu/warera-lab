@@ -65,7 +65,7 @@ A release candidate is not ready unless all of the following are green:
 - Provenance states are written as observed, overridden, assumed, or derived and do not rely on colour alone.
 - Reduced-motion mode removes non-essential motion without removing functionality.
 - Economy Lab and Company Lab full-page visual baselines are intentional and reviewed.
-- The nine-company selector remains compact and unambiguous on desktop, mobile, and exactly 320 px.
+- The 12-company maximum portfolio remains compact and unambiguous in both Economy Lab and Company Lab on desktop, mobile, and exactly 320 px.
 
 ## API, privacy, and persistence boundary
 

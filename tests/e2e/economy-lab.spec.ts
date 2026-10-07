@@ -774,7 +774,7 @@ test("@journey duplicate company names remain unambiguous before and after selec
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test("@journey nine-company portfolio stays compact and unambiguous at 320 px", async ({
+test("@journey twelve-company max portfolio stays compact and unambiguous at 320 px", async ({
   page,
 }) => {
   const state = await installApiMocks(page);
@@ -783,7 +783,7 @@ test("@journey nine-company portfolio stays compact and unambiguous at 320 px", 
   await importPlannerWorkspace(page, "MihaiROCSI");
 
   const companies = page.locator(".company-card");
-  await expect(companies).toHaveCount(9);
+  await expect(companies).toHaveCount(12);
 
   const steelCompanies = companies.filter({ hasText: "Steel Inc" });
   await expect(steelCompanies).toHaveCount(2);
@@ -796,7 +796,7 @@ test("@journey nine-company portfolio stays compact and unambiguous at 320 px", 
 
   const selectorBox = await page.locator(".company-list").boundingBox();
   expect(selectorBox).not.toBeNull();
-  expect(selectorBox!.height).toBeLessThan(892.08);
+  expect(selectorBox!.height / 12).toBeLessThan(100);
 
   await expect(steelCompanies.nth(0).locator(".company-card__upgrades")).not.toBeVisible();
   await steelCompanies.nth(1).focus();
@@ -924,7 +924,7 @@ test("@visual release footer", async ({ page }) => {
   await expect(footer).toHaveScreenshot("release-footer.png");
 });
 
-test("@visual nine-company selector", async ({ page }) => {
+test("@visual twelve-company max selector", async ({ page }) => {
   const state = await installApiMocks(page);
   state.largePortfolio = true;
   await importPlannerWorkspace(page, "MihaiROCSI");
@@ -945,7 +945,35 @@ test("@visual nine-company selector", async ({ page }) => {
   const companiesPanel = page
     .locator(".workspace-panel")
     .filter({ has: page.getByRole("heading", { name: "Companies" }) });
-  await expect(companiesPanel).toHaveScreenshot("company-selector-nine-companies.png");
+  await expect(companiesPanel).toHaveScreenshot("company-selector-twelve-companies.png");
+});
+
+test("@visual Company Lab twelve-company max portfolio", async ({ page }) => {
+  const state = await installApiMocks(page);
+  state.largePortfolio = true;
+  await page.goto("/?lab=company&player=player-1&company=steel-algarve-1");
+
+  const companies = page.locator(".company-card");
+  await expect(companies).toHaveCount(12);
+  await expect(page.locator(".company-operating-context")).toContainText(
+    "steel · resource · common",
+  );
+
+  const selectorBox = await page.locator(".company-list").boundingBox();
+  expect(selectorBox).not.toBeNull();
+  if (test.info().project.name === "visual-320") {
+    expect(selectorBox!.height / 12).toBeLessThan(100);
+  }
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+
+  await expect(page.locator(".company-lab-entry")).toHaveScreenshot(
+    "company-lab-twelve-company-portfolio.png",
+    { timeout: 15_000 },
+  );
 });
 
 test("@visual refresh snapshot control", async ({ page }) => {
