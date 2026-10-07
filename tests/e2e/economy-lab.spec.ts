@@ -486,7 +486,13 @@ test("@journey Company Lab exposes partial context and survives upstream context
   state.economyContextMode = "ok";
   await page.reload();
 
-  await expect(page.getByRole("heading", { name: "Current market context" })).toBeVisible();
+  const recoveredOperatingContext = page.locator(".company-operating-context");
+  const recoveredMarketContext = page.locator(".company-market-context");
+  await expect(recoveredOperatingContext).toContainText("steel · resource · common");
+  await expect(recoveredMarketContext).toContainText("Current observed price");
+  await expect(
+    recoveredMarketContext.getByRole("heading", { name: "Market prices freshness" }),
+  ).toBeVisible();
   await expect(page.getByText(/Missing current price references:/i)).toHaveCount(0);
   await expect(page.getByText(/Normalized game configuration is unavailable/i)).toHaveCount(0);
 });
