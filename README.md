@@ -2,7 +2,7 @@
 
 WarEra Lab is an independent, open-source toolkit for **WarEra simulation, analytics, and game-data exploration**, developed by ROCSI.
 
-> **Status:** Economy Lab MVP is live in production.
+> **Status:** Economy Lab is live in production. The repository also contains Company Lab; consult [VERSION](VERSION) and [CHANGELOG.md](CHANGELOG.md) for the exact contents of the currently deployed release.
 
 Production: <https://warera-lab.rocsi.eu/>
 
@@ -16,7 +16,7 @@ The central design rule is:
 
 **WarEra API data describes the current state; WarEra Lab owns the hypothetical simulation model.**
 
-The first public MVP is credential-free and Economy-Lab-first. Its accepted scope is documented in [docs/MVP.md](docs/MVP.md). Post-MVP areas may include combat/build analysis, richer market context, and other documented public game data.
+The first public MVP is credential-free and Economy-Lab-first. Its accepted scope is documented in [docs/MVP.md](docs/MVP.md). Company Lab extends that foundation with a read-only company inspection surface and an explicit handoff back into Economy Lab simulation. The cross-lab release gate is documented in [docs/RELEASE_CANDIDATE.md](docs/RELEASE_CANDIDATE.md). Post-MVP areas may include combat/build analysis, richer market context, and other documented public game data.
 
 ## Data and calculation provenance
 

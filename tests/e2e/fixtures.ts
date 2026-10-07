@@ -1,15 +1,18 @@
+import type { EconomyPlannerContextResponse } from "@warera-lab/domain";
 import type { Page } from "@playwright/test";
 
 export interface MockApiState {
   searchMode: "ok" | "empty" | "rate-limit";
   snapshotMode: "ok" | "unavailable" | "rate-limit";
-  economyContextMode: "ok" | "unavailable";
+  economyContextMode: "ok" | "unavailable" | "rate-limit" | "missing-price" | "missing-item";
   staleSnapshot: boolean;
   duplicateCompanies: boolean;
   largePortfolio: boolean;
   snapshotRevision: number;
   removedCompanyId?: string;
   apiRequests: string[];
+  economyContextItemCodes: string[];
+  apiRequestDetails: Array<{ method: string; pathname: string; origin: string }>;
   externalRequests: string[];
 }
 
@@ -63,6 +66,7 @@ const duplicateNameCompany = {
   ...company,
   id: "company-duplicate-2",
   regionId: "region-2",
+  itemCode: "iron",
   name: "Iron Inc",
   production: 31,
   workerCount: 4,
@@ -211,6 +215,36 @@ const largePortfolioSnapshotResponse = {
       workerCount: 3,
       activeUpgradeLevels: { automatedEngine: 2, storage: 2 },
     },
+    {
+      ...company,
+      id: "iron-salta-3",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-salta",
+      production: 4.2,
+      workerCount: 2,
+      activeUpgradeLevels: { storage: 2 },
+    },
+    {
+      ...company,
+      id: "iron-sierra-3",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-sierra-leone",
+      production: 8.1,
+      workerCount: 4,
+      activeUpgradeLevels: { automatedEngine: 2, breakRoom: 1 },
+    },
+    {
+      ...company,
+      id: "iron-liberia-4",
+      name: "Iron Inc",
+      itemCode: "iron",
+      regionId: "region-ne-liberia",
+      production: 9.6,
+      workerCount: 5,
+      activeUpgradeLevels: { automatedEngine: 2, storage: 2, breakRoom: 2 },
+    },
   ],
   regions: {
     ...snapshotResponse.regions,
@@ -346,12 +380,21 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     largePortfolio: false,
     snapshotRevision: 0,
     apiRequests: [],
+    economyContextItemCodes: [],
+    apiRequestDetails: [],
     externalRequests: [],
   };
 
   page.on("request", (request) => {
     const url = new URL(request.url());
-    if (url.pathname.startsWith("/api/")) state.apiRequests.push(request.url());
+    if (url.pathname.startsWith("/api/")) {
+      state.apiRequests.push(request.url());
+      state.apiRequestDetails.push({
+        method: request.method(),
+        pathname: url.pathname,
+        origin: url.origin,
+      });
+    }
     if (url.hostname !== "127.0.0.1") state.externalRequests.push(request.url());
   });
 
@@ -473,6 +516,10 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     }
 
     if (url.pathname === "/api/economy/context") {
+      const requestBody = route.request().postDataJSON() as { itemCode?: string };
+      const requestedItemCode = requestBody.itemCode ?? "steel";
+      state.economyContextItemCodes.push(requestedItemCode);
+
       if (state.economyContextMode === "unavailable") {
         await route.fulfill({
           status: 503,
@@ -486,8 +533,48 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
         });
         return;
       }
+      if (state.economyContextMode === "rate-limit") {
+        await route.fulfill({
+          status: 429,
+          headers: { "retry-after": "60" },
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: {
+              code: "UPSTREAM_RATE_LIMITED",
+              message: "WarEra rate limit reached. Try again shortly.",
+              retryAfterSeconds: 60,
+            },
+          }),
+        });
+        return;
+      }
 
-      const response = structuredClone(economyContextResponse);
+      const response = structuredClone(economyContextResponse) as EconomyPlannerContextResponse;
+      if (requestedItemCode === "iron") {
+        response.itemCode = "iron";
+        response.configRevision = "fnv1a-testcfg-iron";
+        response.item = {
+          ...response.item!,
+          code: "iron",
+          productionPoints: 17,
+          productionNeeds: { coal: 4 },
+        };
+        response.marketPrices = { iron: 73.21, coal: 4.25 };
+        response.contextGaps = { itemCodes: [], marketPriceItemCodes: [] };
+        response.companyUpgrades.automatedEngine!.levels[1]!.stats.dailyProd = 77;
+        response.companyUpgrades.storage!.levels[1]!.stats.maxProduction = 444;
+      }
+      if (state.economyContextMode === "missing-price") {
+        delete response.marketPrices.coal;
+        response.contextGaps.marketPriceItemCodes = ["coal"];
+        response.companyUpgrades.storage.levels = {};
+      }
+      if (state.economyContextMode === "missing-item") {
+        delete response.item;
+        response.marketPrices = { steel: response.marketPrices.steel! };
+        response.contextGaps.itemCodes = ["steel"];
+        response.contextGaps.marketPriceItemCodes = [];
+      }
       if (state.snapshotRevision > 0) {
         response.marketPrices.steel = 11;
         response.freshness.generatedAt = "2026-10-01T12:05:07.000Z";

@@ -341,6 +341,38 @@ test("@journey Company Lab handoff preserves duplicate-name identity and recover
   await expect(page.locator(".company-detail")).toContainText("Cluj");
   await expect(page.locator(".company-detail")).toContainText("31");
   await expect(page.locator(".company-detail")).toContainText("4");
+
+  await page.locator(".transfer-advanced > summary").click();
+  const exportedScenario = JSON.parse(await page.getByLabel("JSON export").inputValue()) as {
+    scenarios: {
+      baseline: {
+        companyItemCode?: string;
+        market?: { itemCode?: string };
+      };
+    };
+  };
+  expect(exportedScenario.scenarios.baseline.companyItemCode).toBe("iron");
+  expect(exportedScenario.scenarios.baseline.market?.itemCode).toBe("iron");
+
+  const baselineTab = page.getByRole("button", { name: "Baseline" });
+  await baselineTab.click();
+  await expect(baselineTab).toHaveAttribute("aria-pressed", "true");
+
+  const baselineMarketPlanner = page
+    .locator(".planner-panel")
+    .filter({ has: page.getByRole("heading", { name: "Market & margin" }) });
+  await expect(baselineMarketPlanner.locator(".badge")).toHaveText("iron");
+
+  await page.locator(".calculation-details > summary").click();
+  await expect(
+    page.locator(".calculation-summary-grid article").filter({ hasText: "Market scenario" }),
+  ).toContainText("iron");
+  await expect(
+    page
+      .locator(".calculation-summary-grid article")
+      .filter({ hasText: "Current live references" }),
+  ).toContainText("iron · 2 market prices · 1 recipe input");
+
   expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
     true,
   );
@@ -374,6 +406,213 @@ test("@journey Company Lab handoff preserves duplicate-name identity and recover
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBe(0);
+});
+
+test("@journey Company Lab navigation entry and duplicate-name switching keep context coherent", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+  state.duplicateCompanies = true;
+
+  await importPlannerWorkspace(page);
+
+  const labNavigation = page.getByRole("navigation", { name: "WarEra Lab modules" });
+  const companyLabLink = labNavigation.getByRole("link", { name: "Company Lab" });
+  const potentialTabStops = await page
+    .locator(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [contenteditable="true"], [tabindex]:not([tabindex="-1"])',
+    )
+    .count();
+  let reachedCompanyLab = false;
+  for (let step = 0; step <= potentialTabStops + 1; step += 1) {
+    await page.keyboard.press("Tab");
+    if (await companyLabLink.evaluate((element) => document.activeElement === element)) {
+      reachedCompanyLab = true;
+      break;
+    }
+  }
+  expect(reachedCompanyLab).toBe(true);
+  await expect(companyLabLink).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  await expect(companyLabLink).toHaveAttribute("aria-current", "page");
+  await expect(page).toHaveURL(/lab=company.*player=player-1.*company=company-duplicate-1/);
+
+  const companyCards = page.locator(".company-card").filter({ hasText: "Iron Inc" });
+  await expect(companyCards).toHaveCount(2);
+  await expect(companyCards.nth(0)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-operating-context")).toContainText(
+    "steel · resource · common",
+  );
+
+  state.economyContextItemCodes.length = 0;
+  const ironContextRequest = page.waitForRequest((request) => {
+    if (new URL(request.url()).pathname !== "/api/economy/context") return false;
+    const body = request.postDataJSON() as { itemCode?: string } | null;
+    return body?.itemCode === "iron";
+  });
+  await companyCards.nth(1).click();
+  await ironContextRequest;
+
+  await expect(companyCards.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(page).toHaveURL(/lab=company.*player=player-1.*company=company-duplicate-2/);
+  await expect(page.locator(".company-snapshot-overview")).toContainText("Cluj");
+  await expect(page.locator(".company-snapshot-overview")).toContainText("31");
+  await expect(page.locator(".company-snapshot-overview")).toContainText("4");
+
+  expect(state.economyContextItemCodes).toEqual(["iron"]);
+
+  const operatingContext = page.locator(".company-operating-context");
+  await expect(operatingContext).toContainText("iron · resource · common");
+  await expect(operatingContext).toContainText("Configured production points: 17");
+  await expect(operatingContext).toContainText("Daily production reference");
+  await expect(operatingContext).toContainText("77");
+  await expect(operatingContext).toContainText("Production capacity reference");
+  await expect(operatingContext).toContainText("444");
+
+  const marketContext = page.locator(".company-market-context");
+  await expect(marketContext).toContainText("Output item");
+  await expect(marketContext).toContainText("iron");
+  await expect(marketContext).toContainText("73.21");
+  await expect(marketContext).toContainText("coal");
+  await expect(marketContext).toContainText("Recipe quantity 4");
+  await expect(marketContext).toContainText("4.25");
+});
+
+test("@journey Company Lab exposes partial context and survives upstream context failures", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+  state.economyContextMode = "missing-price";
+
+  await page.goto("/?lab=company&player=player-1&company=company-1");
+
+  const overview = page.locator(".company-snapshot-overview");
+  await expect(overview.getByRole("heading", { name: "Planner Steel" })).toBeVisible();
+  await expect(page.getByText(/Missing current price references: coal/i)).toBeVisible();
+  await expect(
+    page.getByText(/observed level is not present in the current normalized configuration/i),
+  ).toBeVisible();
+  await expect(page.getByText(/No replacement values were invented/i)).toBeVisible();
+  await expect(page.getByText(/Item configuration is incomplete for steel/i)).toHaveCount(0);
+
+  state.economyContextMode = "missing-item";
+  await page.reload();
+
+  await expect(overview.getByRole("heading", { name: "Planner Steel" })).toBeVisible();
+  await expect(
+    page.getByText(/steel is absent from the normalized game configuration/i),
+  ).toBeVisible();
+  await expect(page.getByText(/Item configuration is incomplete for steel/i)).toBeVisible();
+  await expect(
+    page.getByText(/Required input-price context cannot be listed because steel is absent/i),
+  ).toBeVisible();
+  await expect(page.getByText(/Missing current price references:/i)).toHaveCount(0);
+
+  state.economyContextMode = "unavailable";
+  await page.reload();
+
+  await expect(overview.getByRole("heading", { name: "Planner Steel" })).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText(
+    "WarEra Economy context is temporarily unavailable.",
+  );
+  await expect(page.getByText(/Normalized game configuration is unavailable/i)).toBeVisible();
+  await expect(page.getByText(/Normalized current market context is unavailable/i)).toBeVisible();
+
+  state.economyContextMode = "rate-limit";
+  await page.reload();
+
+  await expect(overview.getByRole("heading", { name: "Planner Steel" })).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText(
+    "WarEra rate limit reached. Try again shortly.",
+  );
+
+  state.economyContextMode = "ok";
+  await page.reload();
+
+  const recoveredOperatingContext = page.locator(".company-operating-context");
+  const recoveredMarketContext = page.locator(".company-market-context");
+  await expect(recoveredOperatingContext).toContainText("steel · resource · common");
+  await expect(recoveredMarketContext).toContainText("Current observed price");
+  await expect(
+    recoveredMarketContext.getByRole("heading", { name: "Market prices freshness" }),
+  ).toBeVisible();
+  await expect(page.getByText(/Missing current price references:/i)).toHaveCount(0);
+  await expect(page.getByText(/Normalized game configuration is unavailable/i)).toHaveCount(0);
+});
+
+test("@a11y Company Lab keyboard flow preserves privacy and same-origin boundaries", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+  state.duplicateCompanies = true;
+
+  await page.goto("/?lab=company&player=player-1&company=company-duplicate-1");
+
+  const companyCards = page.locator(".company-card").filter({ hasText: "Iron Inc" });
+  await expect(companyCards).toHaveCount(2);
+
+  const accessibility = await new AxeBuilder({ page }).include(".company-lab-entry").analyze();
+  expect(accessibility.violations).toEqual([]);
+
+  async function reachByKeyboard(
+    locator: ReturnType<typeof page.locator>,
+    direction: "forward" | "backward",
+  ) {
+    const key = direction === "forward" ? "Tab" : "Shift+Tab";
+    for (let step = 0; step < 30; step += 1) {
+      await page.keyboard.press(key);
+      if (await locator.evaluate((element) => document.activeElement === element)) return;
+    }
+    throw new Error(`Could not reach target with ${key} within 30 steps`);
+  }
+
+  const secondCompany = companyCards.nth(1);
+  await reachByKeyboard(secondCompany, "forward");
+  await expect(secondCompany).toBeFocused();
+  expect(
+    await secondCompany.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return style.outlineStyle !== "none" && style.outlineWidth !== "0px";
+    }),
+  ).toBe(true);
+  await page.keyboard.press("Enter");
+
+  await expect(secondCompany).toHaveAttribute("aria-pressed", "true");
+  await expect(page).toHaveURL(/lab=company.*company=company-duplicate-2/);
+
+  const handoff = page.getByRole("link", { name: "Model in Economy Lab" });
+  await reachByKeyboard(handoff, "backward");
+  await expect(handoff).toBeFocused();
+  expect(
+    await handoff.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return style.outlineStyle !== "none" && style.outlineWidth !== "0px";
+    }),
+  ).toBe(true);
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible({
+    timeout: 10_000,
+  });
+
+  expect(state.externalRequests).toEqual([]);
+  expect(state.apiRequestDetails.length).toBeGreaterThan(0);
+  const pageOrigin = new URL(page.url()).origin;
+  expect(
+    state.apiRequestDetails.every(
+      ({ method, pathname, origin }) =>
+        origin === pageOrigin &&
+        method === "POST" &&
+        ["/api/players/snapshot", "/api/economy/context"].includes(pathname),
+    ),
+  ).toBe(true);
+  expect(
+    await page.evaluate(() => ({
+      localStorageKeys: Object.keys(window.localStorage),
+      sessionStorageKeys: Object.keys(window.sessionStorage),
+    })),
+  ).toEqual({ localStorageKeys: [], sessionStorageKeys: [] });
 });
 
 test("@journey unknown lab fallback preserves its recovery warning after Economy context reload", async ({
@@ -535,7 +774,7 @@ test("@journey duplicate company names remain unambiguous before and after selec
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test("@journey nine-company portfolio stays compact and unambiguous at 320 px", async ({
+test("@journey twelve-company max portfolio stays compact and unambiguous at 320 px", async ({
   page,
 }) => {
   const state = await installApiMocks(page);
@@ -544,7 +783,7 @@ test("@journey nine-company portfolio stays compact and unambiguous at 320 px", 
   await importPlannerWorkspace(page, "MihaiROCSI");
 
   const companies = page.locator(".company-card");
-  await expect(companies).toHaveCount(9);
+  await expect(companies).toHaveCount(12);
 
   const steelCompanies = companies.filter({ hasText: "Steel Inc" });
   await expect(steelCompanies).toHaveCount(2);
@@ -557,7 +796,7 @@ test("@journey nine-company portfolio stays compact and unambiguous at 320 px", 
 
   const selectorBox = await page.locator(".company-list").boundingBox();
   expect(selectorBox).not.toBeNull();
-  expect(selectorBox!.height).toBeLessThan(892.08);
+  expect(selectorBox!.height / 12).toBeLessThan(100);
 
   await expect(steelCompanies.nth(0).locator(".company-card__upgrades")).not.toBeVisible();
   await steelCompanies.nth(1).focus();
@@ -685,15 +924,18 @@ test("@visual release footer", async ({ page }) => {
   await expect(footer).toHaveScreenshot("release-footer.png");
 });
 
-test("@visual nine-company selector", async ({ page }) => {
+test("@visual twelve-company max selector", async ({ page }) => {
   const state = await installApiMocks(page);
   state.largePortfolio = true;
   await importPlannerWorkspace(page, "MihaiROCSI");
 
+  const companies = page.locator(".company-card");
+  await expect(companies).toHaveCount(12);
+
   if (test.info().project.name === "visual-320") {
     const selectorBox = await page.locator(".company-list").boundingBox();
     expect(selectorBox).not.toBeNull();
-    expect(selectorBox!.height).toBeLessThan(892.08);
+    expect(selectorBox!.height / 12).toBeLessThan(100);
   }
 
   const firstUpgradeSummary = page.locator(".company-card__upgrades").first();
@@ -706,7 +948,40 @@ test("@visual nine-company selector", async ({ page }) => {
   const companiesPanel = page
     .locator(".workspace-panel")
     .filter({ has: page.getByRole("heading", { name: "Companies" }) });
-  await expect(companiesPanel).toHaveScreenshot("company-selector-nine-companies.png");
+  await expect(companiesPanel).toHaveScreenshot("company-selector-twelve-companies.png");
+});
+
+test("@visual Company Lab twelve-company max portfolio", async ({ page }) => {
+  const state = await installApiMocks(page);
+  state.largePortfolio = true;
+  await page.goto("/?lab=company&player=player-1&company=steel-algarve-1");
+
+  const companies = page.locator(".company-card");
+  await expect(companies).toHaveCount(12);
+  await expect(page.locator(".company-operating-context")).toContainText(
+    "steel · resource · common",
+  );
+  const maxPortfolioMarketContext = page.locator(".company-market-context");
+  await expect(maxPortfolioMarketContext).toContainText("Current observed price");
+  await expect(
+    maxPortfolioMarketContext.getByRole("heading", { name: "Market prices freshness" }),
+  ).toBeVisible();
+
+  const selectorBox = await page.locator(".company-list").boundingBox();
+  expect(selectorBox).not.toBeNull();
+  if (test.info().project.name === "visual-320") {
+    expect(selectorBox!.height / 12).toBeLessThan(100);
+  }
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+
+  await expect(page.locator(".company-lab-entry")).toHaveScreenshot(
+    "company-lab-twelve-company-portfolio.png",
+    { timeout: 15_000 },
+  );
 });
 
 test("@visual refresh snapshot control", async ({ page }) => {
@@ -715,6 +990,59 @@ test("@visual refresh snapshot control", async ({ page }) => {
 
   const workspaceHeader = page.locator(".workspace > .workspace-heading");
   await expect(workspaceHeader).toHaveScreenshot("refresh-snapshot-control.png");
+});
+
+test("@visual representative loaded Company Lab", async ({ page }) => {
+  await installApiMocks(page);
+  await page.goto("/?lab=company&player=player-1&company=company-1");
+
+  await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
+  const loadedMarketContext = page.locator(".company-market-context");
+  await expect(loadedMarketContext).toContainText("Current observed price");
+  await expect(
+    loadedMarketContext.getByRole("heading", { name: "Market prices freshness" }),
+  ).toBeVisible();
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+
+  const reduced = await page.evaluate(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  if (test.info().project.name === "visual-reduced-motion") {
+    expect(reduced).toBe(true);
+
+    const motionDurations = await page.locator(".company-lab-entry").evaluate((element) => {
+      function maximumDurationMs(value: string): number {
+        return Math.max(
+          ...value.split(",").map((duration) => {
+            const normalized = duration.trim();
+            if (normalized.endsWith("ms")) return Number.parseFloat(normalized);
+            if (normalized.endsWith("s")) return Number.parseFloat(normalized) * 1000;
+            return Number.NaN;
+          }),
+        );
+      }
+
+      const style = getComputedStyle(element);
+      return {
+        transitionMs: maximumDurationMs(style.transitionDuration),
+        animationMs: maximumDurationMs(style.animationDuration),
+      };
+    });
+
+    expect(motionDurations.transitionMs).toBeGreaterThan(0);
+    expect(motionDurations.transitionMs).toBeLessThanOrEqual(0.01);
+    expect(motionDurations.animationMs).toBeGreaterThan(0);
+    expect(motionDurations.animationMs).toBeLessThanOrEqual(0.01);
+  }
+
+  await expect(page).toHaveScreenshot("company-lab-release-candidate.png", {
+    fullPage: true,
+    timeout: 15_000,
+  });
 });
 
 test("@visual representative loaded Economy Lab", async ({ page }) => {
