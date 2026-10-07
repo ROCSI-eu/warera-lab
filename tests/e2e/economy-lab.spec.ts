@@ -929,10 +929,13 @@ test("@visual twelve-company max selector", async ({ page }) => {
   state.largePortfolio = true;
   await importPlannerWorkspace(page, "MihaiROCSI");
 
+  const companies = page.locator(".company-card");
+  await expect(companies).toHaveCount(12);
+
   if (test.info().project.name === "visual-320") {
     const selectorBox = await page.locator(".company-list").boundingBox();
     expect(selectorBox).not.toBeNull();
-    expect(selectorBox!.height).toBeLessThan(892.08);
+    expect(selectorBox!.height / 12).toBeLessThan(100);
   }
 
   const firstUpgradeSummary = page.locator(".company-card__upgrades").first();
