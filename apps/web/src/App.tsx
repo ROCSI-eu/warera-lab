@@ -235,8 +235,13 @@ export function App() {
           if (activeLab === "economy" && context) {
             establishScenarioDocument(snapshot, targetCompany, context);
             if (requestedCompanyId && requestedCompany) {
-              setNavigationMessage(
-                "Economy Lab reloaded the current public snapshot and normalized economy context for the company identified by this link. The URL carried player/company identifiers only, not company data.",
+              setNavigationMessage((current) =>
+                [
+                  current,
+                  "Economy Lab reloaded the current public snapshot and normalized economy context for the company identified by this link. The URL carried player/company identifiers only, not company data.",
+                ]
+                  .filter(Boolean)
+                  .join(" "),
               );
             }
           }

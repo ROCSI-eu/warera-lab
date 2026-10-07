@@ -376,6 +376,34 @@ test("@journey Company Lab handoff preserves duplicate-name identity and recover
   expect(overflow).toBe(0);
 });
 
+test("@journey unknown lab fallback preserves its recovery warning after Economy context reload", async ({
+  page,
+}) => {
+  const state = await installApiMocks(page);
+
+  await page.goto("/?lab=unknown&player=player-1&company=company-1");
+
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  await expect(
+    page.getByText(/Unknown lab link\. Economy Lab was opened instead\./i),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      /Economy Lab reloaded the current public snapshot and normalized economy context/i,
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/URL carried player\/company identifiers only, not company data/i),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/lab=economy.*player=player-1.*company=company-1/);
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
+    true,
+  );
+  expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/economy/context")).toBe(
+    true,
+  );
+});
+
 test("@journey invalid Company Lab links recover into usable player and company selection", async ({
   page,
 }) => {
