@@ -17,6 +17,7 @@ import {
 import { CompanyLabShell } from "./CompanyLabShell.js";
 import { CompanySelector } from "./CompanySelector.js";
 import { FreshnessPanel } from "./FreshnessPanel.js";
+import { MarketLabShell } from "./MarketLabShell.js";
 import { ScenarioTransfer, ScenarioWorkspace } from "./ScenarioWorkspace.js";
 import { formatDisplayNumber, formatOptionalDisplayNumber } from "./display-format.js";
 import { describeCompany, type CompanyPresentation } from "./company-display.js";
@@ -120,6 +121,9 @@ export function App() {
         lab: activeLab,
         ...(playerId ? { playerId } : {}),
         ...(playerId && companyId ? { companyId } : {}),
+        ...(activeLab === "market" && initialLocation.route.itemCode
+          ? { itemCode: initialLocation.route.itemCode }
+          : {}),
       };
       const liveLocation = {
         pathname: window.location.pathname,
@@ -128,7 +132,7 @@ export function App() {
       };
       window.history.replaceState(window.history.state, "", buildLabHref(route, liveLocation));
     },
-    [activeLab],
+    [activeLab, initialLocation.route.itemCode],
   );
 
   const establishScenarioDocument = useCallback(
@@ -401,12 +405,15 @@ export function App() {
         lab,
         ...(navigationPlayerId ? { playerId: navigationPlayerId } : {}),
         ...(navigationPlayerId && navigationCompanyId ? { companyId: navigationCompanyId } : {}),
+        ...(lab === "market" && activeLab === "market" && initialLocation.route.itemCode
+          ? { itemCode: initialLocation.route.itemCode }
+          : {}),
       },
       {
         pathname: window.location.pathname,
         search: window.location.search,
         hash:
-          lab === "company" && window.location.hash.startsWith("#wl=") ? "" : window.location.hash,
+          lab !== "economy" && window.location.hash.startsWith("#wl=") ? "" : window.location.hash,
       },
     );
   };
@@ -434,6 +441,12 @@ export function App() {
             >
               Company Lab
             </a>
+            <a
+              href={labHref("market")}
+              aria-current={activeLab === "market" ? "page" : undefined}
+            >
+              Market Lab
+            </a>
           </nav>
           <span className="status-pill">Public MVP</span>
         </div>
@@ -444,16 +457,21 @@ export function App() {
         <h1 id="warera-lab-title">
           {activeLab === "economy"
             ? "Import the present. Model the what-if."
-            : "Understand the company before modelling the what-if."}
+            : activeLab === "company"
+              ? "Understand the company before modelling the what-if."
+              : "Read the market now. Keep the assumptions visible."}
         </h1>
         <p className="lede">
           {activeLab === "economy"
             ? "Search a public WarEra player, inspect a normalized economy snapshot, and carry that observed state into transparent scenarios without credentials or in-game actions."
-            : "Select a public company and review its normalized output, location, observed production, workforce, active upgrades, and data provenance before deeper analysis."}
+            : activeLab === "company"
+              ? "Select a public company and review its normalized output, location, observed production, workforce, active upgrades, and data provenance before deeper analysis."
+              : "Inspect a current-state market module built around normalized public data, explicit freshness, and transparent derivations without historical collection."}
         </p>
       </section>
 
-      <section className="search-panel" aria-labelledby="player-search-title">
+      {activeLab !== "market" ? (
+        <section className="search-panel" aria-labelledby="player-search-title">
         <div className="section-heading">
           <div>
             <p className="section-kicker">Step 1 · public data</p>
@@ -531,7 +549,8 @@ export function App() {
             <FreshnessPanel freshness={state.search.freshness} title="Search" />
           </div>
         ) : null}
-      </section>
+        </section>
+      ) : null}
 
       {activeLab === "economy" && navigationMessage ? (
         <p className="message message--warning" role="status">
@@ -568,6 +587,11 @@ export function App() {
           isBusy={state.isImporting || state.isRefreshing || state.isLoadingEconomyContext}
           isLoadingEconomyContext={state.isLoadingEconomyContext}
           onCompanySelect={(company) => void handleCompanySelect(company)}
+        />
+      ) : activeLab === "market" ? (
+        <MarketLabShell
+          itemCode={initialLocation.route.itemCode}
+          navigationMessage={navigationMessage}
         />
       ) : state.snapshot ? (
         <section className="workspace" aria-labelledby="workspace-title">
