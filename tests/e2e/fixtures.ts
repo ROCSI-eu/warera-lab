@@ -11,6 +11,7 @@ export interface MockApiState {
   snapshotRevision: number;
   removedCompanyId?: string;
   apiRequests: string[];
+  economyContextItemCodes: string[];
   apiRequestDetails: Array<{ method: string; pathname: string; origin: string }>;
   externalRequests: string[];
 }
@@ -65,6 +66,7 @@ const duplicateNameCompany = {
   ...company,
   id: "company-duplicate-2",
   regionId: "region-2",
+  itemCode: "iron",
   name: "Iron Inc",
   production: 31,
   workerCount: 4,
@@ -348,6 +350,7 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     largePortfolio: false,
     snapshotRevision: 0,
     apiRequests: [],
+    economyContextItemCodes: [],
     apiRequestDetails: [],
     externalRequests: [],
   };
@@ -483,6 +486,10 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     }
 
     if (url.pathname === "/api/economy/context") {
+      const requestBody = route.request().postDataJSON() as { itemCode?: string };
+      const requestedItemCode = requestBody.itemCode ?? "steel";
+      state.economyContextItemCodes.push(requestedItemCode);
+
       if (state.economyContextMode === "unavailable") {
         await route.fulfill({
           status: 503,
@@ -513,6 +520,20 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
       }
 
       const response = structuredClone(economyContextResponse) as EconomyPlannerContextResponse;
+      if (requestedItemCode === "iron") {
+        response.itemCode = "iron";
+        response.configRevision = "fnv1a-testcfg-iron";
+        response.item = {
+          ...response.item!,
+          code: "iron",
+          productionPoints: 17,
+          productionNeeds: { coal: 4 },
+        };
+        response.marketPrices = { iron: 73.21, coal: 4.25 };
+        response.contextGaps = { itemCodes: [], marketPriceItemCodes: [] };
+        response.companyUpgrades.automatedEngine!.levels[1]!.stats.dailyProd = 77;
+        response.companyUpgrades.storage!.levels[1]!.stats.maxProduction = 444;
+      }
       if (state.economyContextMode === "missing-price") {
         delete response.marketPrices.coal;
         response.contextGaps.marketPriceItemCodes = ["coal"];

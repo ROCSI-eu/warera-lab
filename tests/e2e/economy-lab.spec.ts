@@ -397,7 +397,11 @@ test("@journey Company Lab navigation entry and duplicate-name switching keep co
   const companyCards = page.locator(".company-card").filter({ hasText: "Iron Inc" });
   await expect(companyCards).toHaveCount(2);
   await expect(companyCards.nth(0)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".company-operating-context")).toContainText(
+    "steel · resource · common",
+  );
 
+  state.economyContextItemCodes.length = 0;
   await companyCards.nth(1).click();
 
   await expect(companyCards.nth(1)).toHaveAttribute("aria-pressed", "true");
@@ -405,6 +409,24 @@ test("@journey Company Lab navigation entry and duplicate-name switching keep co
   await expect(page.locator(".company-snapshot-overview")).toContainText("Cluj");
   await expect(page.locator(".company-snapshot-overview")).toContainText("31");
   await expect(page.locator(".company-snapshot-overview")).toContainText("4");
+
+  expect(state.economyContextItemCodes).toEqual(["iron"]);
+
+  const operatingContext = page.locator(".company-operating-context");
+  await expect(operatingContext).toContainText("iron · resource · common");
+  await expect(operatingContext).toContainText("Configured production points: 17");
+  await expect(operatingContext).toContainText("Daily production reference");
+  await expect(operatingContext).toContainText("77");
+  await expect(operatingContext).toContainText("Production capacity reference");
+  await expect(operatingContext).toContainText("444");
+
+  const marketContext = page.locator(".company-market-context");
+  await expect(marketContext).toContainText("Output item");
+  await expect(marketContext).toContainText("iron");
+  await expect(marketContext).toContainText("73.21");
+  await expect(marketContext).toContainText("coal");
+  await expect(marketContext).toContainText("Recipe quantity 4");
+  await expect(marketContext).toContainText("4.25");
 });
 
 test("@journey Company Lab exposes partial context and survives upstream context failures", async ({
