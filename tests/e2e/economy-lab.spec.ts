@@ -368,7 +368,9 @@ test("@journey Company Lab handoff preserves duplicate-name identity and recover
     page.locator(".calculation-summary-grid article").filter({ hasText: "Market scenario" }),
   ).toContainText("iron");
   await expect(
-    page.locator(".calculation-summary-grid article").filter({ hasText: "Current live references" }),
+    page
+      .locator(".calculation-summary-grid article")
+      .filter({ hasText: "Current live references" }),
   ).toContainText("iron · 2 market prices · 1 recipe input");
 
   expect(state.apiRequests.some((url) => new URL(url).pathname === "/api/players/snapshot")).toBe(
