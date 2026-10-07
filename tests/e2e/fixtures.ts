@@ -1,15 +1,17 @@
+import type { EconomyPlannerContextResponse } from "@warera-lab/domain";
 import type { Page } from "@playwright/test";
 
 export interface MockApiState {
   searchMode: "ok" | "empty" | "rate-limit";
   snapshotMode: "ok" | "unavailable" | "rate-limit";
-  economyContextMode: "ok" | "unavailable";
+  economyContextMode: "ok" | "unavailable" | "rate-limit" | "partial";
   staleSnapshot: boolean;
   duplicateCompanies: boolean;
   largePortfolio: boolean;
   snapshotRevision: number;
   removedCompanyId?: string;
   apiRequests: string[];
+  apiRequestMethods: string[];
   externalRequests: string[];
 }
 
@@ -346,12 +348,16 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
     largePortfolio: false,
     snapshotRevision: 0,
     apiRequests: [],
+    apiRequestMethods: [],
     externalRequests: [],
   };
 
   page.on("request", (request) => {
     const url = new URL(request.url());
-    if (url.pathname.startsWith("/api/")) state.apiRequests.push(request.url());
+    if (url.pathname.startsWith("/api/")) {
+      state.apiRequests.push(request.url());
+      state.apiRequestMethods.push(`${request.method()} ${url.pathname}`);
+    }
     if (url.hostname !== "127.0.0.1") state.externalRequests.push(request.url());
   });
 
@@ -486,8 +492,29 @@ export async function installApiMocks(page: Page): Promise<MockApiState> {
         });
         return;
       }
+      if (state.economyContextMode === "rate-limit") {
+        await route.fulfill({
+          status: 429,
+          headers: { "retry-after": "60" },
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: {
+              code: "UPSTREAM_RATE_LIMITED",
+              message: "WarEra rate limit reached. Try again shortly.",
+              retryAfterSeconds: 60,
+            },
+          }),
+        });
+        return;
+      }
 
-      const response = structuredClone(economyContextResponse);
+      const response = structuredClone(economyContextResponse) as EconomyPlannerContextResponse;
+      if (state.economyContextMode === "partial") {
+        delete response.marketPrices.coal;
+        response.contextGaps.itemCodes = ["steel"];
+        response.contextGaps.marketPriceItemCodes = ["coal"];
+        response.companyUpgrades.storage.levels = {};
+      }
       if (state.snapshotRevision > 0) {
         response.marketPrices.steel = 11;
         response.freshness.generatedAt = "2026-10-01T12:05:07.000Z";
