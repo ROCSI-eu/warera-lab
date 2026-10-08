@@ -107,11 +107,17 @@ function selectedItem(itemCode: string): MarketLabItemResponse {
 export interface MarketMockState {
   overviewMode: "ok" | "empty" | "error";
   itemMode: "ok" | "missing-orders" | "error";
+  recipeEconomicsMode: "missing-price" | "positive" | "negative";
   itemCodes: string[];
 }
 
 export async function installMarketMocks(page: Page): Promise<MarketMockState> {
-  const state: MarketMockState = { overviewMode: "ok", itemMode: "ok", itemCodes: [] };
+  const state: MarketMockState = {
+    overviewMode: "ok",
+    itemMode: "ok",
+    recipeEconomicsMode: "missing-price",
+    itemCodes: [],
+  };
 
   await page.route("**/api/market/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -152,6 +158,11 @@ export async function installMarketMocks(page: Page): Promise<MarketMockState> {
       const { itemCode } = route.request().postDataJSON() as { itemCode: string };
       state.itemCodes.push(itemCode);
       const item = selectedItem(itemCode);
+      if (itemCode === "steel" && state.recipeEconomicsMode !== "missing-price") {
+        item.marketPrices.iron = 2;
+        item.contextGaps.marketPriceItemCodes = [];
+        if (state.recipeEconomicsMode === "negative") item.marketPrices.steel = 3;
+      }
       if (state.itemMode === "missing-orders" && itemCode !== "missing") {
         delete item.topOrders;
         item.contextGaps.orderBookItemCodes = [itemCode];
