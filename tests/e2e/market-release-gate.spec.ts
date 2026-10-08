@@ -154,9 +154,7 @@ test("@a11y keyboard item inspection, disclosures and Economy handoff work at 32
     .include(".market-lab")
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();
-  expect(
-    a11y.violations.filter(({ impact }) => impact === "serious" || impact === "critical"),
-  ).toEqual([]);
+  expect(a11y.violations).toEqual([]);
   expect(await horizontalOverflow(page)).toBe(0);
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
