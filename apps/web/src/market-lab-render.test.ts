@@ -118,6 +118,54 @@ describe("MarketLabShell", () => {
     expect(html).not.toContain("Projected profit");
   });
 
+  it("provides deliberate Economy Lab entry and context-aware links without copying prices into URLs", () => {
+    const detached = markup({
+      itemCode: "steel",
+      item: complete,
+      economyLabHref: "/?lab=economy",
+      handoffIdentity: "standalone",
+    });
+    expect(detached).toContain("Find a player in Economy Lab");
+    expect(detached).toContain("not inserted into, or used to overwrite");
+    expect(detached).toContain('href="/?lab=economy"');
+    expect(detached).not.toContain("marketPrices=");
+    const attached = markup({
+      itemCode: "steel",
+      item: complete,
+      economyLabHref: "/?lab=economy&player=player-1&company=company-1",
+      handoffIdentity: "company",
+    });
+    expect(attached).toContain("Continue to Economy Lab");
+    expect(attached).toContain("reload and verify");
+    expect(attached).toContain("identifiers only");
+    expect(attached).toContain('href="/?lab=economy&amp;player=player-1&amp;company=company-1"');
+    const playerOnly = markup({
+      itemCode: "steel",
+      item: complete,
+      economyLabHref: "/?lab=economy&player=player-1",
+      handoffIdentity: "player",
+    });
+    expect(playerOnly).toContain("select a company");
+  });
+
+  it("keeps the deliberate Economy recovery link available without a successful market item response", () => {
+    for (const state of [
+      { itemCode: "steel", itemError: "Market source unavailable" },
+      { itemCode: "steel", isLoadingItem: true },
+    ]) {
+      const rendered = markup({
+        ...state,
+        economyLabHref: "/?lab=economy&player=player-1&company=company-1",
+        handoffIdentity: "company",
+      });
+      expect(rendered).toContain("Continue with a scenario");
+      expect(rendered).toContain("Continue to Economy Lab");
+      expect(rendered).toContain('href="/?lab=economy&amp;player=player-1&amp;company=company-1"');
+    }
+    const noSelection = markup({ economyLabHref: "/?lab=economy" });
+    expect(noSelection).not.toContain("Continue with a scenario");
+  });
+
   it("renders partial context, missing configuration, missing order source and zero price distinctly", () => {
     const html = markup({
       overview,

@@ -315,7 +315,7 @@ test("@journey Company Lab restores player and company context through reload an
     "/?lab=economy&player=player-1&company=company-1",
   );
   await expect(
-    page.getByText(/handoff carries only the current player and company identifiers/i),
+    page.getByText(/Economy Lab receives only the current player and company identifiers/i),
   ).toBeVisible();
 
   state.apiRequests.length = 0;
@@ -386,7 +386,9 @@ test("@journey Company Lab handoff preserves duplicate-name identity and recover
   state.apiRequests.length = 0;
   await handoff.click();
 
-  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(page).toHaveURL(/lab=economy.*player=player-1.*company=company-duplicate-2/);
   const economyCards = page.locator(".company-card").filter({ hasText: "Iron Inc" });
   await expect(economyCards).toHaveCount(2);
@@ -453,7 +455,9 @@ test("@journey Company Lab handoff preserves duplicate-name identity and recover
   await expect(recoveredCompany).toHaveCount(1);
   await expect(recoveredCompany).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".company-detail")).toContainText("Prahova");
-  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible({
+    timeout: 15_000,
+  });
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

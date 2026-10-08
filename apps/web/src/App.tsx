@@ -583,6 +583,23 @@ export function App() {
           economyContextItemCode={state.economyContextItemCode}
           navigationMessage={navigationMessage}
           economyLabHref={labHref("economy")}
+          marketLabHref={
+            selectedCompany && state.snapshot && typeof window !== "undefined"
+              ? buildLabHref(
+                  {
+                    lab: "market",
+                    playerId: state.snapshot.player.id,
+                    companyId: selectedCompany.id,
+                    itemCode: selectedCompany.itemCode,
+                  },
+                  {
+                    pathname: window.location.pathname,
+                    search: window.location.search,
+                    hash: window.location.hash.startsWith("#wl=") ? "" : window.location.hash,
+                  },
+                )
+              : undefined
+          }
           isBusy={state.isImporting || state.isRefreshing || state.isLoadingEconomyContext}
           isLoadingEconomyContext={state.isLoadingEconomyContext}
           onCompanySelect={(company) => void handleCompanySelect(company)}

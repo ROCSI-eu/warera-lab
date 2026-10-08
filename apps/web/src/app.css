@@ -1762,3 +1762,21 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* #81: explicit cross-lab actions (no implicit scenario transfer). */
+.workspace-header-actions {
+  flex-wrap: wrap;
+}
+.market-economy-handoff {
+  margin-top: 1.25rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(155, 183, 220, 0.2);
+  border-radius: 0.8rem;
+  background: rgba(155, 183, 220, 0.055);
+}
+.market-economy-handoff h4 {
+  margin-top: 0;
+}
+.market-economy-handoff .company-lab-handoff {
+  margin: 0.35rem 0;
+}

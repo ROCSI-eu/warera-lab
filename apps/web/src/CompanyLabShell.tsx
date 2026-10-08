@@ -18,6 +18,7 @@ export function CompanyLabShell({
   economyContextItemCode,
   navigationMessage,
   economyLabHref,
+  marketLabHref,
   isBusy,
   isLoadingEconomyContext,
   onCompanySelect,
@@ -29,6 +30,7 @@ export function CompanyLabShell({
   economyContextItemCode: string | undefined;
   navigationMessage: string | undefined;
   economyLabHref: string;
+  marketLabHref?: string | undefined;
   isBusy: boolean;
   isLoadingEconomyContext: boolean;
   onCompanySelect: (company: PublicCompanySnapshot) => void;
@@ -69,18 +71,26 @@ export function CompanyLabShell({
         <div className="workspace-header-actions">
           <span className="badge badge--observed">Public snapshot context</span>
           {selectedCompany ? (
-            <a className="company-lab-handoff" href={economyLabHref}>
-              Model in Economy Lab →
-            </a>
+            <>
+              {marketLabHref ? (
+                <a className="company-lab-handoff" href={marketLabHref}>
+                  Inspect {selectedCompany.itemCode} in Market Lab →
+                </a>
+              ) : null}
+              <a className="company-lab-handoff" href={economyLabHref}>
+                Model in Economy Lab →
+              </a>
+            </>
           ) : null}
         </div>
       </div>
 
       {selectedCompany ? (
         <p className="company-lab-handoff-note">
-          The handoff carries only the current player and company identifiers. Economy Lab reloads
-          the current public snapshot and normalized economy context before creating its observed
-          baseline.
+          Economy Lab receives only the current player and company identifiers, then reloads the
+          public snapshot and normalized context before creating its observed baseline. Market Lab
+          additionally receives the selected company’s output item code to inspect its current
+          market reference, without transferring snapshot data or scenario state.
         </p>
       ) : null}
 

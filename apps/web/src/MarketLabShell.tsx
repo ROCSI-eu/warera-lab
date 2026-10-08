@@ -19,6 +19,8 @@ interface MarketLabShellProps {
   isLoadingOverview?: boolean;
   isLoadingItem?: boolean;
   itemHref?: (code?: string) => string;
+  economyLabHref?: string;
+  handoffIdentity?: "company" | "player" | "standalone";
   onRefresh?: () => void;
 }
 
@@ -69,6 +71,8 @@ export function MarketLabShell({
   isLoadingOverview = false,
   isLoadingItem = false,
   itemHref = () => "/?lab=market",
+  economyLabHref,
+  handoffIdentity = "standalone",
   onRefresh,
 }: MarketLabShellProps) {
   const [filter, setFilter] = useState("");
@@ -330,6 +334,29 @@ export function MarketLabShell({
               </div>
               <FreshnessPanel freshness={item.freshness} title="Selected item" />
             </>
+          ) : null}
+          {itemCode && economyLabHref ? (
+            <section className="market-economy-handoff" aria-label="Continue in Economy Lab">
+              <h4>Continue with a scenario</h4>
+              <p className="muted">
+                {handoffIdentity === "company"
+                  ? "Open Economy Lab with these player and company identifiers. Economy Lab will reload and verify the live public context before constructing its baseline."
+                  : handoffIdentity === "player"
+                    ? "Open Economy Lab with this player identifier. Economy Lab will reload the public snapshot and select a company before constructing a scenario."
+                    : "Open Economy Lab to search and import a public player, then choose a company to simulate."}{" "}
+                The inspected market item is a reference only; it is not inserted into, or used to
+                overwrite, the company’s scenario.
+              </p>
+              <a className="company-lab-handoff" href={economyLabHref}>
+                {handoffIdentity === "standalone"
+                  ? "Find a player in Economy Lab →"
+                  : "Continue to Economy Lab →"}
+              </a>
+              <p className="muted">
+                This handoff carries identifiers only when supplied, never prices, recipes, snapshot
+                data, or hypothetical scenario values.
+              </p>
+            </section>
           ) : null}
         </section>
       </div>
