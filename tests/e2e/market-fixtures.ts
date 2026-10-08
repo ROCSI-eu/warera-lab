@@ -105,8 +105,8 @@ function selectedItem(itemCode: string): MarketLabItemResponse {
 }
 
 export interface MarketMockState {
-  overviewMode: "ok" | "empty" | "error";
-  itemMode: "ok" | "missing-orders" | "error";
+  overviewMode: "ok" | "empty" | "error" | "rate-limit";
+  itemMode: "ok" | "missing-orders" | "empty-orders" | "error" | "rate-limit";
   recipeEconomicsMode: "missing-price" | "positive" | "negative";
   itemCodes: string[];
 }
@@ -137,6 +137,20 @@ export async function installMarketMocks(page: Page): Promise<MarketMockState> {
       });
       return;
     }
+    if (
+      (path === "/api/market/overview" && state.overviewMode === "rate-limit") ||
+      (path === "/api/market/item" && state.itemMode === "rate-limit")
+    ) {
+      await route.fulfill({
+        status: 429,
+        headers: { "retry-after": "45" },
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "UPSTREAM_RATE_LIMITED", message: "WarEra rate limit reached." },
+        }),
+      });
+      return;
+    }
     if (path === "/api/market/overview") {
       await route.fulfill({
         status: 200,
@@ -162,6 +176,9 @@ export async function installMarketMocks(page: Page): Promise<MarketMockState> {
         item.marketPrices.iron = 2;
         item.contextGaps.marketPriceItemCodes = [];
         if (state.recipeEconomicsMode === "negative") item.marketPrices.steel = 3;
+      }
+      if (state.itemMode === "empty-orders" && item.topOrders) {
+        item.topOrders = { buyOrders: [], sellOrders: [] };
       }
       if (state.itemMode === "missing-orders" && itemCode !== "missing") {
         delete item.topOrders;

@@ -16,7 +16,7 @@ The central design rule is:
 
 **WarEra API data describes the current state; WarEra Lab owns the hypothetical simulation model.**
 
-The first public MVP is credential-free and Economy-Lab-first. Its accepted scope is documented in [docs/MVP.md](docs/MVP.md). Company Lab extends that foundation with a read-only company inspection surface and an explicit handoff back into Economy Lab simulation. The cross-lab release gate is documented in [docs/RELEASE_CANDIDATE.md](docs/RELEASE_CANDIDATE.md). Post-MVP areas may include combat/build analysis, richer market context, and other documented public game data.
+The first public MVP is credential-free and Economy-Lab-first. Its accepted scope is documented in [docs/MVP.md](docs/MVP.md). Company Lab extends that foundation with a read-only company inspection surface and an explicit handoff back into Economy Lab simulation. Market Lab adds current-state item prices, orders and transparent recipe-only economics, with deliberate Company → Market → Economy navigation and no historical collection or polling. The cross-lab release gate is documented in [docs/RELEASE_CANDIDATE.md](docs/RELEASE_CANDIDATE.md). Post-MVP areas may include combat/build analysis, richer market context, and other documented public game data.
 
 ## Data and calculation provenance
 
