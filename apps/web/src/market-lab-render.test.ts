@@ -148,6 +148,24 @@ describe("MarketLabShell", () => {
     expect(playerOnly).toContain("select a company");
   });
 
+  it("keeps the deliberate Economy recovery link available without a successful market item response", () => {
+    for (const state of [
+      { itemCode: "steel", itemError: "Market source unavailable" },
+      { itemCode: "steel", isLoadingItem: true },
+    ]) {
+      const rendered = markup({
+        ...state,
+        economyLabHref: "/?lab=economy&player=player-1&company=company-1",
+        handoffIdentity: "company",
+      });
+      expect(rendered).toContain("Continue with a scenario");
+      expect(rendered).toContain("Continue to Economy Lab");
+      expect(rendered).toContain('href="/?lab=economy&amp;player=player-1&amp;company=company-1"');
+    }
+    const noSelection = markup({ economyLabHref: "/?lab=economy" });
+    expect(noSelection).not.toContain("Continue with a scenario");
+  });
+
   it("renders partial context, missing configuration, missing order source and zero price distinctly", () => {
     const html = markup({
       overview,
