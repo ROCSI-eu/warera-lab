@@ -31,7 +31,7 @@ Delivers the Market Lab MVP alongside Economy Lab and Company Lab: a credential-
 
 ### Fixed
 
-None outside the Market Lab MVP and its focused test/release-gate hardening.
+None.
 
 ### Verification
 
