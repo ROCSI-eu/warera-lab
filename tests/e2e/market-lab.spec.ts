@@ -146,7 +146,7 @@ test("@a11y market item explorer at 320px has keyboard selection and no automate
   await expect(itemList.getByRole("link").first()).toBeFocused();
   const violations = await new AxeBuilder({ page })
     .include(".market-lab")
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
   expect(violations.violations).toEqual([]);
   expect(
