@@ -53,6 +53,30 @@ describe("simulateMarketMargin", () => {
     expect(result.grossMarginDeltaVsLiveOutputPrice.value).toBe(0);
   });
 
+  it("preserves prototype-shaped recipe item codes as enumerable cost components", () => {
+    const prototypeInput = Object.fromEntries([["__proto__", 2]]);
+    const prices = Object.fromEntries([
+      ["steel", 10],
+      ["__proto__", 3],
+    ]);
+    const result = simulateMarketMargin({
+      item: { ...steel, productionNeeds: prototypeInput },
+      marketPrices: prices,
+      quantity: 1,
+    });
+
+    expect(Object.keys(result.recipeInputs)).toEqual(["__proto__"]);
+    expect(Object.values(result.recipeInputs)).toHaveLength(1);
+    expect(result.recipeInputs["__proto__"]).toMatchObject({
+      itemCode: "__proto__",
+      cost: { value: 6, provenance: "derived" },
+    });
+    expect(result.recipeInputCost.value).toBe(6);
+    expect(
+      Object.values(result.recipeInputs).reduce((sum, entry) => sum + entry.cost.value, 0),
+    ).toBe(result.recipeInputCost.value);
+  });
+
   it("marks output/input overrides and optional cost inputs explicitly", () => {
     const result = simulateMarketMargin({
       item: steel,

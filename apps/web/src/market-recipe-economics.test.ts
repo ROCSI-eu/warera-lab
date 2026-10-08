@@ -145,6 +145,26 @@ describe("Market Lab recipe economics", () => {
     }
   });
 
+  it("keeps prototype-shaped valid input codes in the exact displayed breakdown", () => {
+    const context: MarketLabItemResponse = {
+      ...baseline,
+      item: { ...baseline.item!, productionNeeds: Object.fromEntries([["__proto__", 2]]) },
+      marketPrices: Object.fromEntries([
+        ["steel", 10],
+        ["__proto__", 3],
+      ]),
+    };
+    const evaluation = evaluateMarketRecipeEconomics(context);
+    expect(evaluation.status).toBe("available");
+    if (evaluation.status !== "available") return;
+    expect(Object.keys(evaluation.result.recipeInputs)).toEqual(["__proto__"]);
+    expect(evaluation.result.recipeInputCost.value).toBe(6);
+    const rendered = html(context);
+    expect(rendered).toContain("__proto__");
+    expect(rendered).toContain("recipe observed, cost derived");
+    expect(rendered).toContain("&quot;__proto__&quot;");
+  });
+
   it("does not depend on top orders and contains only selected item config and prices", () => {
     const evaluation = evaluateMarketRecipeEconomics({
       ...baseline,
