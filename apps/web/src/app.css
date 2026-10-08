@@ -1717,3 +1717,48 @@ button:disabled {
     max-width: 48%;
   }
 }
+
+/* #80: one-unit derived recipe reference. No recommendation or trend context. */
+.market-recipe-economics {
+  min-width: 0;
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(232, 237, 244, 0.1);
+}
+.market-recipe-economics__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+.market-recipe-economics__metrics article {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 0.45rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(232, 237, 244, 0.09);
+  border-radius: 0.8rem;
+  background: rgba(0, 0, 0, 0.13);
+}
+.market-recipe-economics__metrics article span {
+  color: #a8b6c7;
+  font-size: 0.77rem;
+}
+.market-recipe-economics__metrics article strong {
+  color: #e4eef9;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+.market-recipe-breakdown {
+  display: grid;
+  gap: 0.45rem;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 420px) {
+  .market-recipe-economics__metrics {
+    grid-template-columns: 1fr;
+  }
+}

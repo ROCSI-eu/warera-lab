@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { formatDisplayNumber } from "./display-format.js";
 import { FreshnessPanel } from "./FreshnessPanel.js";
+import { MarketRecipeEconomics } from "./MarketRecipeEconomics.js";
 
 interface MarketLabShellProps {
   itemCode?: string;
@@ -301,6 +302,8 @@ export function MarketLabShell({
                   values were substituted.
                 </p>
               ) : null}
+
+              <MarketRecipeEconomics context={item} />
 
               <div className="market-orders">
                 <h4>Current top orders</h4>

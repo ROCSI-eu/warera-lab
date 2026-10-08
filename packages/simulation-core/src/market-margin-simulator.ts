@@ -182,7 +182,12 @@ export function simulateMarketMargin(
 
   validateInputPriceOverrides(input.inputPriceOverrides, input.item.productionNeeds);
 
-  const recipeInputs: Record<string, MarketMarginRecipeInputResult> = {};
+  // Valid item codes may include object-prototype keys such as "__proto__".
+  // Use a null-prototype record so every computed component remains enumerable.
+  const recipeInputs: Record<string, MarketMarginRecipeInputResult> = Object.create(null) as Record<
+    string,
+    MarketMarginRecipeInputResult
+  >;
   let recipeInputCost = 0;
 
   for (const [inputItemCode, requiredPerOutputUnitRaw] of Object.entries(
