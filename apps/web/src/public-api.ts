@@ -1,5 +1,7 @@
 import type {
   EconomyPlannerContextResponse,
+  MarketLabItemResponse,
+  MarketLabOverviewResponse,
   PlayerSearchResponse,
   PublicPlayerSnapshotResponse,
 } from "@warera-lab/domain";
@@ -127,4 +129,12 @@ export function getPlayerSnapshot(userId: string): Promise<PublicPlayerSnapshotR
 
 export function getEconomyContext(itemCode: string): Promise<EconomyPlannerContextResponse> {
   return post<EconomyPlannerContextResponse>("/api/economy/context", { itemCode });
+}
+
+export function getMarketOverview(): Promise<MarketLabOverviewResponse> {
+  return post<MarketLabOverviewResponse>("/api/market/overview", {});
+}
+
+export function getMarketItem(itemCode: string): Promise<MarketLabItemResponse> {
+  return post<MarketLabItemResponse>("/api/market/item", { itemCode });
 }

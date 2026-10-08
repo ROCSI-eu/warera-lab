@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   PublicApiClientError,
   getEconomyContext,
+  getMarketItem,
+  getMarketOverview,
   getPlayerSnapshot,
   searchPlayers,
 } from "./public-api.js";
@@ -60,6 +62,32 @@ describe("public API client", () => {
     await getEconomyContext("steel");
 
     expect(fetchMock).toHaveBeenCalledWith("/api/economy/context", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ itemCode: "steel" }),
+    });
+  });
+
+  it("requests normalized Market overview and selected item by same-origin POST only", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        data: {
+          items: [],
+          contextGaps: { itemCodes: [], marketPriceItemCodes: [] },
+          freshness: { generatedAt: "2026-10-08T09:00:00Z", hasStaleData: false, sources: [] },
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getMarketOverview();
+    await getMarketItem("steel");
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/market/overview", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/market/item", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ itemCode: "steel" }),
