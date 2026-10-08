@@ -87,6 +87,24 @@ export function MarketLab({
     setRefreshVersion((current) => current + 1);
   }, [itemCode]);
 
+  const economyLabHref = () => {
+    if (typeof window === "undefined") return "/?lab=economy";
+    // Never treat a portable scenario fragment as an implicit cross-lab transfer.
+    // Economy Lab revalidates any identifiers through its existing public snapshot flow.
+    return buildLabHref(
+      {
+        lab: "economy",
+        ...(playerId ? { playerId } : {}),
+        ...(playerId && companyId ? { companyId } : {}),
+      },
+      {
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash.startsWith("#wl=") ? "" : window.location.hash,
+      },
+    );
+  };
+
   const itemHref = (nextItemCode?: string) => {
     if (typeof window === "undefined") return "/?lab=market";
     return buildLabHref(
@@ -111,6 +129,8 @@ export function MarketLab({
       isLoadingOverview={isLoadingOverview}
       isLoadingItem={isLoadingItem}
       itemHref={itemHref}
+      economyLabHref={economyLabHref()}
+      handoffIdentity={playerId ? (companyId ? "company" : "player") : "standalone"}
       onRefresh={refresh}
     />
   );
