@@ -4,6 +4,59 @@ All production deployments of WarEra Lab are recorded here.
 
 Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documented in [docs/RELEASES.md](docs/RELEASES.md). One version corresponds to one production deployment and one exact deployed Git commit.
 
+## v0.0.6 — 2026-10-08
+
+**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Previous version:** `v0.0.5`
+**Environment:** Production — `https://warera-lab.rocsi.eu/`
+
+### Summary
+
+Delivers the Market Lab MVP alongside Economy Lab and Company Lab: a credential-free, current-state market explorer for item prices, orders, and transparent recipe-only economics, with deliberate handoffs to existing player/company scenario workflows.
+
+### Added
+
+- Dedicated Market Lab navigation and reload-safe item selection through the `lab=market&item=...` URL contract.
+- Normalized, read-only current-market overview and selected-item API contracts behind the same-origin backend; browser-side WarEra credentials and direct external API requests are not required.
+- Searchable item catalogue with available price, type, rarity, tradability, and explicit freshness/provenance information.
+- Selected-item current top buy/sell orders, configured recipe inputs, current input/output prices, and clearly labeled derived recipe-only costs and implied spread with exact calculation disclosure.
+- Deliberate Company Lab → Market Lab → Economy Lab handoffs carrying validated identities only; Economy Lab independently re-fetches its observed scenario baseline.
+- Market Lab loaded/degraded visual baselines and responsive, reduced-motion, keyboard, accessibility, and cross-lab E2E release-gate coverage.
+
+### Changed
+
+- Current missing, empty, unavailable, partial-price, and upstream-rate-limit conditions are distinguished explicitly, with manual refresh and retry guidance instead of background polling.
+- Release-candidate documentation now includes Market Lab workflow, privacy constraints, and the production smoke checklist.
+- Automated accessibility coverage checks both loaded and degraded views and waits for independently loaded overview/item responses before scanning.
+
+### Fixed
+
+None.
+
+### Verification
+
+- Market Lab release-gate PR #88 merged into `main` as `10b7b834c7c6dfa860d784ae3dd4e1995c5e3059`.
+- The final PR #88 head `fb53cac6a913cc4da8008b0a07e0b3475c2064cb` passed GitHub Actions full `npm run verify`: release-version consistency, formatting, lint, builds, typechecks, 147 Vitest tests, and 90 Playwright tests; final Codex review found no major issues.
+- Release-preparation CI, exact production commit and version confirmation, live desktop/mobile/320 px smoke, service/API health, and tag/Release verification: **pending**. Record only results actually observed after the release is deployed.
+
+### Known limitations
+
+- Market Lab is current-state-only: no historical price tracking, continuous monitoring, automatic polling, alerts, watchlists, or authenticated/private game access.
+- Recipe-only implied spread is not realized profit and does not assume undocumented game mechanics or business expenses.
+- Missing current prices/configuration/order data remain unavailable rather than estimated.
+- Player Lab and other future modules are not part of this release.
+
+### References
+
+- #44 — Plan and deliver Market Lab MVP
+- #77 — Market Lab shell and URL-state contract
+- #78 — Normalized current-state Market Lab API contract
+- #79 — Current market overview and item explorer
+- #80 — Transparent recipe-only current economics
+- #81 — Market Lab cross-lab handoffs
+- #82 — Final responsive, accessibility, E2E, and release gate
+- PR #88 — Final Market Lab release-gate verification
+
 ## v0.0.5 — 2026-10-07
 
 **Production commit:** `3db462a4c144bc3ad2214d116a186679e216e3c0`

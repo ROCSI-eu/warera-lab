@@ -2,7 +2,7 @@
 
 WarEra Lab is an independent, open-source toolkit for **WarEra simulation, analytics, and game-data exploration**, developed by ROCSI.
 
-> **Status:** Economy Lab is live in production. The repository also contains Company Lab; consult [VERSION](VERSION) and [CHANGELOG.md](CHANGELOG.md) for the exact contents of the currently deployed release.
+> **Status:** Economy Lab, Company Lab, and Market Lab are included in this project. Consult [VERSION](VERSION) and [CHANGELOG.md](CHANGELOG.md) for the exact contents of the current production release.
 
 Production: <https://warera-lab.rocsi.eu/>
 
