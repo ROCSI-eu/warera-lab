@@ -203,7 +203,8 @@ export type SnapshotFreshnessSourceKind =
   | "regions"
   | "countries"
   | "gameConfig"
-  | "marketPrices";
+  | "marketPrices"
+  | "marketOrders";
 
 export interface SnapshotFreshnessSource {
   source: SnapshotFreshnessSourceKind;
@@ -248,6 +249,40 @@ export interface EconomyPlannerContextResponse {
   contextGaps: {
     itemCodes: string[];
     marketPriceItemCodes: string[];
+  };
+  freshness: SnapshotFreshness;
+}
+
+// Market Lab uses the existing normalized item, price and order types, never upstream shapes.
+export interface MarketLabCatalogueItem {
+  code: string;
+  type: string;
+  rarity: string;
+  isTradable?: boolean;
+  currentPrice?: number;
+}
+
+export interface MarketLabOverviewResponse {
+  items: MarketLabCatalogueItem[];
+  contextGaps: {
+    // Prices that have no corresponding normalized game-config item.
+    itemCodes: string[];
+    marketPriceItemCodes: string[];
+  };
+  freshness: SnapshotFreshness;
+}
+
+export interface MarketLabItemResponse {
+  itemCode: string;
+  item?: ItemEconomyConfig;
+  marketPrices: MarketPriceMap;
+  topOrders?: MarketOrderBook;
+  contextGaps: {
+    // Selected output or recipe inputs absent from normalized game config.
+    itemCodes: string[];
+    marketPriceItemCodes: string[];
+    // Order lookup could not be completed; differs from an empty valid order book.
+    orderBookItemCodes: string[];
   };
   freshness: SnapshotFreshness;
 }

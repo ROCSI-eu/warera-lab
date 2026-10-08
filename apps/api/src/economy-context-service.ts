@@ -2,43 +2,14 @@ import type {
   EconomyGameConfig,
   EconomyPlannerContextResponse,
   MarketPriceMap,
-  SnapshotFreshness,
-  SnapshotFreshnessSource,
 } from "@warera-lab/domain";
-import type { WarEraAdapterResponse, WarEraCacheMetadata } from "@warera-lab/warera-api";
+import type { WarEraAdapterResponse } from "@warera-lab/warera-api";
+
+import { aggregateFreshness, sourceFreshness } from "./source-freshness.js";
 
 export interface EconomyWarEraClient {
   getEconomyGameConfig(): Promise<WarEraAdapterResponse<EconomyGameConfig>>;
   getItemPrices(): Promise<WarEraAdapterResponse<MarketPriceMap>>;
-}
-
-function freshnessState(cache: WarEraCacheMetadata): SnapshotFreshnessSource["state"] {
-  if (cache.state === "stale") return "stale";
-  if (cache.state === "fresh") return "cached";
-  return "live";
-}
-
-function sourceFreshness(
-  source: "gameConfig" | "marketPrices",
-  response: Pick<WarEraAdapterResponse<unknown>, "retrievedAt" | "cache">,
-): SnapshotFreshnessSource {
-  return {
-    source,
-    retrievedAt: response.retrievedAt,
-    ageMs: response.cache.ageMs,
-    state: freshnessState(response.cache),
-  };
-}
-
-function aggregateFreshness(
-  generatedAt: string,
-  sources: SnapshotFreshnessSource[],
-): SnapshotFreshness {
-  return {
-    generatedAt,
-    hasStaleData: sources.some((source) => source.state === "stale"),
-    sources,
-  };
 }
 
 function canonicalize(value: unknown): unknown {

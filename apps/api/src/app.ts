@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { EconomyContextService, type EconomyWarEraClient } from "./economy-context-service.js";
+import { MarketContextService, type MarketWarEraClient } from "./market-context-service.js";
 import {
   PlayerNotFoundError,
   PlayerSnapshotService,
@@ -22,8 +23,13 @@ const economyContextRequestSchema = z.object({
   itemCode: z.string().trim().min(1).max(publicItemCodeMaxLength),
 });
 
+const marketOverviewRequestSchema = z.strictObject({});
+const marketItemRequestSchema = z.strictObject({
+  itemCode: z.string().trim().min(1).max(publicItemCodeMaxLength),
+});
+
 interface AppDependencies {
-  wareraClient?: PublicWarEraClient & EconomyWarEraClient;
+  wareraClient?: PublicWarEraClient & EconomyWarEraClient & MarketWarEraClient;
   now?: () => Date;
 }
 
@@ -119,6 +125,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   const client = dependencies.wareraClient ?? new WarEraPublicApiClient();
   const playerService = new PlayerSnapshotService(client, dependencies.now);
   const economyContextService = new EconomyContextService(client, dependencies.now);
+  const marketContextService = new MarketContextService(client, dependencies.now);
 
   app.use("/api/*", async (context, next) => {
     await next();
@@ -164,6 +171,30 @@ export function createApp(dependencies: AppDependencies = {}) {
 
     try {
       return context.json({ data: await economyContextService.getContext(parsed.data.itemCode) });
+    } catch (error) {
+      if (error instanceof WarEraApiError) return mapWarEraError(error);
+      throw error;
+    }
+  });
+
+  app.post("/api/market/overview", async (context) => {
+    const parsed = marketOverviewRequestSchema.safeParse(await readJson(context.req.raw));
+    if (!parsed.success) return invalidRequest("Provide an empty JSON object.");
+
+    try {
+      return context.json({ data: await marketContextService.getOverview() });
+    } catch (error) {
+      if (error instanceof WarEraApiError) return mapWarEraError(error);
+      throw error;
+    }
+  });
+
+  app.post("/api/market/item", async (context) => {
+    const parsed = marketItemRequestSchema.safeParse(await readJson(context.req.raw));
+    if (!parsed.success) return invalidRequest("Provide a valid market item code.");
+
+    try {
+      return context.json({ data: await marketContextService.getItem(parsed.data.itemCode) });
     } catch (error) {
       if (error instanceof WarEraApiError) return mapWarEraError(error);
       throw error;
