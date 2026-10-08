@@ -1,9 +1,12 @@
-export type LabId = "economy" | "company";
+import { publicItemCodeMaxLength } from "@warera-lab/domain";
+
+export type LabId = "economy" | "company" | "market";
 
 export interface LabRoute {
   lab: LabId;
   playerId?: string;
   companyId?: string;
+  itemCode?: string;
 }
 
 export interface ParsedLabLocation {
@@ -26,14 +29,33 @@ function parseIdentity(value: string | null): string | undefined {
   return trimmed;
 }
 
+function parseItemCode(value: string | null): string | undefined {
+  if (value === null) return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length > publicItemCodeMaxLength) return undefined;
+  return trimmed;
+}
+
 export function parseLabLocation(search: string): ParsedLabLocation {
   const params = new URLSearchParams(search);
   const requestedLab = params.get("lab");
-  const lab: LabId = requestedLab === "company" ? "company" : "economy";
+  const lab: LabId =
+    requestedLab === "company" || requestedLab === "market" ? requestedLab : "economy";
   const messages: string[] = [];
 
-  if (requestedLab !== null && requestedLab !== "economy" && requestedLab !== "company") {
+  if (
+    requestedLab !== null &&
+    requestedLab !== "economy" &&
+    requestedLab !== "company" &&
+    requestedLab !== "market"
+  ) {
     messages.push("Unknown lab link. Economy Lab was opened instead.");
+  }
+
+  const rawItemCode = lab === "market" ? params.get("item") : null;
+  const itemCode = parseItemCode(rawItemCode);
+  if (rawItemCode !== null && itemCode === undefined) {
+    messages.push("The item context in this link is invalid. Choose an item again.");
   }
 
   const rawPlayerId = params.get("player");
@@ -44,12 +66,17 @@ export function parseLabLocation(search: string): ParsedLabLocation {
     messages.push("The player context in this link is invalid. Search for the player again.");
   }
 
+  const baseRoute: LabRoute = {
+    lab,
+    ...(itemCode === undefined ? {} : { itemCode }),
+  };
+
   if (playerId === undefined) {
     if (rawCompanyId !== null) {
       messages.push("A company link also needs a player context. Search for the player again.");
     }
     return {
-      route: { lab },
+      route: baseRoute,
       ...(messages.length > 0 ? { message: messages.join(" ") } : {}),
     };
   }
@@ -61,7 +88,7 @@ export function parseLabLocation(search: string): ParsedLabLocation {
 
   return {
     route: {
-      lab,
+      ...baseRoute,
       playerId,
       ...(companyId === undefined ? {} : { companyId }),
     },
@@ -82,6 +109,12 @@ export function buildLabHref(route: LabRoute, location: LocationParts): string {
     params.delete("company");
   }
 
+  if (route.lab === "market" && route.itemCode) {
+    params.set("item", route.itemCode);
+  } else {
+    params.delete("item");
+  }
+
   const query = params.toString();
   return location.pathname + (query.length > 0 ? "?" + query : "") + location.hash;
 }
@@ -91,6 +124,7 @@ export function buildPortableScenarioHref(location: LocationParts, shareFragment
   params.delete("lab");
   params.delete("player");
   params.delete("company");
+  params.delete("item");
 
   const query = params.toString();
   const fragment = shareFragment.startsWith("#") ? shareFragment : "#" + shareFragment;
