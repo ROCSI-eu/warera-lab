@@ -6,7 +6,7 @@ Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documente
 
 ## v0.0.6 — 2026-10-08
 
-**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Production commit:** `acd8749b6cce1301662840601f4ff5bff5c80de9`
 **Previous version:** `v0.0.5`
 **Environment:** Production — `https://warera-lab.rocsi.eu/`
 
@@ -37,7 +37,15 @@ None.
 
 - Market Lab release-gate PR #88 merged into `main` as `10b7b834c7c6dfa860d784ae3dd4e1995c5e3059`.
 - The final PR #88 head `fb53cac6a913cc4da8008b0a07e0b3475c2064cb` passed GitHub Actions full `npm run verify`: release-version consistency, formatting, lint, builds, typechecks, 147 Vitest tests, and 90 Playwright tests; final Codex review found no major issues.
-- Release-preparation CI, exact production commit and version confirmation, live desktop/mobile/320 px smoke, service/API health, and tag/Release verification: **pending**. Record only results actually observed after the release is deployed.
+- Release-preparation PR #89 final head `31c727db2d624bd97c7e13f9a59a681d77645ddc` passed [GitHub Actions run #37765155242](https://github.com/ROCSI-eu/warera-lab/actions/runs/37765155242) with `npm run verify` (release-version consistency, formatting, lint, production builds, typechecks, 147 Vitest tests and 90 Playwright tests). Final Codex review found no major issues.
+- Release-preparation PR #89 merged to production commit `acd8749b6cce1301662840601f4ff5bff5c80de9`; both the tested PR head and the merged commit have the identical Git tree `5f60ca3c0e2a59c5c5ab270d9810163ca38cff81`.
+- The exact merged commit was built and deployed on 2026-10-08. The production `current` symlink, root `VERSION`, `.deployment-sha` and visible frontend release agree on `v0.0.6` and that commit.
+- Local and public `/api/health` checks passed; public root returned HTTP 200. Apache and `warera-lab-api.service` were active, with API service `NRestarts=0`.
+- Public browser smoke passed on desktop (1440 px), representative mobile (390 px) and exactly 320 px. The 60-item current overview, selected steel item, orders, recipe-only economics, freshness and provenance rendered with Market overview/item API responses HTTP 200; no horizontal overflow, page/console errors, browser-side external requests or localStorage/sessionStorage/IndexedDB persistence were observed.
+- Live `MihaiROCSI` public search/import and Economy Lab → Company Lab → Market Lab → Economy Lab handoffs passed at 320 px. Player/company context was preserved, selected market item data was not injected into the Economy Lab URL/scenario, and browser Back restored Market Lab. Observed browser API requests returned HTTP 200.
+- Live loaded and degraded Market Lab views passed scoped Axe WCAG 2 A/AA, 2.1 A/AA and 2.2 AA checks at 320 px with reduced motion enabled, with zero reported violations and no horizontal overflow.
+- The current v0.0.6 deployment retains v0.0.5 as the single rollback release.
+- Tag `v0.0.6` resolves directly to the exact deployed commit `acd8749b6cce1301662840601f4ff5bff5c80de9`. [GitHub Release `v0.0.6 — Market Lab MVP`](https://github.com/ROCSI-eu/warera-lab/releases/tag/v0.0.6) was published on 2026-10-08, is marked Latest, and is neither draft nor prerelease.
 
 ### Known limitations
 
