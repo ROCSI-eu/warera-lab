@@ -7,6 +7,13 @@ import { installMarketMocks } from "./market-fixtures.js";
 const horizontalOverflow = async (page: import("@playwright/test").Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
+const browserStorage = async (page: import("@playwright/test").Page) =>
+  page.evaluate(async () => ({
+    localStorage: Object.keys(window.localStorage),
+    sessionStorage: Object.keys(window.sessionStorage),
+    indexedDatabases: (await window.indexedDB.databases()).map((db) => db.name),
+  }));
+
 test("@journey Market navigation, direct item reload and back retain current-state URL context", async ({
   page,
 }) => {
@@ -64,13 +71,11 @@ test("@journey Market 429 recovery stays manual with no polling, history or brow
   expect(initialRequests).toBeGreaterThanOrEqual(2);
   await page.clock.fastForward(300_000);
   expect(api.apiRequestDetails).toHaveLength(initialRequests);
-  expect(
-    await page.evaluate(() => ({
-      localStorage: Object.keys(window.localStorage),
-      sessionStorage: Object.keys(window.sessionStorage),
-      indexedDatabases: "indexedDB" in window,
-    })),
-  ).toMatchObject({ localStorage: [], sessionStorage: [] });
+  expect(await browserStorage(page)).toEqual({
+    localStorage: [],
+    sessionStorage: [],
+    indexedDatabases: [],
+  });
 
   market.overviewMode = "ok";
   market.itemMode = "ok";
@@ -81,6 +86,12 @@ test("@journey Market 429 recovery stays manual with no polling, history or brow
     "Recipe-only implied spread",
   );
   expect(api.apiRequestDetails).toHaveLength(initialRequests + 2);
+  // Market data was successfully fetched; storage must still remain untouched.
+  expect(await browserStorage(page)).toEqual({
+    localStorage: [],
+    sessionStorage: [],
+    indexedDatabases: [],
+  });
   expect(api.externalRequests).toEqual([]);
   expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
 });
