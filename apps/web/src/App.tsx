@@ -17,7 +17,7 @@ import {
 import { CompanyLabShell } from "./CompanyLabShell.js";
 import { CompanySelector } from "./CompanySelector.js";
 import { FreshnessPanel } from "./FreshnessPanel.js";
-import { MarketLabShell } from "./MarketLabShell.js";
+import { MarketLab } from "./MarketLab.js";
 import { ScenarioTransfer, ScenarioWorkspace } from "./ScenarioWorkspace.js";
 import { formatDisplayNumber, formatOptionalDisplayNumber } from "./display-format.js";
 import { describeCompany, type CompanyPresentation } from "./company-display.js";
@@ -588,8 +588,12 @@ export function App() {
           onCompanySelect={(company) => void handleCompanySelect(company)}
         />
       ) : activeLab === "market" ? (
-        <MarketLabShell
+        <MarketLab
           {...(initialLocation.route.itemCode ? { itemCode: initialLocation.route.itemCode } : {})}
+          {...(initialLocation.route.playerId ? { playerId: initialLocation.route.playerId } : {})}
+          {...(initialLocation.route.companyId
+            ? { companyId: initialLocation.route.companyId }
+            : {})}
           {...(navigationMessage ? { navigationMessage } : {})}
         />
       ) : state.snapshot ? (

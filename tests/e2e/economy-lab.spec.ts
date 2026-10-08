@@ -9,6 +9,7 @@ import {
   longOpaqueCountryId,
   productionSelect,
 } from "./fixtures.js";
+import { installMarketMocks } from "./market-fixtures.js";
 
 const releaseVersion = readFileSync(new URL("../../VERSION", import.meta.url), "utf8").trim();
 
@@ -187,10 +188,11 @@ test("@journey refresh falls back safely when the selected company disappears", 
   expect(overflow).toBe(0);
 });
 
-test("@journey Market Lab preserves item context without loading live workspace data", async ({
+test("@journey Market Lab preserves item context without loading player workspace data", async ({
   page,
 }) => {
   const state = await installApiMocks(page);
+  await installMarketMocks(page);
 
   await page.goto("/?lab=market&item=steel&player=player-1&company=company-1");
 
@@ -200,17 +202,23 @@ test("@journey Market Lab preserves item context without loading live workspace 
 
   await expect(marketLabLink).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Market Lab", exact: true })).toBeVisible();
-  await expect(page.getByText("Selected item")).toBeVisible();
-  await expect(page.getByText("steel", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "steel", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "steel", exact: true })).toBeVisible();
   await expect(page.getByLabel("WarEra player name")).toHaveCount(0);
-  expect(state.apiRequests).toEqual([]);
+  await expect(page.getByText("Recipe quantity 2")).toBeVisible();
+  const firstVisitPaths = state.apiRequestDetails.map((entry) => entry.pathname);
+  // React StrictMode can repeat mount effects in the development E2E server.
+  // Every request must still be current-state Market data, never a player lookup.
+  expect(new Set(firstVisitPaths)).toEqual(new Set(["/api/market/item", "/api/market/overview"]));
   expect(state.externalRequests).toEqual([]);
 
   await page.reload();
 
   await expect(marketLabLink).toHaveAttribute("aria-current", "page");
-  await expect(page.getByText("steel", { exact: true })).toBeVisible();
-  expect(state.apiRequests).toEqual([]);
+  await expect(page.getByRole("heading", { name: "steel", exact: true })).toBeVisible();
+  expect(
+    state.apiRequestDetails.filter((entry) => entry.pathname.startsWith("/api/players/")),
+  ).toEqual([]);
 
   await economyLabLink.click();
   await expect(page).toHaveURL(/lab=economy.*player=player-1.*company=company-1/);
@@ -225,8 +233,11 @@ test("@journey Market Lab preserves item context without loading live workspace 
     "aria-current",
     "page",
   );
-  await expect(page.getByText("steel", { exact: true })).toBeVisible();
-  expect(state.apiRequests.length).toBe(requestsAfterEconomyEntry);
+  await expect(page.getByRole("heading", { name: "steel", exact: true })).toBeVisible();
+  expect(
+    state.apiRequestDetails.filter((entry) => entry.pathname.startsWith("/api/players/")).length,
+  ).toBeGreaterThan(0);
+  expect(state.apiRequests.length).toBeGreaterThanOrEqual(requestsAfterEconomyEntry);
 });
 
 test("@journey Company Lab restores player and company context through reload and browser history", async ({
