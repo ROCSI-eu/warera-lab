@@ -69,7 +69,10 @@ test("@journey standalone and malformed Market identity use recoverable Economy 
   );
   expect(api.apiRequestDetails.every((x) => x.pathname.startsWith("/api/market/"))).toBe(true);
   await handoff.click();
-  await expect(page.getByLabel("WarEra player name")).toBeVisible();
+  await expect(page).toHaveURL("/?lab=economy", { timeout: 15_000 });
+  await expect(page.getByRole("searchbox", { name: "WarEra player name" })).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(page.getByRole("heading", { name: "Scenario workspace" })).toHaveCount(0);
   expect(api.apiRequestDetails.filter((x) => x.pathname === "/api/players/snapshot")).toHaveLength(
     0,
@@ -117,5 +120,23 @@ test("@journey Market identity links revalidate missing company instead of treat
   await expect(page.getByRole("region", { name: "Continue in Economy Lab" })).toContainText(
     "select a company",
   );
+  expect(api.externalRequests).toEqual([]);
+});
+
+test("@journey Market-to-Economy recovery link survives selected item upstream failure", async ({
+  page,
+}) => {
+  const api = await installApiMocks(page);
+  const market = await installMarketMocks(page);
+  market.itemMode = "error";
+  await page.goto("/?lab=market&item=steel&player=player-1&company=company-1");
+
+  await expect(page.getByText("Current item context is unavailable.")).toBeVisible();
+  const handoff = page.getByRole("region", { name: "Continue in Economy Lab" });
+  await expect(handoff).toContainText("reload and verify");
+  await handoff.getByRole("link", { name: "Continue to Economy Lab" }).click();
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  await expect(page).toHaveURL("/?lab=economy&player=player-1&company=company-1");
+  expect(api.economyContextItemCodes).toContain("steel");
   expect(api.externalRequests).toEqual([]);
 });
