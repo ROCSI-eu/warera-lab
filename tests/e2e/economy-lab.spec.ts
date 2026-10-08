@@ -315,7 +315,7 @@ test("@journey Company Lab restores player and company context through reload an
     "/?lab=economy&player=player-1&company=company-1",
   );
   await expect(
-    page.getByText(/handoff carries only the current player and company identifiers/i),
+    page.getByText(/Economy Lab receives only the current player and company identifiers/i),
   ).toBeVisible();
 
   state.apiRequests.length = 0;
