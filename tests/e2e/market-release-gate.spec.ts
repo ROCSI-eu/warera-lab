@@ -81,6 +81,12 @@ test("@journey Market 429 recovery stays manual with no polling, history or brow
   market.itemMode = "ok";
   market.recipeEconomicsMode = "positive";
   await page.getByRole("button", { name: "Refresh market" }).click();
+  // Overview and item load independently; wait for both successful responses.
+  await expect(
+    page
+      .getByRole("list", { name: "Browse current market items" })
+      .getByRole("link", { name: /steel.*12\.75/i }),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Current top orders" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Recipe-only current economics" })).toContainText(
     "Recipe-only implied spread",
