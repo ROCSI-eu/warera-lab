@@ -153,6 +153,12 @@ test("@a11y keyboard item inspection, disclosures and Economy handoff work at 32
   await expect(page.getByRole("heading", { name: "coal", exact: true })).toBeVisible();
 
   await page.goto("/?lab=market&item=steel&player=player-1&company=company-1");
+  // Overview and item load separately; include the loaded catalogue in the Axe scan.
+  await expect(
+    page
+      .getByRole("list", { name: "Browse current market items" })
+      .getByRole("link", { name: /steel.*12\.75/i }),
+  ).toBeVisible();
   const recipeDetails = page.getByText("How is this recipe-only spread calculated?");
   await recipeDetails.focus();
   await page.keyboard.press("Enter");
