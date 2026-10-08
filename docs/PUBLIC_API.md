@@ -86,6 +86,90 @@ This endpoint supplies the browser-facing inputs needed by the Economy Lab plann
 
 The endpoint does not expose the raw upstream game-configuration payload or the complete market-price map.
 
+## `POST /api/market/overview`
+
+Request body: an empty JSON object, `{}`. This is a **demand-driven** snapshot; no
+background polling or historical recording is involved.
+
+The response is a compact, sorted selection catalogue from the normalized game
+configuration, with each item's `code`, `type`, `rarity`, optional `isTradable`,
+and `currentPrice` **only when the price source has a value**. It does not return
+the raw game configuration, skills, upgrades, or the entire unfiltered price map.
+
+```json
+{
+  "data": {
+    "items": [
+      { "code": "iron", "type": "resource", "rarity": "common", "isTradable": true },
+      {
+        "code": "steel",
+        "type": "resource",
+        "rarity": "common",
+        "isTradable": true,
+        "currentPrice": 10
+      }
+    ],
+    "contextGaps": {
+      "itemCodes": [],
+      "marketPriceItemCodes": ["iron"]
+    },
+    "freshness": {
+      "generatedAt": "2026-10-08T12:00:00.000Z",
+      "hasStaleData": false,
+      "sources": []
+    }
+  }
+}
+```
+
+`contextGaps.itemCodes` lists codes present in current price data but absent
+from the item configuration (not added as synthetic catalogue entries).
+`marketPriceItemCodes` lists configured items without a current price. A valid
+price of `0` remains `0`; an absent price is **omitted**, never inferred as zero.
+Each actual response includes source records for `gameConfig` and `marketPrices`
+with retrieval time, age, and cache state.
+
+## `POST /api/market/item`
+
+Request:
+
+```json
+{
+  "itemCode": "steel"
+}
+```
+
+The code is trimmed and must be 1–64 characters. The response includes:
+
+- `itemCode` and the selected `item` using the canonical `ItemEconomyConfig`
+  shape (including `productionNeeds`), if configured;
+- `marketPrices` using the canonical `MarketPriceMap`, restricted to the
+  selected output and recipe input codes, with missing values omitted;
+- `topOrders` using the canonical `MarketOrderBook`, **only** for a configured
+  item not explicitly marked non-tradable; orders are filtered to the requested
+  item/side and capped at ten buy and ten sell orders;
+- `contextGaps.itemCodes` for output/input codes absent from normalized config,
+  `contextGaps.marketPriceItemCodes` for missing output/input prices, and
+  `contextGaps.orderBookItemCodes` if the optional order fetch failed;
+- `freshness` for actual successful `gameConfig`, `marketPrices`, and (when
+  fetched successfully) `marketOrders` sources; order freshness includes the
+  requested item code as `subjectId`.
+
+An empty `topOrders` book means the upstream order lookup completed and returned
+no applicable orders. Omitted `topOrders` means no order lookup was applicable
+(unknown or explicitly non-tradable item), or the lookup failed (then
+`orderBookItemCodes` identifies the gap). Missing configuration or price
+values are never filled from assumptions. Price/config failures produce the
+same sanitized upstream error envelope as other API routes; optional order
+failures instead preserve the partial current-state response with an explicit
+gap and no fabricated order freshness.
+
+These routes reuse the existing documented `gameConfig.getGameConfig`,
+`itemTrading.getPrices`, and `tradingOrder.getTopOrders` adapters, bounded
+cache, request deduplication, and rate-limit protections. They do not alter
+`/api/economy/context`. Browser clients call them only on user demand; no
+persistent history, credentials, or new upstream procedures are introduced.
+
 ## Freshness
 
 Browser-facing freshness states are intentionally simple:
