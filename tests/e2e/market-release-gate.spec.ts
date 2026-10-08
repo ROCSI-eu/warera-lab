@@ -169,7 +169,7 @@ test("@a11y keyboard item inspection, disclosures and Economy handoff work at 32
   // WCAG 2.2 touch-target findings outside this focused release gate.
   const a11y = await new AxeBuilder({ page })
     .include(".market-lab")
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
   expect(a11y.violations).toEqual([]);
   expect(await horizontalOverflow(page)).toBe(0);
