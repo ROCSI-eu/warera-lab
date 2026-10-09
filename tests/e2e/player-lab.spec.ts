@@ -17,10 +17,11 @@ test("@journey Player Lab accepts public player-only links without economy/marke
   expect(api.apiRequestDetails.map((request) => request.pathname)).toEqual([
     "/api/players/snapshot",
   ]);
-  await expect(page.getByRole("link", { name: "Company Lab" })).toHaveAttribute(
-    "href",
-    "/?lab=company&player=player-1",
-  );
+  await expect(
+    page
+      .getByRole("navigation", { name: "WarEra Lab modules" })
+      .getByRole("link", { name: "Company Lab" }),
+  ).toHaveAttribute("href", "/?lab=company&player=player-1");
 
   await page.getByRole("button", { name: "Refresh snapshot" }).click();
   await expect(page.getByText("Public player snapshot refreshed.")).toBeVisible();
@@ -31,7 +32,10 @@ test("@journey Player Lab accepts public player-only links without economy/marke
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Economy Lab" }).click();
+  await page
+    .getByRole("navigation", { name: "WarEra Lab modules" })
+    .getByRole("link", { name: "Economy Lab" })
+    .click();
   await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
   expect(api.economyContextItemCodes).toContain("steel");
   await page.goBack();
@@ -58,10 +62,11 @@ test("@journey Player Lab validates company focus and never silently selects a c
   await page.goto("/?lab=player&player=player-1&company=company-1");
   await expect(page.getByText(/This link focuses the owned company Planner Steel/)).toBeVisible();
   await expect(page).toHaveURL("/?lab=player&player=player-1&company=company-1");
-  await expect(page.getByRole("link", { name: "Company Lab" })).toHaveAttribute(
-    "href",
-    "/?lab=company&player=player-1&company=company-1",
-  );
+  await expect(
+    page
+      .getByRole("navigation", { name: "WarEra Lab modules" })
+      .getByRole("link", { name: "Company Lab" }),
+  ).toHaveAttribute("href", "/?lab=company&player=player-1&company=company-1");
   expect(api.economyContextItemCodes).toEqual([]);
 });
 
