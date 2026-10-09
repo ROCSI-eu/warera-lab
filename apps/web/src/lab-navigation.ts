@@ -1,6 +1,6 @@
 import { publicItemCodeMaxLength } from "@warera-lab/domain";
 
-export type LabId = "economy" | "company" | "market";
+export type LabId = "economy" | "company" | "market" | "player";
 
 export interface LabRoute {
   lab: LabId;
@@ -40,14 +40,17 @@ export function parseLabLocation(search: string): ParsedLabLocation {
   const params = new URLSearchParams(search);
   const requestedLab = params.get("lab");
   const lab: LabId =
-    requestedLab === "company" || requestedLab === "market" ? requestedLab : "economy";
+    requestedLab === "company" || requestedLab === "market" || requestedLab === "player"
+      ? requestedLab
+      : "economy";
   const messages: string[] = [];
 
   if (
     requestedLab !== null &&
     requestedLab !== "economy" &&
     requestedLab !== "company" &&
-    requestedLab !== "market"
+    requestedLab !== "market" &&
+    requestedLab !== "player"
   ) {
     messages.push("Unknown lab link. Economy Lab was opened instead.");
   }
