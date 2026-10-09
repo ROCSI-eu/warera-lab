@@ -13,6 +13,7 @@ export function PlayerLabShell({
   isRefreshing,
   refreshMessage,
   onRefresh,
+  onRetryLinkedPlayer,
   handoffLocation = { pathname: "/", search: "", hash: "" },
 }: {
   snapshot: PublicPlayerSnapshotResponse | undefined;
@@ -22,6 +23,7 @@ export function PlayerLabShell({
   isRefreshing: boolean;
   refreshMessage: WorkspaceMessage | undefined;
   onRefresh: () => void;
+  onRetryLinkedPlayer?: (() => void) | undefined;
   handoffLocation?: HandoffLocation;
 }) {
   const focusedCompany = snapshot?.companies.find((company) => company.id === focusedCompanyId);
@@ -72,6 +74,17 @@ export function PlayerLabShell({
         >
           {isRefreshing ? "Refreshing the public player snapshot…" : refreshMessage.text}
         </p>
+      ) : null}
+      {!snapshot && !isImporting && onRetryLinkedPlayer ? (
+        <div className="message message--warning">
+          <p>
+            The public player in this link could not be loaded. You can retry the same link after
+            any suggested rate-limit wait, or search for another player above.
+          </p>
+          <button className="refresh-button" type="button" onClick={onRetryLinkedPlayer}>
+            Retry linked player
+          </button>
+        </div>
       ) : null}
       {snapshot ? (
         <>

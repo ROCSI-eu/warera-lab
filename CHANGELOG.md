@@ -30,13 +30,14 @@ Release candidate for Player Lab MVP: a public, player-centered hub combining no
 ### Fixed
 
 - At 320 px, observed economic skill labels no longer break in the middle of words; their labels and reported levels/values remain readable.
+- Failed initial Player Lab deep links expose an explicit manual retry for the same validated public player and company identifiers, including unavailable and rate-limited responses.
 
 ### Verification
 
-- Player Lab-specific Playwright journey/accessibility checks passed on desktop and emulated mobile (6/6), with 320 px keyboard/focus/no-overflow, WCAG 2.2 scoped axe and no browser-side credential/storage/polling assertions.
+- Player Lab-specific Playwright journey/accessibility checks passed on desktop and emulated mobile (10/10), including initial 503/429 deep-link retry, with 320 px keyboard/focus/no-overflow, WCAG 2.2 scoped axe and no browser-side credential/storage/polling assertions.
 - All 44 existing and new visual checks passed during release baseline generation: Economy, Company, Market, and Player Lab at desktop, emulated mobile, exactly 320 px and reduced-motion settings. The only added visual baseline files belong to Player Lab.
 - The narrow-screen typography fix was validated with a 9/9 targeted rerun and inspected in the regenerated 320 px screenshots.
-- Full repository `npm run verify` and Codex review: pending final results before owner merge approval.
+- Initial PR #104 head `1ccc1c579bce981304def16611e647f10c025c0e` passed complete GitHub Actions `npm run verify` (168 Vitest tests and 132 Playwright cases); the follow-up tree requires a new full CI run and a second Codex review before merge.
 - Production deployment and smoke: **not performed**. Exact production commit, visible version, service health, live Player Lab and cross-lab verification remain pending separate deployment approval.
 - Desktop/mobile/320 px browser evidence will be recorded from automated Playwright; no physical Android/iOS device checks are claimed.
 

@@ -11,7 +11,7 @@ Introduces Player Lab, a public player-centric starting point for the existing W
 - Search/import a public player and inspect identity, country, economy skills, and explicit data freshness/provenance.
 - Browse up to twelve owned companies, including safe disambiguation of identically named companies.
 - Move into Economy, Company, or Market Lab with validated, relevant identifiers and no hypothetical scenario-state transfer.
-- Clear degraded-state handling, responsive/keyboard/accessibility release testing, and readable skill labels at exactly 320 px.
+- Clear degraded-state handling, a manual retry when an initial player link fails, responsive/keyboard/accessibility release testing, and readable skill labels at exactly 320 px.
 
 ## Production verification
 

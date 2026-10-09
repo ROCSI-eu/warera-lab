@@ -89,6 +89,68 @@ test("@journey Player Lab handoffs discard portable scenario fragments and prese
   expect(api.externalRequests).toEqual([]);
 });
 
+test("@journey failed initial linked player snapshot retries 503 and 429 manually without searching", async ({
+  page,
+}) => {
+  const api = await installApiMocks(page);
+  api.snapshotMode = "unavailable";
+  await page.goto("/?lab=player&player=player-1&company=company-1");
+  await expect(page.getByRole("alert")).toContainText(/temporarily unavailable/i);
+  const retry = page.getByRole("button", { name: "Retry linked player" });
+  await expect(retry).toBeVisible();
+  await expect(page).toHaveURL("/?lab=player&player=player-1&company=company-1");
+
+  api.snapshotMode = "rate-limit";
+  await retry.click();
+  await expect(page.getByRole("alert")).toContainText(/rate limit reached/i);
+  await expect(page.getByText(/Suggested retry: in about 60 seconds/i)).toBeVisible();
+  await expect(retry).toBeVisible();
+
+  api.snapshotMode = "ok";
+  await retry.click();
+  await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
+  await expect(retry).toHaveCount(0);
+  await expect(page.getByText(/This link focuses the owned company Planner Steel/)).toBeVisible();
+  await expect(page).toHaveURL("/?lab=player&player=player-1&company=company-1");
+  expect(api.apiRequestDetails.map(({ pathname }) => pathname)).toEqual([
+    "/api/players/snapshot",
+    "/api/players/snapshot",
+    "/api/players/snapshot",
+  ]);
+  expect(api.economyContextItemCodes).toEqual([]);
+  expect(api.externalRequests).toEqual([]);
+});
+
+test("@journey initial 429 Player Lab direct link retries with keyboard after rate limit", async ({
+  page,
+}) => {
+  const api = await installApiMocks(page);
+  api.snapshotMode = "rate-limit";
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/?lab=player&player=player-1");
+  await expect(page.getByRole("alert")).toContainText(/rate limit reached/i);
+  const retry = page.getByRole("button", { name: "Retry linked player" });
+  await retry.focus();
+  await expect(retry).toBeFocused();
+  const focusVisible = await retry.evaluate((button) => {
+    const style = getComputedStyle(button);
+    return style.outlineStyle !== "none" && style.outlineWidth !== "0px";
+  });
+  expect(focusVisible).toBe(true);
+  expect(await horizontalOverflow(page)).toBe(0);
+  api.snapshotMode = "ok";
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
+  await expect(retry).toHaveCount(0);
+  await expect(page).toHaveURL("/?lab=player&player=player-1");
+  expect(api.apiRequestDetails.map(({ pathname }) => pathname)).toEqual([
+    "/api/players/snapshot",
+    "/api/players/snapshot",
+  ]);
+  expect(api.economyContextItemCodes).toEqual([]);
+  expect(api.externalRequests).toEqual([]);
+});
+
 test("@a11y twelve-company Player Lab at 320px supports keyboard handoff, focus, and named links", async ({
   page,
 }) => {

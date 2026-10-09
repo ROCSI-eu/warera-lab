@@ -621,6 +621,15 @@ export function App() {
           isRefreshing={state.isRefreshing}
           refreshMessage={state.refreshMessage}
           onRefresh={() => void handleRefreshSnapshot()}
+          onRetryLinkedPlayer={
+            !state.snapshot && state.message?.kind === "error" && initialLocation.route.playerId
+              ? () =>
+                  void importPlayerContext(
+                    initialLocation.route.playerId!,
+                    initialLocation.route.companyId,
+                  )
+              : undefined
+          }
           handoffLocation={
             typeof window === "undefined"
               ? { pathname: "/", search: "", hash: "" }
