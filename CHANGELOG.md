@@ -37,9 +37,9 @@ Release candidate for Player Lab MVP: a public, player-centered hub combining no
 - Player Lab-specific Playwright journey/accessibility checks passed on desktop and emulated mobile (10/10), including initial 503/429 deep-link retry, with 320 px keyboard/focus/no-overflow, WCAG 2.2 scoped axe and no browser-side credential/storage/polling assertions.
 - All 44 existing and new visual checks passed during release baseline generation: Economy, Company, Market, and Player Lab at desktop, emulated mobile, exactly 320 px and reduced-motion settings. The only added visual baseline files belong to Player Lab.
 - The narrow-screen typography fix was validated with a 9/9 targeted rerun and inspected in the regenerated 320 px screenshots.
-- Initial PR #104 head `1ccc1c579bce981304def16611e647f10c025c0e` passed complete GitHub Actions `npm run verify` (168 Vitest tests and 132 Playwright cases); the follow-up tree requires a new full CI run and a second Codex review before merge.
+- PR #104 follow-up implementation head `8234832cbfed3fb023f8d5d8af5d713a8ce7718f` passed [GitHub Actions run #37945476289](https://github.com/ROCSI-eu/warera-lab/actions/runs/37945476289) on 2026-10-09: full `npm run verify`, release-version consistency, formatting, lint (one non-blocking warning), production build, typecheck, 168 Vitest tests across 25 files and 136 Playwright cases. Release-documentation follow-up changes still require verification on the final PR head and a fresh Codex review before merge.
 - Production deployment and smoke: **not performed**. Exact production commit, visible version, service health, live Player Lab and cross-lab verification remain pending separate deployment approval.
-- Desktop/mobile/320 px browser evidence will be recorded from automated Playwright; no physical Android/iOS device checks are claimed.
+- Desktop, representative mobile, exact 320 px and reduced-motion browser evidence was captured through Playwright screenshot baselines and regression checks; no physical Android/iOS device checks are claimed.
 
 ### Known limitations
 
