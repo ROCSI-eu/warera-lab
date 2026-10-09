@@ -621,6 +621,15 @@ export function App() {
           isRefreshing={state.isRefreshing}
           refreshMessage={state.refreshMessage}
           onRefresh={() => void handleRefreshSnapshot()}
+          handoffLocation={
+            typeof window === "undefined"
+              ? { pathname: "/", search: "", hash: "" }
+              : {
+                  pathname: window.location.pathname,
+                  search: window.location.search,
+                  hash: window.location.hash,
+                }
+          }
         />
       ) : activeLab === "company" ? (
         <CompanyLabShell

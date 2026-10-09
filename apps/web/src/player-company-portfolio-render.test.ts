@@ -68,7 +68,7 @@ describe("Player Lab company output portfolio", () => {
     expect(html).toContain("Prahova · Romania");
     expect(html).toContain("Reported production 0");
     expect(html).toContain("0 workers");
-    expect(html).not.toMatch(/active company|inactive company|inventory quantity|Company Lab →/i);
+    expect(html).not.toMatch(/active company|inactive company|inventory quantity/i);
     expect(html).not.toContain("Not reported");
   });
 
@@ -77,7 +77,7 @@ describe("Player Lab company output portfolio", () => {
     const third = { ...firstCompany, id: "another-company-1111111" };
     const current = { ...snapshot, companies: [firstCompany, second, third] };
     const html = renderPortfolio(current);
-    expect(html.match(/Steel Inc/g)).toHaveLength(3);
+    expect(html.match(/<h4>Steel Inc<\/h4>/g)).toHaveLength(3);
     const identifiers = [...html.matchAll(/Company (…[^<]+)<\/small>/g)].map((match) => match[1]);
     expect(identifiers).toHaveLength(3);
     expect(new Set(identifiers).size).toBe(3);

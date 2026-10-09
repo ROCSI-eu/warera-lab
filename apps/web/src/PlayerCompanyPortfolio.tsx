@@ -2,6 +2,7 @@ import type { PublicCompanySnapshot, PublicPlayerSnapshotResponse } from "@warer
 
 import { describeCompany } from "./company-display.js";
 import { formatDisplayNumber } from "./display-format.js";
+import { playerHandoffHref, type HandoffLocation } from "./player-handoffs.js";
 
 // Keep duplicate-name records identifiable even when their names, locations and
 // reported operations match. Only show an ID fragment for ambiguous names.
@@ -27,7 +28,13 @@ function reportedOperations(company: PublicCompanySnapshot): string[] {
   ].filter((value): value is string => value !== undefined);
 }
 
-export function PlayerCompanyPortfolio({ snapshot }: { snapshot: PublicPlayerSnapshotResponse }) {
+export function PlayerCompanyPortfolio({
+  snapshot,
+  location = { pathname: "/", search: "", hash: "" },
+}: {
+  snapshot: PublicPlayerSnapshotResponse;
+  location?: HandoffLocation;
+}) {
   const companies = snapshot.companies;
   const outputCounts = new Map<string, number>();
   const nameCounts = new Map<string, string[]>();
@@ -76,12 +83,29 @@ export function PlayerCompanyPortfolio({ snapshot }: { snapshot: PublicPlayerSna
               const duplicateIds = nameCounts.get(company.name) ?? [];
               const region = snapshot.regions[company.regionId];
               const country = region && snapshot.countries[region.countryId];
-              const location = !region
+              const companyLocation = !region
                 ? "Location unavailable"
                 : !country
                   ? region.name + " · Country unavailable"
                   : presentation.location;
               const cues = reportedOperations(company);
+              const companyHref = playerHandoffHref(
+                "company",
+                snapshot.player.id,
+                location,
+                company,
+              )!;
+              const economyHref = playerHandoffHref(
+                "economy",
+                snapshot.player.id,
+                location,
+                company,
+              )!;
+              const marketHref = playerHandoffHref("market", snapshot.player.id, location, company);
+              const identity =
+                duplicateIds.length > 1
+                  ? company.name + " (Company " + uniqueSuffix(company.id, duplicateIds) + ")"
+                  : company.name;
 
               return (
                 <li key={company.id}>
@@ -98,10 +122,30 @@ export function PlayerCompanyPortfolio({ snapshot }: { snapshot: PublicPlayerSna
                       <span>Company output</span>
                       <strong>{company.itemCode}</strong>
                     </p>
-                    <p className="player-portfolio__location">{location}</p>
+                    <p className="player-portfolio__location">{companyLocation}</p>
                     {cues.length > 0 ? (
                       <p className="player-portfolio__operations">{cues.join(" · ")}</p>
                     ) : null}
+                    <nav className="player-portfolio__actions" aria-label={"Explore " + identity}>
+                      <a href={companyHref} aria-label={"Inspect " + identity + " in Company Lab"}>
+                        Company Lab →
+                      </a>
+                      <a href={economyHref} aria-label={"Model " + identity + " in Economy Lab"}>
+                        Economy Lab →
+                      </a>
+                      {marketHref ? (
+                        <a
+                          href={marketHref}
+                          aria-label={
+                            "Inspect " + company.itemCode + " from " + identity + " in Market Lab"
+                          }
+                        >
+                          Market Lab →
+                        </a>
+                      ) : (
+                        <span className="muted">No usable output item for Market Lab</span>
+                      )}
+                    </nav>
                   </article>
                 </li>
               );
