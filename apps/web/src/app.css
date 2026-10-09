@@ -1857,6 +1857,23 @@ button:disabled {
   }
 }
 
+/* Avoid splitting economic skill names mid-word on narrow 320 px screens. */
+@media (max-width: 24rem) {
+  .player-profile__skills .skill-list > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.35rem;
+  }
+
+  .player-profile__skills dt {
+    overflow-wrap: normal;
+  }
+
+  .player-profile__skills dd {
+    text-align: left;
+  }
+}
+
 /* Public portfolio summary: concise records, not the detailed Company Lab. */
 .player-portfolio {
   min-width: 0;
