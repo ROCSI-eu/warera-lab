@@ -69,7 +69,7 @@ export function PlayerProfile({ snapshot }: { snapshot: PublicPlayerSnapshotResp
       >
         <div className="section-heading">
           <div>
-            <p className="section-kicker">Current public values · not a scenario</p>
+            <p className="section-kicker">Reported public values · not a scenario</p>
             <h3 id="player-skills-title">Observed economy skills</h3>
           </div>
           <span className="badge badge--observed">Observed</span>

@@ -94,7 +94,7 @@ describe("Player Lab observed public profile", () => {
     expect(html).toContain("Entrepreneurship");
     expect(html).toContain("Management");
     expect(html).toContain("Companies");
-    expect(html).toContain("Current public values · not a scenario");
+    expect(html).toContain("Reported public values · not a scenario");
     expect(html).toContain("Player snapshot freshness");
     expect(html).toContain("1 live · 1 cached");
     expect(html).toContain("View source details (2)");
