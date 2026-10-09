@@ -1,7 +1,9 @@
 import type { PublicPlayerSnapshotResponse } from "@warera-lab/domain";
 import type { WorkspaceMessage } from "./workspace-state.js";
 import { PlayerProfile } from "./PlayerProfile.js";
-import { PlayerCompanyPortfolio } from "./PlayerCompanyPortfolio.js";
+import { PlayerCompanyPortfolio, portfolioCompanyIdentity } from "./PlayerCompanyPortfolio.js";
+import { PlayerNextSteps } from "./PlayerNextSteps.js";
+import type { HandoffLocation } from "./player-handoffs.js";
 
 export function PlayerLabShell({
   snapshot,
@@ -11,6 +13,7 @@ export function PlayerLabShell({
   isRefreshing,
   refreshMessage,
   onRefresh,
+  handoffLocation = { pathname: "/", search: "", hash: "" },
 }: {
   snapshot: PublicPlayerSnapshotResponse | undefined;
   focusedCompanyId: string | undefined;
@@ -19,6 +22,7 @@ export function PlayerLabShell({
   isRefreshing: boolean;
   refreshMessage: WorkspaceMessage | undefined;
   onRefresh: () => void;
+  handoffLocation?: HandoffLocation;
 }) {
   const focusedCompany = snapshot?.companies.find((company) => company.id === focusedCompanyId);
 
@@ -32,7 +36,7 @@ export function PlayerLabShell({
           </h2>
           <p className="muted">
             {snapshot
-              ? "Public economic profile and a concise owned-company overview from WarEra's public snapshot. Specialist-lab shortcuts will follow in the next step."
+              ? "Public economic profile and a concise owned-company overview from WarEra's public snapshot. Choose a purpose-specific lab below to explore further."
               : "Search for a public WarEra player above and select Import to establish a player-centered starting point."}
           </p>
         </div>
@@ -71,14 +75,17 @@ export function PlayerLabShell({
       ) : null}
       {snapshot ? (
         <>
-          <PlayerProfile snapshot={snapshot} />
-          <PlayerCompanyPortfolio snapshot={snapshot} />
           {focusedCompany ? (
-            <p className="muted">
-              This link focuses the owned company {focusedCompany.name}. This does not indicate
-              whether the company is active in WarEra.
+            <p className="message" role="status">
+              This link focuses the owned company{" "}
+              {portfolioCompanyIdentity(focusedCompany, snapshot.companies)}. Use the links in its
+              portfolio card below to inspect that company in a specialist lab. The link does not
+              indicate whether the company is active in WarEra.
             </p>
           ) : null}
+          <PlayerProfile snapshot={snapshot} />
+          <PlayerNextSteps snapshot={snapshot} location={handoffLocation} />
+          <PlayerCompanyPortfolio snapshot={snapshot} location={handoffLocation} />
           {snapshot.freshness.hasStaleData ? (
             <p className="message message--warning" role="status">
               Some public data is stale; refresh to request another snapshot.
