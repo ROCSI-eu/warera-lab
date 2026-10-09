@@ -64,7 +64,7 @@ export function PlayerLabShell({
           className={"message message--" + refreshMessage.kind}
           role={refreshMessage.kind === "error" ? "alert" : "status"}
         >
-          {refreshMessage.text}
+          {isRefreshing ? "Refreshing the public player snapshot…" : refreshMessage.text}
         </p>
       ) : null}
       {snapshot ? (
