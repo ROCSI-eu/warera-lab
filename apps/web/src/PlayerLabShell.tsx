@@ -1,6 +1,7 @@
 import type { PublicPlayerSnapshotResponse } from "@warera-lab/domain";
 import type { WorkspaceMessage } from "./workspace-state.js";
 import { PlayerProfile } from "./PlayerProfile.js";
+import { PlayerCompanyPortfolio } from "./PlayerCompanyPortfolio.js";
 
 export function PlayerLabShell({
   snapshot,
@@ -31,7 +32,7 @@ export function PlayerLabShell({
           </h2>
           <p className="muted">
             {snapshot
-              ? "Public economic profile and owned-company count from WarEra's public snapshot. Company details and lab shortcuts are coming in the next steps."
+              ? "Public economic profile and a concise owned-company overview from WarEra's public snapshot. Specialist-lab shortcuts will follow in the next step."
               : "Search for a public WarEra player above and select Import to establish a player-centered starting point."}
           </p>
         </div>
@@ -71,6 +72,7 @@ export function PlayerLabShell({
       {snapshot ? (
         <>
           <PlayerProfile snapshot={snapshot} />
+          <PlayerCompanyPortfolio snapshot={snapshot} />
           {focusedCompany ? (
             <p className="muted">
               This link focuses the owned company {focusedCompany.name}. This does not indicate

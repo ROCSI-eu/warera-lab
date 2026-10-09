@@ -1856,3 +1856,141 @@ button:disabled {
     gap: 0.5rem;
   }
 }
+
+/* Public portfolio summary: concise records, not the detailed Company Lab. */
+.player-portfolio {
+  min-width: 0;
+  margin-top: 1.5rem;
+}
+
+.player-portfolio > .section-heading {
+  margin-bottom: 0.8rem;
+}
+
+.player-portfolio > .section-heading .muted {
+  margin-top: 0.35rem;
+}
+
+.player-portfolio__outputs {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid rgba(232, 237, 244, 0.08);
+  border-radius: 0.85rem;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.player-portfolio__outputs > strong {
+  font-size: 0.84rem;
+}
+
+.player-portfolio__outputs ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.player-portfolio__outputs li {
+  display: inline-flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.6rem;
+  background: rgba(155, 183, 220, 0.11);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.player-portfolio__outputs small {
+  color: #a7b5c7;
+}
+
+.player-portfolio__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.player-portfolio__grid li,
+.player-portfolio__card {
+  min-width: 0;
+}
+
+.player-portfolio__card {
+  height: 100%;
+  padding: 0.9rem;
+  border: 1px solid rgba(232, 237, 244, 0.1);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.player-portfolio__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+}
+
+.player-portfolio__heading h4 {
+  min-width: 0;
+  margin: 0;
+  font-size: 0.98rem;
+  overflow-wrap: anywhere;
+}
+
+.player-portfolio__identifier {
+  color: #93a4b8;
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
+.player-portfolio__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.65rem 0 0;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.player-portfolio__item span,
+.player-portfolio__location,
+.player-portfolio__operations {
+  color: #9eafc2;
+}
+
+.player-portfolio__item strong {
+  color: #e2edf8;
+}
+
+.player-portfolio__location,
+.player-portfolio__operations {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 50rem) {
+  .player-portfolio__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 36rem) {
+  .player-portfolio__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .player-portfolio__card {
+    padding: 0.75rem;
+  }
+}
