@@ -62,7 +62,11 @@ test("@a11y Player Lab missing-country, zero-company and stale-data profile rema
   await page.goto("/?lab=player&player=player-1");
   const profile = page.locator(".player-profile");
   await expect(profile.getByText("Country unavailable")).toBeVisible();
-  await expect(profile.getByText("No owned companies are listed")).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "Owned-company overview" })
+      .getByText("No owned companies are listed"),
+  ).toBeVisible();
   await expect(profile.getByText(/Some geographic context is unavailable/)).toBeVisible();
   await expect(profile.getByText("Contains stale data")).toBeVisible();
   await expect(profile.getByText("1 cached · 1 stale")).toBeVisible();
