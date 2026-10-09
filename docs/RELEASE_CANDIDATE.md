@@ -1,6 +1,6 @@
 # WarEra Lab release-candidate smoke checklist
 
-This checklist is the shared release gate for Economy Lab, Company Lab, and Market Lab. It is intended to be run before deployment and then reused for the production smoke pass on the exact deployed commit.
+This checklist is the shared release gate for Economy Lab, Company Lab, Market Lab, and Player Lab. It is intended to be run before deployment and then reused for the production smoke pass on the exact deployed commit.
 
 ## Automated release gate
 
@@ -65,6 +65,19 @@ A release candidate is not ready unless all of the following are green:
 9. At desktop, representative mobile, exactly 320 px, and reduced-motion settings, inspect complete and degraded current-state views and review intentional Market Lab screenshot baselines.
 10. Verify keyboard focus/Enter activation for catalogue items, selection clearing, calculation disclosures, refresh and Economy handoff; run axe against the whole loaded Market Lab page and degraded states.
 
+## Player Lab workflow
+
+1. Navigate to Player Lab; search for a public player and import an exact search result. Confirm the URL has `lab=player&player=...`.
+2. Open/reload a direct Player Lab URL, then navigate into a specialist lab and use browser Back to verify recovery.
+3. Verify identity, country, observed skills, source provenance and freshness; confirm missing country/region or skills are not invented.
+4. Inspect no-company, same-name/different-ID company, and realistic twelve-company snapshots. Confirm output item codes are **company outputs**, not player inventory or proof of active production.
+5. At desktop (1440 px), representative mobile, and exactly 320 px, check wrapping, overflow, readable actions, focus/keyboard order and named links. Repeat with reduced motion and review loaded, degraded and twelve-company Playwright screenshot baselines.
+6. Refresh stale data, induce HTTP 429 and upstream-unavailable responses, then retry manually. Confirm previous snapshot remains usable and the browser does not poll in the background.
+7. From Player Lab, open contextual Company, Economy and Market links. Confirm validated exact company identifiers even for duplicate names, item-only Market lookup, direct URL/reload/Back and graceful removed-company recovery.
+8. Confirm Player Lab does not request Economy/Market data until explicitly navigating there, uses only same-origin public read-only snapshot/search calls, and does not request credentials or persist player history.
+9. Confirm no portable scenario `#wl=` fragment, raw snapshot data, hypothetical scenario, market prices, or inventory are transferred via Player Lab handoffs. Existing Economy scenario isolation must remain unchanged.
+10. Record automated desktop/mobile/320 px and accessibility results separately from any physical-device testing (unperformed checks must remain open).
+
 ## Responsive, accessibility, and visual checks
 
 - Desktop workbench remains coherent at 1440 px.
@@ -77,7 +90,7 @@ A release candidate is not ready unless all of the following are green:
 - Freshness states are written as Live, Cached, or Stale and do not rely on colour alone.
 - Provenance states are written as observed, overridden, assumed, or derived and do not rely on colour alone.
 - Reduced-motion mode removes non-essential motion without removing functionality.
-- Economy Lab, Company Lab, and Market Lab full-page visual baselines are intentional and reviewed.
+- Economy Lab, Company Lab, Market Lab, and Player Lab full-page visual baselines are intentional and reviewed.
 - The 12-company maximum portfolio remains compact and unambiguous in both Economy Lab and Company Lab on desktop, mobile, and exactly 320 px.
 
 ## API, privacy, and persistence boundary
@@ -121,4 +134,4 @@ After deployment, smoke the public site using the same release candidate:
 12. confirm no unexpected browser-side external requests, persistence prompts, credentials, or account requirements appear;
 13. record the production URL, deployed SHA, visible version, and smoke evidence in the release/issue record.
 
-Issue #82 and parent #44 should remain open until the Market Lab post-deploy production smoke is complete. The same release-gate policy also applies to the earlier Economy/Company release issues.
+For the Player Lab v0.0.7 gate, additionally inspect the public Player Lab direct link, live search/import, owned-company/output semantics, duplicate company identity, contextual handoffs, and visible version across desktop/representative mobile/exactly 320 px. Leave #99 and parent #45 open until the owner-approved versioned production smoke succeeds. The earlier release-gate policy remains in force for Economy, Company and Market Lab.
