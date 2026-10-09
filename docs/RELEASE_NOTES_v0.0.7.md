@@ -18,7 +18,7 @@ Introduces Player Lab, a public player-centric starting point for the existing W
 - **Production commit:** Pending owner-approved deployment.
 - **Version and service checks:** Pending.
 - **Player Lab and cross-lab live smoke, desktop/mobile/320 px:** Pending.
-- **Automated test evidence:** To be finalized in PR #99 and changelog before merge.
+- **Automated test evidence:** PR #104 implementation head `8234832` passed [GitHub Actions full verification](https://github.com/ROCSI-eu/warera-lab/actions/runs/37945476289) with 168 Vitest and 136 Playwright tests; final release-documentation head requires its own CI confirmation before merge.
 
 ## Known limitations
 
