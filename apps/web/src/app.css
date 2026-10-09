@@ -1783,3 +1783,76 @@ button:disabled {
 .market-economy-handoff .company-lab-handoff {
   margin: 0.35rem 0;
 }
+
+/* Player Lab keeps public identity and observed skills ahead of deep provenance. */
+.player-profile {
+  min-width: 0;
+}
+
+.player-profile__identity {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1.1rem;
+}
+
+.player-profile__identity > div {
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(232, 237, 244, 0.08);
+  border-radius: 0.85rem;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.player-profile__identity span {
+  display: block;
+  color: #8491a3;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.player-profile__identity strong {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+
+.player-profile__metrics {
+  margin-top: 0.7rem;
+}
+
+.player-profile__clarification {
+  margin: 0.6rem 0 1rem;
+  font-size: 0.8rem;
+}
+
+.player-profile__skills {
+  margin-top: 1rem;
+}
+
+.player-profile__skills dt {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 36rem) {
+  .player-profile__identity,
+  .player-profile__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .player-profile__identity > div,
+  .player-profile__metrics article {
+    padding: 0.7rem;
+  }
+
+  .player-profile__metrics strong {
+    font-size: 1.25rem;
+  }
+
+  .player-profile__skills .skill-list > div {
+    gap: 0.5rem;
+  }
+}
