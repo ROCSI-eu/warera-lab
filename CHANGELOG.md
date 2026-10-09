@@ -34,7 +34,7 @@ Release candidate for Player Lab MVP: a public, player-centered hub combining no
 
 ### Verification
 
-- Player Lab-specific Playwright journey/accessibility checks passed on desktop and emulated mobile (10/10), including initial 503/429 deep-link retry, with 320 px keyboard/focus/no-overflow, WCAG 2.2 scoped axe and no browser-side credential/storage/polling assertions.
+- Player Lab-specific Playwright journey/accessibility checks passed on desktop and emulated mobile (10/10), including initial 503/429 deep-link retry, 320 px keyboard/focus/no-overflow and scoped axe WCAG 2.2 checks. Browser storage was asserted empty and a simulated clock advance confirmed no automatic polling; cookie, Authorization-header and Fetch credential-mode exclusion were **not** asserted.
 - All 44 existing and new visual checks passed during release baseline generation: Economy, Company, Market, and Player Lab at desktop, emulated mobile, exactly 320 px and reduced-motion settings. The only added visual baseline files belong to Player Lab.
 - The narrow-screen typography fix was validated with a 9/9 targeted rerun and inspected in the regenerated 320 px screenshots.
 - PR #104 follow-up implementation head `8234832cbfed3fb023f8d5d8af5d713a8ce7718f` passed [GitHub Actions run #37945476289](https://github.com/ROCSI-eu/warera-lab/actions/runs/37945476289) on 2026-10-09: full `npm run verify`, release-version consistency, formatting, lint (one non-blocking warning), production build, typecheck, 168 Vitest tests across 25 files and 136 Playwright cases. Release-documentation follow-up changes still require verification on the final PR head and a fresh Codex review before merge.
