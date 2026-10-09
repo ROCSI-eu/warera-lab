@@ -59,10 +59,6 @@ export function PlayerProfile({ snapshot }: { snapshot: PublicPlayerSnapshotResp
       <p className="player-profile__clarification muted">
         Company count reflects this public snapshot, not whether any company is active.
       </p>
-      {snapshot.companies.length === 0 ? (
-        <p className="muted">No owned companies are listed in this public snapshot.</p>
-      ) : null}
-
       <section
         className="workspace-panel player-profile__skills"
         aria-labelledby="player-skills-title"
