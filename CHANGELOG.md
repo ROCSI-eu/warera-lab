@@ -6,13 +6,13 @@ Versioning follows the WarEra Lab pre-1.0 sequential deployment scheme documente
 
 ## v0.0.7 — 2026-10-09
 
-**Production commit:** Pending production deployment — finalize after successful deploy/tag.
+**Production commit:** `d4df7435f6c57ade330d5bf03c8d3c3e971ee14d`
 **Previous version:** `v0.0.6`
 **Environment:** Production — `https://warera-lab.rocsi.eu/`
 
 ### Summary
 
-Release candidate for Player Lab MVP: a public, player-centered hub combining normalized identity, economic skills, owned-company outputs, and contextual handoffs into the existing Economy, Company and Market Labs.
+Player Lab MVP: a public, player-centered hub combining normalized identity, economic skills, owned-company outputs, and contextual handoffs into the existing Economy, Company and Market Labs.
 
 ### Added
 
@@ -25,7 +25,7 @@ Release candidate for Player Lab MVP: a public, player-centered hub combining no
 
 - Player Lab loads only the necessary read-only public snapshot, with no automatic Economy/Market context fan-out.
 - Absent, stale, unavailable, and rate-limited snapshot states retain transparent status and manual retry behavior.
-- Shared release-candidate documentation covers Player Lab workflows and versioned production acceptance.
+- Shared release documentation covers Player Lab workflows and versioned production acceptance.
 
 ### Fixed
 
@@ -37,8 +37,9 @@ Release candidate for Player Lab MVP: a public, player-centered hub combining no
 - Player Lab-specific Playwright journey/accessibility checks passed on desktop and emulated mobile (10/10), including initial 503/429 deep-link retry, 320 px keyboard/focus/no-overflow and scoped axe WCAG 2.2 checks. Browser storage was asserted empty and a simulated clock advance confirmed no automatic polling; cookie, Authorization-header and Fetch credential-mode exclusion were **not** asserted.
 - All 44 existing and new visual checks passed during release baseline generation: Economy, Company, Market, and Player Lab at desktop, emulated mobile, exactly 320 px and reduced-motion settings. The only added visual baseline files belong to Player Lab.
 - The narrow-screen typography fix was validated with a 9/9 targeted rerun and inspected in the regenerated 320 px screenshots.
-- PR #104 follow-up implementation head `8234832cbfed3fb023f8d5d8af5d713a8ce7718f` passed [GitHub Actions run #37945476289](https://github.com/ROCSI-eu/warera-lab/actions/runs/37945476289) on 2026-10-09: full `npm run verify`, release-version consistency, formatting, lint (one non-blocking warning), production build, typecheck, 168 Vitest tests across 25 files and 136 Playwright cases. Release-documentation follow-up changes still require verification on the final PR head and a fresh Codex review before merge.
-- Production deployment and smoke: **not performed**. Exact production commit, visible version, service health, live Player Lab and cross-lab verification remain pending separate deployment approval.
+- Final PR #104 head `7ea2364f88b7d2df4f63678c51cfc26ac6f20066` passed [GitHub Actions run #37977110508](https://github.com/ROCSI-eu/warera-lab/actions/runs/37977110508) on 2026-10-09: full `npm run verify`, release-version consistency, formatting, lint (zero errors, one non-blocking warning), production builds, typecheck, 168 Vitest tests across 25 files and 136 Playwright cases. Final Codex review found no new issues, and both earlier review threads were resolved. Squash-merged PR #104 as production commit `d4df7435f6c57ade330d5bf03c8d3c3e971ee14d`; the tested head and merged commit share Git tree `3ab377bb1c957107b32036ce050d6cd1c94de484`.
+- Production deployment on 2026-10-09 succeeded from exact commit `d4df7435f6c57ade330d5bf03c8d3c3e971ee14d` using the release-directory cutover. Public UI reported `v0.0.7`; production `.deployment-sha` matched; website root and `/api/health` returned HTTP 200; API systemd service remained active with no restarts after cutover. Previous `v0.0.6` release remains available for rollback.
+- Live production Chromium smoke passed on desktop (1440 px), representative mobile (390 px), exactly 320 px, and reduced-motion configurations: direct player snapshot for `MihaiROCSI` (nine companies), live player search/import, Back navigation and Company/Economy/Market contextual handoffs. Live snapshot, economy context and selected market item APIs returned HTTP 200; no horizontal overflow was observed at these viewports or 320 px handoff destinations. Scoped axe checks on desktop and 320 px returned zero WCAG 2/2.1/2.2 violations. No browser page/console errors, cross-origin network requests, local/session storage or IndexedDB data were observed; these observations do not establish cookie, header or credential-mode exclusion.
 - Desktop, representative mobile, exact 320 px and reduced-motion browser evidence was captured through Playwright screenshot baselines and regression checks; no physical Android/iOS device checks are claimed.
 
 ### Known limitations
@@ -46,7 +47,7 @@ Release candidate for Player Lab MVP: a public, player-centered hub combining no
 - Public current-state only: no private/authenticated data, historical progression, account storage, or player inventory tracking.
 - Company output item is not a player-owned inventory balance. Ownership and reported worker/production values do not establish whether a company is active.
 - Partial/missing upstream context remains unavailable rather than inferred. Market handoffs fetch current item data independently and do not revalidate a stale company-to-item association.
-- Real-device mobile testing has not been performed as part of this candidate; automated mobile runs are browser emulation.
+- Real-device mobile testing has not been performed as part of this release; automated mobile runs are browser emulation.
 - The four-lab UX assessment (#93) and unified stabilization (#94) remain separate future work.
 
 ### References
@@ -56,7 +57,8 @@ Release candidate for Player Lab MVP: a public, player-centered hub combining no
 - #96 — Public identity and economic profile (PR #101)
 - #97 — Owned-company and output overview (PR #102)
 - #98 — Contextual Economy, Company and Market handoffs (PR #103)
-- #99 — Player Lab release-quality and versioning gate
+- #99 — Player Lab release-quality and versioning gate (PR #104)
+- [v0.0.7 — Player Lab MVP GitHub Release](https://github.com/ROCSI-eu/warera-lab/releases/tag/v0.0.7)
 
 ## v0.0.6 — 2026-10-08
 
