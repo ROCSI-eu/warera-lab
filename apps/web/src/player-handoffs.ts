@@ -20,6 +20,13 @@ export function playerHandoffHref(
   location: HandoffLocation,
   company?: PublicCompanySnapshot,
 ): string | undefined {
+  // The player snapshot API accepts IDs up to 128 characters; route identities
+  // allow up to 160. Never silently trim a record ID into a different identity.
+  const validIdentity = (value: string, maxLength: number) =>
+    value.length > 0 && value.length <= maxLength && value === value.trim();
+  if (!validIdentity(playerId, 128) || (company && !validIdentity(company.id, 160))) {
+    return undefined;
+  }
   const itemCode = company?.itemCode.trim();
   if (lab === "market" && (!company || !itemCode || itemCode.length > publicItemCodeMaxLength)) {
     return undefined;

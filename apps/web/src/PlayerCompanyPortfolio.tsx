@@ -16,6 +16,18 @@ function uniqueSuffix(id: string, duplicateIds: string[]): string {
   return id;
 }
 
+export function portfolioCompanyIdentity(
+  company: PublicCompanySnapshot,
+  companies: PublicCompanySnapshot[],
+): string {
+  const duplicateIds = companies
+    .filter((candidate) => candidate.name === company.name)
+    .map((candidate) => candidate.id);
+  return duplicateIds.length > 1
+    ? company.name + " (Company " + uniqueSuffix(company.id, duplicateIds) + ")"
+    : company.name;
+}
+
 function reportedOperations(company: PublicCompanySnapshot): string[] {
   return [
     company.production === undefined
@@ -94,18 +106,15 @@ export function PlayerCompanyPortfolio({
                 snapshot.player.id,
                 location,
                 company,
-              )!;
+              );
               const economyHref = playerHandoffHref(
                 "economy",
                 snapshot.player.id,
                 location,
                 company,
-              )!;
+              );
               const marketHref = playerHandoffHref("market", snapshot.player.id, location, company);
-              const identity =
-                duplicateIds.length > 1
-                  ? company.name + " (Company " + uniqueSuffix(company.id, duplicateIds) + ")"
-                  : company.name;
+              const identity = portfolioCompanyIdentity(company, companies);
 
               return (
                 <li key={company.id}>
@@ -127,12 +136,19 @@ export function PlayerCompanyPortfolio({
                       <p className="player-portfolio__operations">{cues.join(" · ")}</p>
                     ) : null}
                     <nav className="player-portfolio__actions" aria-label={"Explore " + identity}>
-                      <a href={companyHref} aria-label={"Inspect " + identity + " in Company Lab"}>
-                        Company Lab →
-                      </a>
-                      <a href={economyHref} aria-label={"Model " + identity + " in Economy Lab"}>
-                        Economy Lab →
-                      </a>
+                      {companyHref ? (
+                        <a
+                          href={companyHref}
+                          aria-label={"Inspect " + identity + " in Company Lab"}
+                        >
+                          Company Lab →
+                        </a>
+                      ) : null}
+                      {economyHref ? (
+                        <a href={economyHref} aria-label={"Model " + identity + " in Economy Lab"}>
+                          Economy Lab →
+                        </a>
+                      ) : null}
                       {marketHref ? (
                         <a
                           href={marketHref}
@@ -142,10 +158,22 @@ export function PlayerCompanyPortfolio({
                         >
                           Market Lab →
                         </a>
-                      ) : (
+                      ) : null}
+                      {!companyHref && !economyHref ? (
+                        <span className="muted">
+                          Lab links unavailable: public identifier is invalid.
+                        </span>
+                      ) : null}
+                      {!marketHref && companyHref ? (
                         <span className="muted">No usable output item for Market Lab</span>
-                      )}
+                      ) : null}
                     </nav>
+                    {marketHref && snapshot.freshness.hasStaleData ? (
+                      <p className="player-portfolio__market-caveat">
+                        This company-to-output association may be stale. Market Lab fetches current
+                        item data but does not verify the company still produces it.
+                      </p>
+                    ) : null}
                   </article>
                 </li>
               );

@@ -9,8 +9,8 @@ export function PlayerNextSteps({
   snapshot: PublicPlayerSnapshotResponse;
   location: HandoffLocation;
 }) {
-  const economyHref = playerHandoffHref("economy", snapshot.player.id, location)!;
-  const companyHref = playerHandoffHref("company", snapshot.player.id, location)!;
+  const economyHref = playerHandoffHref("economy", snapshot.player.id, location);
+  const companyHref = playerHandoffHref("company", snapshot.player.id, location);
 
   return (
     <section className="player-handoffs" aria-labelledby="player-next-steps-title">
@@ -18,7 +18,13 @@ export function PlayerNextSteps({
       <h3 id="player-next-steps-title">Continue exploring this player</h3>
       <div className="player-handoffs__grid">
         <article>
-          <a href={economyHref}>Model this player's skills in Economy Lab →</a>
+          {economyHref ? (
+            <a href={economyHref}>Model this player's skills in Economy Lab →</a>
+          ) : (
+            <span className="muted">
+              Economy Lab link unavailable: player identifier is invalid.
+            </span>
+          )}
           <p>
             Reload the public economy snapshot and explore what-if scenarios.
             {snapshot.companies.length > 0
@@ -27,7 +33,13 @@ export function PlayerNextSteps({
           </p>
         </article>
         <article>
-          <a href={companyHref}>Browse owned companies in Company Lab →</a>
+          {companyHref ? (
+            <a href={companyHref}>Browse owned companies in Company Lab →</a>
+          ) : (
+            <span className="muted">
+              Company Lab link unavailable: player identifier is invalid.
+            </span>
+          )}
           <p>
             {snapshot.companies.length > 0
               ? "Review a company's detailed public operations and upgrades, starting with its first listed record."

@@ -1,7 +1,7 @@
 import type { PublicPlayerSnapshotResponse } from "@warera-lab/domain";
 import type { WorkspaceMessage } from "./workspace-state.js";
 import { PlayerProfile } from "./PlayerProfile.js";
-import { PlayerCompanyPortfolio } from "./PlayerCompanyPortfolio.js";
+import { PlayerCompanyPortfolio, portfolioCompanyIdentity } from "./PlayerCompanyPortfolio.js";
 import { PlayerNextSteps } from "./PlayerNextSteps.js";
 import type { HandoffLocation } from "./player-handoffs.js";
 
@@ -77,7 +77,8 @@ export function PlayerLabShell({
         <>
           {focusedCompany ? (
             <p className="message" role="status">
-              This link focuses the owned company {focusedCompany.name}. Use the links in its
+              This link focuses the owned company{" "}
+              {portfolioCompanyIdentity(focusedCompany, snapshot.companies)}. Use the links in its
               portfolio card below to inspect that company in a specialist lab. The link does not
               indicate whether the company is active in WarEra.
             </p>

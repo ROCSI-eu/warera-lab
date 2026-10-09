@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { PlayerCompanyPortfolio } from "./PlayerCompanyPortfolio.js";
 import { PlayerNextSteps } from "./PlayerNextSteps.js";
+import { PlayerLabShell } from "./PlayerLabShell.js";
 import { playerHandoffHref } from "./player-handoffs.js";
 
 const location = {
@@ -108,6 +109,67 @@ describe("Player Lab contextual URL handoffs", () => {
     expect(html.match(/Model Fish Inc \(Company /g)?.length).toBe(3);
     expect(html.match(/Inspect fish from Fish Inc \(Company /g)?.length).toBe(2);
     expect(html).not.toContain("wl=");
+  });
+
+  it("rejects unusable API/route identities instead of generating silently coerced links", () => {
+    expect(playerHandoffHref("economy", " player-1 ", location)).toBeUndefined();
+    expect(playerHandoffHref("company", "p".repeat(129), location)).toBeUndefined();
+    expect(
+      playerHandoffHref("market", "player-1", location, { ...company, id: "company-1 " }),
+    ).toBeUndefined();
+    expect(
+      playerHandoffHref("economy", "player-1", location, { ...company, id: "c".repeat(161) }),
+    ).toBeUndefined();
+
+    const invalid = { ...snapshot, player: { ...snapshot.player, id: " ".repeat(2) + "bad" } };
+    const emptyLinks = renderToStaticMarkup(
+      createElement(PlayerNextSteps, { snapshot: invalid, location }),
+    );
+    expect(emptyLinks).toContain("player identifier is invalid");
+    expect(emptyLinks).not.toContain("href=");
+    const companyLinks = renderToStaticMarkup(
+      createElement(PlayerCompanyPortfolio, { snapshot: invalid, location }),
+    );
+    expect(companyLinks).toContain("Lab links unavailable");
+    expect(companyLinks).not.toContain("href=");
+  });
+
+  it("warns next to Market handoffs when the public company association could be stale", () => {
+    const html = renderToStaticMarkup(
+      createElement(PlayerCompanyPortfolio, {
+        snapshot: { ...snapshot, freshness: { ...snapshot.freshness, hasStaleData: true } },
+        location,
+      }),
+    );
+    expect(html).toContain("This company-to-output association may be stale");
+    expect(html).toContain("Market Lab fetches current");
+    expect(html).toContain("does not verify the company still produces it");
+    const currentHtml = renderToStaticMarkup(
+      createElement(PlayerCompanyPortfolio, { snapshot, location }),
+    );
+    expect(currentHtml).not.toContain("company-to-output association may be stale");
+  });
+
+  it("identifies exact focused company when duplicate names are present", () => {
+    const second = { ...company, id: "company-2" };
+    const html = renderToStaticMarkup(
+      createElement(PlayerLabShell, {
+        snapshot: { ...snapshot, companies: [company, second] },
+        focusedCompanyId: second.id,
+        navigationMessage: undefined,
+        isImporting: false,
+        isRefreshing: false,
+        refreshMessage: undefined,
+        onRefresh: () => undefined,
+        handoffLocation: location,
+      }),
+    );
+    expect(html).toContain("This link focuses the owned company");
+    expect(html).toContain("Fish Inc (Company");
+    expect(html).toContain("company-2");
+    expect(html.indexOf("This link focuses the owned company")).toBeLessThan(
+      html.indexOf("Observed economy skills"),
+    );
   });
 
   it("keeps company-level actions without inventing market item or activity status", () => {
