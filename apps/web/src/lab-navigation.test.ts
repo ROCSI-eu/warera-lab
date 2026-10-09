@@ -7,6 +7,29 @@ describe("lab navigation", () => {
     expect(parseLabLocation("")).toEqual({ route: { lab: "economy" } });
   });
 
+  it("accepts direct Player Lab links with optional focused company identity", () => {
+    expect(parseLabLocation("?lab=player&player=player-1")).toEqual({
+      route: { lab: "player", playerId: "player-1" },
+    });
+    expect(parseLabLocation("?lab=player&player=player-1&company=company-2")).toEqual({
+      route: { lab: "player", playerId: "player-1", companyId: "company-2" },
+    });
+    expect(parseLabLocation("?lab=player&company=orphan").message).toMatch(/needs a player/i);
+  });
+
+  it("builds Player Lab links without carrying Market item or scenario state", () => {
+    expect(
+      buildLabHref(
+        { lab: "player", playerId: "player-1" },
+        {
+          pathname: "/",
+          search: "?lab=market&company=old&item=steel",
+          hash: "",
+        },
+      ),
+    ).toBe("/?lab=player&player=player-1");
+  });
+
   it("parses reload-safe Company Lab player and company context", () => {
     expect(parseLabLocation("?lab=company&player=player-1&company=company-2")).toEqual({
       route: {

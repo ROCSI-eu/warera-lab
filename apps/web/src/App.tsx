@@ -18,6 +18,7 @@ import { CompanyLabShell } from "./CompanyLabShell.js";
 import { CompanySelector } from "./CompanySelector.js";
 import { FreshnessPanel } from "./FreshnessPanel.js";
 import { MarketLab } from "./MarketLab.js";
+import { PlayerLabShell } from "./PlayerLabShell.js";
 import { ScenarioTransfer, ScenarioWorkspace } from "./ScenarioWorkspace.js";
 import { formatDisplayNumber, formatOptionalDisplayNumber } from "./display-format.js";
 import { describeCompany, type CompanyPresentation } from "./company-display.js";
@@ -98,6 +99,9 @@ export function App() {
     initialScenario.document,
   );
   const [scenarioCompanyId, setScenarioCompanyId] = useState<string>();
+  // Player Lab may focus an explicitly linked company, but never assumes that
+  // the first owned company is the player's active or intentional selection.
+  const [playerFocusedCompanyId, setPlayerFocusedCompanyId] = useState<string>();
   const [scenarioImportMessage, setScenarioImportMessage] = useState<string | undefined>(
     initialScenario.message,
   );
@@ -218,13 +222,19 @@ export function App() {
         const requestedCompany = requestedCompanyId
           ? snapshot.companies.find((company) => company.id === requestedCompanyId)
           : undefined;
-        const targetCompany = requestedCompany ?? snapshot.companies[0];
+        const targetCompany =
+          activeLab === "player" ? requestedCompany : (requestedCompany ?? snapshot.companies[0]);
+        if (activeLab === "player") {
+          setPlayerFocusedCompanyId(requestedCompany?.id);
+        }
 
         if (requestedCompanyId && !requestedCompany) {
           setNavigationMessage(
-            targetCompany
-              ? `The company from this link is no longer available. Switched to ${targetCompany.name}; choose another company if needed.`
-              : "The company from this link is no longer available, and this player has no public companies to select.",
+            activeLab === "player"
+              ? "The company in this link is no longer listed for this player. Showing the player without a company focus."
+              : targetCompany
+                ? `The company from this link is no longer available. Switched to ${targetCompany.name}; choose another company if needed.`
+                : "The company from this link is no longer available, and this player has no public companies to select.",
           );
         }
 
@@ -234,7 +244,7 @@ export function App() {
 
         replaceLabContext(snapshot.player.id, targetCompany?.id);
 
-        if (targetCompany) {
+        if (targetCompany && activeLab !== "player") {
           const context = await loadEconomyContext(targetCompany.itemCode);
           if (activeLab === "economy" && context) {
             establishScenarioDocument(snapshot, targetCompany, context);
@@ -311,6 +321,23 @@ export function App() {
 
     try {
       const snapshot = await getPlayerSnapshot(currentPlayerId);
+      if (activeLab === "player") {
+        const focusedCompany = snapshot.companies.find(
+          (company) => company.id === playerFocusedCompanyId,
+        );
+        setPlayerFocusedCompanyId(focusedCompany?.id);
+        dispatch({
+          type: "refresh-succeeded",
+          snapshot,
+          selectedCompanyId: focusedCompany?.id,
+          message:
+            playerFocusedCompanyId && !focusedCompany
+              ? "Snapshot refreshed. The previously focused company is no longer available; showing the player only."
+              : "Public player snapshot refreshed.",
+        });
+        replaceLabContext(snapshot.player.id, focusedCompany?.id);
+        return;
+      }
       const preservedCompany = previousCompanyId
         ? snapshot.companies.find((company) => company.id === previousCompanyId)
         : undefined;
@@ -381,10 +408,14 @@ export function App() {
     state.snapshot?.player.id ??
     (initialScenario.document ? undefined : initialLocation.route.playerId);
   const navigationCompanyId =
-    selectedCompany?.id ??
-    (navigationPlayerId === initialLocation.route.playerId
-      ? initialLocation.route.companyId
-      : undefined);
+    activeLab === "player"
+      ? state.snapshot
+        ? playerFocusedCompanyId
+        : initialLocation.route.companyId
+      : (selectedCompany?.id ??
+        (navigationPlayerId === initialLocation.route.playerId
+          ? initialLocation.route.companyId
+          : undefined));
   const labHref = (lab: LabId) => {
     if (typeof window === "undefined") return "/";
 
@@ -431,6 +462,9 @@ export function App() {
         </a>
         <div className="site-header__actions">
           <nav className="lab-navigation" aria-label="WarEra Lab modules">
+            <a href={labHref("player")} aria-current={activeLab === "player" ? "page" : undefined}>
+              Player Lab
+            </a>
             <a
               href={labHref("economy")}
               aria-current={activeLab === "economy" ? "page" : undefined}
@@ -454,18 +488,22 @@ export function App() {
       <section className="hero" id="top" aria-labelledby="warera-lab-title">
         <p className="eyebrow">ROCSI · independent open-source project</p>
         <h1 id="warera-lab-title">
-          {activeLab === "economy"
-            ? "Import the present. Model the what-if."
-            : activeLab === "company"
-              ? "Understand the company before modelling the what-if."
-              : "Read the market now. Keep the assumptions visible."}
+          {activeLab === "player"
+            ? "Find the player. Understand the economy."
+            : activeLab === "economy"
+              ? "Import the present. Model the what-if."
+              : activeLab === "company"
+                ? "Understand the company before modelling the what-if."
+                : "Read the market now. Keep the assumptions visible."}
         </h1>
         <p className="lede">
-          {activeLab === "economy"
-            ? "Search a public WarEra player, inspect a normalized economy snapshot, and carry that observed state into transparent scenarios without credentials or in-game actions."
-            : activeLab === "company"
-              ? "Select a public company and review its normalized output, location, observed production, workforce, active upgrades, and data provenance before deeper analysis."
-              : "Inspect a current-state market module built around normalized public data, explicit freshness, and transparent derivations without historical collection."}
+          {activeLab === "player"
+            ? "Start with a player's public economic context. This lightweight hub will connect their profile and companies to specialized labs without credentials or game actions."
+            : activeLab === "economy"
+              ? "Search a public WarEra player, inspect a normalized economy snapshot, and carry that observed state into transparent scenarios without credentials or in-game actions."
+              : activeLab === "company"
+                ? "Select a public company and review its normalized output, location, observed production, workforce, active upgrades, and data provenance before deeper analysis."
+                : "Inspect a current-state market module built around normalized public data, explicit freshness, and transparent derivations without historical collection."}
         </p>
       </section>
 
@@ -574,7 +612,17 @@ export function App() {
         </>
       ) : null}
 
-      {activeLab === "company" ? (
+      {activeLab === "player" ? (
+        <PlayerLabShell
+          snapshot={state.snapshot}
+          focusedCompanyId={playerFocusedCompanyId}
+          navigationMessage={navigationMessage}
+          isImporting={state.isImporting}
+          isRefreshing={state.isRefreshing}
+          refreshMessage={state.refreshMessage}
+          onRefresh={() => void handleRefreshSnapshot()}
+        />
+      ) : activeLab === "company" ? (
         <CompanyLabShell
           snapshot={state.snapshot}
           selectedCompany={selectedCompany}

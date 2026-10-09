@@ -666,7 +666,10 @@ button:disabled {
   }
   .lab-navigation a {
     flex: 1 1 0;
-    padding-inline: 0.25rem;
+    min-width: 0;
+    padding: 0.45rem 0.2rem;
+    font-size: 0.72rem;
+    white-space: normal;
     text-align: center;
   }
   .status-pill {
