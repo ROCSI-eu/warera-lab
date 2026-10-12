@@ -73,6 +73,29 @@ describe("shared selected-context summary", () => {
     expect(html).not.toContain("Inspect company");
   });
 
+  it("does not attach a retained what-if scenario to a different selected company", () => {
+    const detached = markup({
+      lab: "economy",
+      snapshot,
+      company: second,
+      hasScenario: true,
+      scenarioCompanyId: first.id,
+    });
+    expect(detached).toContain("A scenario from a different company remains available below");
+    expect(detached).toContain("View imported workspace");
+    expect(detached).not.toContain("Open scenario workspace");
+
+    const attached = markup({
+      lab: "economy",
+      snapshot,
+      company: second,
+      hasScenario: true,
+      scenarioCompanyId: second.id,
+    });
+    expect(attached).toContain("Open scenario workspace");
+    expect(attached).not.toContain("different company");
+  });
+
   it("does not claim the Market link identifies a verified company or independent origin", () => {
     const linked = markup({
       lab: "market",

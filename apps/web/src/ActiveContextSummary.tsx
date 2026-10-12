@@ -16,6 +16,7 @@ interface ActiveContextSummaryProps {
   playerLoadFailed?: boolean | undefined;
   isLoadingEconomyContext?: boolean | undefined;
   hasScenario?: boolean | undefined;
+  scenarioCompanyId?: string | undefined;
   isPortableScenario?: boolean | undefined;
 }
 
@@ -31,6 +32,7 @@ export function ActiveContextSummary({
   playerLoadFailed = false,
   isLoadingEconomyContext = false,
   hasScenario = false,
+  scenarioCompanyId,
   isPortableScenario = false,
 }: ActiveContextSummaryProps) {
   const hasMarketLink = lab === "market" && Boolean(itemCode || linkedPlayerId);
@@ -74,6 +76,11 @@ export function ActiveContextSummary({
         ? `Public player snapshot loaded · ${snapshot.companies.length} owned ${snapshot.companies.length === 1 ? "company" : "companies"} listed.`
         : "Public player snapshot loaded. The displayed company is observed context, not a modified scenario.";
 
+    if (lab === "economy" && hasScenario && scenarioCompanyId !== company?.id) {
+      detail =
+        "A scenario from a different company remains available below, but is not attached to the currently selected company.";
+    }
+
     if (lab === "player") {
       actions.push({ label: "View owned companies", target: "player-portfolio-title" });
       actions.push({ label: "Explore next steps", target: "player-next-steps-title" });
@@ -85,7 +92,7 @@ export function ActiveContextSummary({
       });
     } else {
       actions.push({ label: "View imported workspace", target: "workspace-title" });
-      if (hasScenario)
+      if (hasScenario && scenarioCompanyId !== undefined && scenarioCompanyId === company?.id)
         actions.push({ label: "Open scenario workspace", target: "scenario-workspace-title" });
     }
   } else {

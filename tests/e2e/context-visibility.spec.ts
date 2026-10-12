@@ -129,6 +129,32 @@ test("@journey #106 company and Economy deep links expose exact selected context
   expect(api.externalRequests).toEqual([]);
 });
 
+test("@journey #106 Economy context summary detaches retained scenario on failed company switch", async ({
+  page,
+}) => {
+  const api = await installApiMocks(page);
+  api.duplicateCompanies = true;
+  await page.goto("/?lab=economy&player=player-1&company=company-1");
+
+  const summary = page.locator(".active-context");
+  await expect(summary).toContainText(/Iron Inc \(Company .*1\)/);
+  await expect(summary.getByRole("button", { name: "Open scenario workspace" })).toBeVisible();
+
+  api.economyContextMode = "unavailable";
+  await page.locator(".company-card").filter({ hasText: "Iron Inc" }).last().click();
+  await expect(summary).toContainText(/Iron Inc \(Company .*\)/);
+  await expect(summary).toContainText("A scenario from a different company");
+  await expect(summary.getByRole("button", { name: "Open scenario workspace" })).toHaveCount(0);
+  await expect(page.getByRole("alert")).toContainText(/temporarily unavailable/i);
+  await expect(page).toHaveURL(/company=company-duplicate-2/);
+
+  api.economyContextMode = "ok";
+  await page.locator(".company-card").filter({ hasText: "Iron Inc" }).first().click();
+  await expect(summary.getByRole("button", { name: "Open scenario workspace" })).toBeVisible();
+  await expect(summary).not.toContainText("different company");
+  expect(api.externalRequests).toEqual([]);
+});
+
 test("@a11y #106 Market selected item is discoverable at 390/320 with truthful linked IDs", async ({
   page,
 }) => {

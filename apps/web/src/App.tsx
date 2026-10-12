@@ -501,6 +501,7 @@ export function App() {
         playerLoadFailed={!state.snapshot && state.message?.kind === "error"}
         isLoadingEconomyContext={state.isLoadingEconomyContext}
         hasScenario={Boolean(scenarioDocument)}
+        scenarioCompanyId={scenarioCompanyId}
         isPortableScenario={Boolean(scenarioDocument && !scenarioCompanyId)}
       />
 
