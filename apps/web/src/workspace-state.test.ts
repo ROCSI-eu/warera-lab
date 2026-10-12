@@ -112,6 +112,7 @@ describe("workspace state", () => {
 
     expect(searching.isSearching).toBe(true);
     expect(searching.snapshot).toBe(snapshot);
+    expect(searching.lastCompletedImportPlayerId).toBeUndefined();
     expect(searching.selectedCompanyId).toBe("company-1");
   });
 
@@ -120,6 +121,7 @@ describe("workspace state", () => {
     const searching = workspaceReducer(previous, { type: "search-started" });
     expect(searching.search).toBeUndefined();
     expect(searching.snapshot).toBe(snapshot);
+    expect(searching.lastCompletedImportPlayerId).toBeUndefined();
     expect(searching.selectedCompanyId).toBe("company-1");
     expect(searching.message?.kind).toBe("status");
 
@@ -163,8 +165,32 @@ describe("workspace state", () => {
     const ready = workspaceReducer(importing, { type: "import-succeeded", snapshot });
 
     expect(ready.isImporting).toBe(false);
+    expect(ready.lastCompletedImportPlayerId).toBe("user-1");
     expect(ready.snapshot).toBe(snapshot);
     expect(ready.selectedCompanyId).toBe("company-1");
+  });
+
+  it("shows import success only for the latest completed import", () => {
+    const first = readyState();
+    expect(first.lastCompletedImportPlayerId).toBe("user-1");
+
+    const pending = workspaceReducer(first, { type: "import-started", playerId: "user-2" });
+    expect(pending.isImporting).toBe(true);
+    expect(pending.lastCompletedImportPlayerId).toBeUndefined();
+    expect(pending.snapshot).toBe(snapshot);
+
+    const failed = workspaceReducer(pending, {
+      type: "import-failed",
+      message: "Rate limit reached.",
+    });
+    expect(failed.isImporting).toBe(false);
+    expect(failed.lastCompletedImportPlayerId).toBeUndefined();
+    expect(failed.snapshot).toBe(snapshot);
+    expect(failed.message?.kind).toBe("error");
+
+    const next = workspaceReducer(failed, { type: "import-started", playerId: "user-1" });
+    const completed = workspaceReducer(next, { type: "import-succeeded", snapshot });
+    expect(completed.lastCompletedImportPlayerId).toBe("user-1");
   });
 
   it("preserves a usable snapshot when a later import fails", () => {

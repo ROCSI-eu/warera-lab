@@ -591,6 +591,8 @@ export function App() {
 
           {state.search &&
           state.snapshot &&
+          !state.isImporting &&
+          state.lastCompletedImportPlayerId === state.snapshot.player.id &&
           state.search.matches.some((match) => match.id === state.snapshot?.player.id) ? (
             <div className="search-completion search-completion--success" role="status">
               <strong>Public snapshot imported: {state.snapshot.player.username}</strong>
