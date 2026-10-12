@@ -39,7 +39,9 @@ export function CompanyLabShell({
     return (
       <section className="empty-workspace company-lab-entry" aria-labelledby="company-lab-title">
         <p className="section-kicker">Company Lab</p>
-        <h2 id="company-lab-title">Choose a player to establish company context</h2>
+        <h2 id="company-lab-title" tabIndex={-1}>
+          Choose a player to establish company context
+        </h2>
         <p>
           Search and import a public player above. Company Lab will keep the chosen player and
           company in the URL so the same context can be reopened or shared.
@@ -62,7 +64,9 @@ export function CompanyLabShell({
       <div className="workspace-heading">
         <div>
           <p className="section-kicker">Company Lab · public snapshot</p>
-          <h2 id="company-lab-title">{snapshot.player.username}</h2>
+          <h2 id="company-lab-title" tabIndex={-1}>
+            {snapshot.player.username}
+          </h2>
           <p className="muted">
             Select a company to inspect its normalized identity, location, observed operations,
             active upgrades, and snapshot provenance before modelling any changes.
@@ -110,7 +114,9 @@ export function CompanyLabShell({
       <div className="company-lab-context-grid">
         <section className="workspace-panel" aria-labelledby="company-lab-companies-title">
           <p className="section-kicker">Choose context</p>
-          <h3 id="company-lab-companies-title">Companies</h3>
+          <h3 id="company-lab-companies-title" tabIndex={-1}>
+            Companies
+          </h3>
           <CompanySelector
             companies={snapshot.companies}
             presentations={companyPresentations}

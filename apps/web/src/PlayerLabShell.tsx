@@ -33,7 +33,7 @@ export function PlayerLabShell({
       <div className="workspace-heading">
         <div>
           <p className="section-kicker">Player Lab · public snapshot</p>
-          <h2 id="player-lab-title">
+          <h2 id="player-lab-title" tabIndex={-1}>
             {snapshot ? snapshot.player.username : "Start with a player"}
           </h2>
           <p className="muted">

@@ -791,6 +791,8 @@ test("@journey player search hides opaque IDs and fits exact 320 px before and a
 
   await searchButton.focus();
   await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "View matching players" })).toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(resultButton).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();

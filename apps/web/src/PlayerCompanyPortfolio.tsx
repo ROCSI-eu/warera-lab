@@ -61,7 +61,9 @@ export function PlayerCompanyPortfolio({
       <div className="section-heading">
         <div>
           <p className="section-kicker">Observed company records</p>
-          <h3 id="player-portfolio-title">Owned-company overview</h3>
+          <h3 id="player-portfolio-title" tabIndex={-1}>
+            Owned-company overview
+          </h3>
           <p className="muted">
             {formatDisplayNumber(companies.length, "integer")}{" "}
             {companies.length === 1 ? "company" : "companies"} listed ·{" "}

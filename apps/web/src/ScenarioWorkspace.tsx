@@ -362,7 +362,9 @@ export function ScenarioWorkspace({
       <div className="workspace-heading">
         <div>
           <p className="section-kicker">Step 3 · compare and explain</p>
-          <h2 id="scenario-workspace-title">Scenario workspace</h2>
+          <h2 id="scenario-workspace-title" tabIndex={-1}>
+            Scenario workspace
+          </h2>
           <p className="muted">
             Baseline is stable. Scenario A and Scenario B are independent hypothetical states.
           </p>
