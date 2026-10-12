@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-import { installApiMocks } from "./fixtures.js";
+import { installApiMocks, snapshotResponse } from "./fixtures.js";
 
 test("@journey #106 search completion and Player portfolio continuation are explicit", async ({
   page,
@@ -152,6 +152,36 @@ test("@journey #106 Economy context summary detaches retained scenario on failed
   await page.locator(".company-card").filter({ hasText: "Iron Inc" }).first().click();
   await expect(summary.getByRole("button", { name: "Open scenario workspace" })).toBeVisible();
   await expect(summary).not.toContainText("different company");
+  expect(api.externalRequests).toEqual([]);
+});
+
+test("@journey #106 Economy retains live-derived origin after last company is removed", async ({
+  page,
+}) => {
+  const api = await installApiMocks(page);
+  await page.goto("/?lab=economy&player=player-1&company=company-1");
+
+  const summary = page.locator(".active-context");
+  await expect(summary).toContainText("Company · Planner Steel");
+  await expect(summary.getByRole("button", { name: "Open scenario workspace" })).toBeVisible();
+
+  await page.route("**/api/players/snapshot", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: { ...snapshotResponse, companies: [] },
+      }),
+    });
+  });
+  await page.getByRole("button", { name: "Refresh snapshot" }).click();
+  await expect(summary).toContainText("previously live-derived scenario");
+  await expect(summary).toContainText("detached from its former live company context");
+  await expect(summary).not.toContainText("Portable what-if scenario");
+  await expect(summary).not.toContainText("Company · Planner Steel");
+  await expect(summary.getByRole("button", { name: "Open scenario workspace" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Scenario workspace" })).toBeVisible();
+  await expect(page).toHaveURL("/?lab=economy&player=player-1");
   expect(api.externalRequests).toEqual([]);
 });
 

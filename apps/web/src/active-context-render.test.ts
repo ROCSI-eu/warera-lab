@@ -96,6 +96,28 @@ describe("shared selected-context summary", () => {
     expect(attached).not.toContain("different company");
   });
 
+  it("labels detached live-derived scenarios without confusing them with portable imports", () => {
+    const detached = markup({
+      lab: "economy",
+      snapshot: { ...snapshot, companies: [] },
+      hasScenario: true,
+      isPortableScenario: false,
+    });
+    expect(detached).toContain("previously live-derived scenario");
+    expect(detached).toContain("detached from its former live company context");
+    expect(detached).not.toContain("Portable what-if scenario");
+    expect(detached).not.toContain("Open scenario workspace");
+
+    const portable = markup({
+      lab: "economy",
+      snapshot: { ...snapshot, companies: [] },
+      hasScenario: true,
+      isPortableScenario: true,
+    });
+    expect(portable).toContain("Portable what-if scenario");
+    expect(portable).not.toContain("previously live-derived scenario");
+  });
+
   it("does not claim the Market link identifies a verified company or independent origin", () => {
     const linked = markup({
       lab: "market",

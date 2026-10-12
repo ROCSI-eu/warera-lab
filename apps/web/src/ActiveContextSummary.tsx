@@ -76,9 +76,16 @@ export function ActiveContextSummary({
         ? `Public player snapshot loaded · ${snapshot.companies.length} owned ${snapshot.companies.length === 1 ? "company" : "companies"} listed.`
         : "Public player snapshot loaded. The displayed company is observed context, not a modified scenario.";
 
-    if (lab === "economy" && hasScenario && scenarioCompanyId !== company?.id) {
+    if (
+      lab === "economy" &&
+      hasScenario &&
+      !isPortableScenario &&
+      (scenarioCompanyId === undefined || scenarioCompanyId !== company?.id)
+    ) {
       detail =
-        "A scenario from a different company remains available below, but is not attached to the currently selected company.";
+        scenarioCompanyId === undefined
+          ? "A previously live-derived scenario remains available below, but is detached from its former live company context."
+          : "A scenario from a different company remains available below, but is not attached to the currently selected company.";
     }
 
     if (lab === "player") {

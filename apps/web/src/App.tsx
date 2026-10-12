@@ -101,6 +101,10 @@ export function App() {
     initialScenario.document,
   );
   const [scenarioCompanyId, setScenarioCompanyId] = useState<string>();
+  // Source provenance is independent of whether the source company remains attached.
+  const [scenarioWasPortableImport, setScenarioWasPortableImport] = useState(
+    Boolean(initialScenario.document),
+  );
   // Player Lab may focus an explicitly linked company, but never assumes that
   // the first owned company is the player's active or intentional selection.
   const [playerFocusedCompanyId, setPlayerFocusedCompanyId] = useState<string>();
@@ -155,6 +159,7 @@ export function App() {
           : createWorkspaceScenarioDocument(snapshot, company, context),
       );
       setScenarioCompanyId(company.id);
+      setScenarioWasPortableImport(false);
       setScenarioImportMessage(undefined);
       setScenarioSessionKey((current) => current + 1);
     },
@@ -164,6 +169,7 @@ export function App() {
   function handleScenarioImport(document: ScenarioDocumentV1) {
     setScenarioDocument(document);
     setScenarioCompanyId(undefined);
+    setScenarioWasPortableImport(true);
     setScenarioImportMessage(
       "Portable scenario loaded without attaching or looking up a live player workspace.",
     );
@@ -502,7 +508,7 @@ export function App() {
         isLoadingEconomyContext={state.isLoadingEconomyContext}
         hasScenario={Boolean(scenarioDocument)}
         scenarioCompanyId={scenarioCompanyId}
-        isPortableScenario={Boolean(scenarioDocument && !scenarioCompanyId)}
+        isPortableScenario={Boolean(scenarioDocument && scenarioWasPortableImport)}
       />
 
       <section className="hero" id="top" aria-labelledby="warera-lab-title">
