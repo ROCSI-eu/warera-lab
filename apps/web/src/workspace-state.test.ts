@@ -115,6 +115,37 @@ describe("workspace state", () => {
     expect(searching.selectedCompanyId).toBe("company-1");
   });
 
+  it("clears stale matches when searching again without losing an imported player", () => {
+    const previous = readyState();
+    const searching = workspaceReducer(previous, { type: "search-started" });
+    expect(searching.search).toBeUndefined();
+    expect(searching.snapshot).toBe(snapshot);
+    expect(searching.selectedCompanyId).toBe("company-1");
+    expect(searching.message?.kind).toBe("status");
+
+    const failed = workspaceReducer(searching, {
+      type: "search-failed",
+      message: "WarEra rate limit reached.",
+    });
+    expect(failed.isSearching).toBe(false);
+    expect(failed.search).toBeUndefined();
+    expect(failed.snapshot).toBe(snapshot);
+    expect(failed.message).toEqual({
+      kind: "error",
+      text: "WarEra rate limit reached.",
+    });
+  });
+
+  it("clears previous matches when a search fails before starting (invalid input)", () => {
+    const failed = workspaceReducer(readyState(), {
+      type: "search-failed",
+      message: "Enter at least two characters.",
+    });
+    expect(failed.search).toBeUndefined();
+    expect(failed.snapshot).toBe(snapshot);
+    expect(failed.message?.kind).toBe("error");
+  });
+
   it("stores search results and clears the transient searching state", () => {
     const searching = workspaceReducer(initialWorkspaceState, { type: "search-started" });
     const results = workspaceReducer(searching, { type: "search-succeeded", search });

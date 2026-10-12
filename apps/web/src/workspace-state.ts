@@ -67,6 +67,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       return {
         ...state,
         isSearching: true,
+        search: undefined,
         message: { kind: "status", text: "Searching public WarEra players…" },
       };
     case "search-succeeded":
@@ -83,6 +84,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       return {
         ...state,
         isSearching: false,
+        search: undefined,
         message: { kind: "error", text: action.message },
       };
     case "import-started":

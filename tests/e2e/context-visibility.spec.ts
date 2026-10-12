@@ -32,6 +32,33 @@ test("@journey #106 search completion and Player portfolio continuation are expl
   expect(api.externalRequests).toEqual([]);
 });
 
+test("@journey #106 retry after a search failure never reports prior matches as completed", async ({
+  page,
+}) => {
+  const api = await installApiMocks(page);
+  await page.goto("/?lab=player");
+  await page.getByLabel("WarEra player name").fill("Planner");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.getByText("Search complete · 1 match found")).toBeVisible();
+  await page.getByRole("button", { name: /Planner Level 12/ }).click();
+  await expect(page.getByText("Public snapshot imported: Planner")).toBeVisible();
+
+  api.searchMode = "rate-limit";
+  await page.getByLabel("WarEra player name").fill("Another player");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText(/rate limit reached/i);
+  await expect(page.locator(".search-completion")).toHaveCount(0);
+  await expect(page.locator(".search-results")).toHaveCount(0);
+  await expect(page.locator(".active-context")).toContainText("Current player: Planner");
+
+  api.searchMode = "empty";
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.getByText("Search complete · 0 matches found")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "0 matches" })).toBeVisible();
+  await expect(page.locator(".active-context")).toContainText("Current player: Planner");
+  expect(api.externalRequests).toEqual([]);
+});
+
 test("@journey #106 company and Economy deep links expose exact selected context and keep URL", async ({
   page,
 }) => {
