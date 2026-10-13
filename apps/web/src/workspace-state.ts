@@ -14,6 +14,7 @@ export interface WorkspaceState {
   isSearching: boolean;
   isImporting: boolean;
   pendingPlayerId?: string | undefined;
+  lastCompletedImportPlayerId?: string | undefined;
   search?: PlayerSearchResponse | undefined;
   snapshot?: PublicPlayerSnapshotResponse | undefined;
   selectedCompanyId?: string | undefined;
@@ -67,6 +68,8 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       return {
         ...state,
         isSearching: true,
+        search: undefined,
+        lastCompletedImportPlayerId: undefined,
         message: { kind: "status", text: "Searching public WarEra players…" },
       };
     case "search-succeeded":
@@ -83,6 +86,8 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
       return {
         ...state,
         isSearching: false,
+        search: undefined,
+        lastCompletedImportPlayerId: undefined,
         message: { kind: "error", text: action.message },
       };
     case "import-started":
@@ -90,6 +95,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         ...state,
         isImporting: true,
         pendingPlayerId: action.playerId,
+        lastCompletedImportPlayerId: undefined,
         refreshMessage: undefined,
         message: { kind: "status", text: "Importing the public economy snapshot…" },
       };
@@ -98,6 +104,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         ...state,
         isImporting: false,
         pendingPlayerId: undefined,
+        lastCompletedImportPlayerId: action.snapshot.player.id,
         snapshot: action.snapshot,
         selectedCompanyId: action.snapshot.companies[0]?.id,
         economyContext: undefined,
@@ -110,6 +117,7 @@ export function workspaceReducer(state: WorkspaceState, action: WorkspaceAction)
         ...state,
         isImporting: false,
         pendingPlayerId: undefined,
+        lastCompletedImportPlayerId: undefined,
         message: { kind: "error", text: action.message },
       };
     case "refresh-started":

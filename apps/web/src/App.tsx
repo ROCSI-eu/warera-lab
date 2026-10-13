@@ -14,6 +14,8 @@ import {
   useState,
 } from "react";
 
+import { ActiveContextSummary } from "./ActiveContextSummary.js";
+import { focusLabSection } from "./focus-lab-section.js";
 import { CompanyLabShell } from "./CompanyLabShell.js";
 import { CompanySelector } from "./CompanySelector.js";
 import { FreshnessPanel } from "./FreshnessPanel.js";
@@ -99,6 +101,10 @@ export function App() {
     initialScenario.document,
   );
   const [scenarioCompanyId, setScenarioCompanyId] = useState<string>();
+  // Source provenance is independent of whether the source company remains attached.
+  const [scenarioWasPortableImport, setScenarioWasPortableImport] = useState(
+    Boolean(initialScenario.document),
+  );
   // Player Lab may focus an explicitly linked company, but never assumes that
   // the first owned company is the player's active or intentional selection.
   const [playerFocusedCompanyId, setPlayerFocusedCompanyId] = useState<string>();
@@ -153,6 +159,7 @@ export function App() {
           : createWorkspaceScenarioDocument(snapshot, company, context),
       );
       setScenarioCompanyId(company.id);
+      setScenarioWasPortableImport(false);
       setScenarioImportMessage(undefined);
       setScenarioSessionKey((current) => current + 1);
     },
@@ -162,6 +169,7 @@ export function App() {
   function handleScenarioImport(document: ScenarioDocumentV1) {
     setScenarioDocument(document);
     setScenarioCompanyId(undefined);
+    setScenarioWasPortableImport(true);
     setScenarioImportMessage(
       "Portable scenario loaded without attaching or looking up a live player workspace.",
     );
@@ -485,6 +493,24 @@ export function App() {
         </div>
       </header>
 
+      <ActiveContextSummary
+        lab={activeLab}
+        snapshot={state.snapshot}
+        company={selectedCompany}
+        focusedCompany={state.snapshot?.companies.find(
+          (company) => company.id === playerFocusedCompanyId,
+        )}
+        linkedPlayerId={initialLocation.route.playerId}
+        linkedCompanyId={initialLocation.route.companyId}
+        itemCode={initialLocation.route.itemCode}
+        isLoadingPlayer={state.isImporting}
+        playerLoadFailed={!state.snapshot && state.message?.kind === "error"}
+        isLoadingEconomyContext={state.isLoadingEconomyContext}
+        hasScenario={Boolean(scenarioDocument)}
+        scenarioCompanyId={scenarioCompanyId}
+        isPortableScenario={Boolean(scenarioDocument && scenarioWasPortableImport)}
+      />
+
       <section className="hero" id="top" aria-labelledby="warera-lab-title">
         <p className="eyebrow">ROCSI · independent open-source project</p>
         <h1 id="warera-lab-title">
@@ -512,7 +538,9 @@ export function App() {
           <div className="section-heading">
             <div>
               <p className="section-kicker">Step 1 · public data</p>
-              <h2 id="player-search-title">Find a player</h2>
+              <h2 id="player-search-title" tabIndex={-1}>
+                Find a player
+              </h2>
             </div>
             <span className="badge">Documented API only</span>
           </div>
@@ -548,10 +576,56 @@ export function App() {
             </p>
           ) : null}
 
+          {state.search && !state.isSearching ? (
+            <div className="search-completion" role="status">
+              <strong>
+                Search complete · {state.search.matches.length}{" "}
+                {state.search.matches.length === 1 ? "match" : "matches"} found
+              </strong>
+              {state.search.matches.length > 0 ? (
+                <button
+                  type="button"
+                  className="company-lab-handoff"
+                  onClick={() => focusLabSection("player-search-results-title")}
+                >
+                  View matching players ↓
+                </button>
+              ) : (
+                <span>Try another player name.</span>
+              )}
+            </div>
+          ) : null}
+
+          {state.search &&
+          state.snapshot &&
+          !state.isImporting &&
+          state.lastCompletedImportPlayerId === state.snapshot.player.id &&
+          state.search.matches.some((match) => match.id === state.snapshot?.player.id) ? (
+            <div className="search-completion search-completion--success" role="status">
+              <strong>Public snapshot imported: {state.snapshot.player.username}</strong>
+              <span>Observed public data loaded. Continue to the player's workspace below.</span>
+              <button
+                type="button"
+                className="company-lab-handoff"
+                onClick={() =>
+                  focusLabSection(
+                    activeLab === "player"
+                      ? "player-lab-title"
+                      : activeLab === "company"
+                        ? "company-lab-title"
+                        : "workspace-title",
+                  )
+                }
+              >
+                View imported workspace ↓
+              </button>
+            </div>
+          ) : null}
+
           {state.search ? (
             <div className="results-block" aria-live="polite">
               <div className="results-heading">
-                <h3>
+                <h3 id="player-search-results-title" tabIndex={-1}>
                   {state.search.matches.length}{" "}
                   {state.search.matches.length === 1 ? "match" : "matches"}
                 </h3>
@@ -576,7 +650,9 @@ export function App() {
                         <span aria-hidden="true">
                           {state.isImporting && state.pendingPlayerId === match.id
                             ? "Importing…"
-                            : "Import →"}
+                            : state.snapshot?.player.id === match.id
+                              ? "Imported ✓"
+                              : "Import →"}
                         </span>
                       </button>
                     </li>
@@ -684,7 +760,9 @@ export function App() {
           <div className="workspace-heading">
             <div>
               <p className="section-kicker">Imported workspace</p>
-              <h2 id="workspace-title">{state.snapshot.player.username}</h2>
+              <h2 id="workspace-title" tabIndex={-1}>
+                {state.snapshot.player.username}
+              </h2>
               <p className="muted">
                 Level {state.snapshot.player.level} ·{" "}
                 {playerCountry?.name ?? state.snapshot.player.countryId}

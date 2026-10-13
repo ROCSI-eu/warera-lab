@@ -15,7 +15,9 @@ export function PlayerNextSteps({
   return (
     <section className="player-handoffs" aria-labelledby="player-next-steps-title">
       <p className="section-kicker">Where to go next</p>
-      <h3 id="player-next-steps-title">Continue exploring this player</h3>
+      <h3 id="player-next-steps-title" tabIndex={-1}>
+        Continue exploring this player
+      </h3>
       <div className="player-handoffs__grid">
         <article>
           {economyHref ? (

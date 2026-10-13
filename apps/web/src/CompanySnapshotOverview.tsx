@@ -46,7 +46,9 @@ export function CompanySnapshotOverview({
       <div className="section-heading">
         <div>
           <p className="section-kicker">Selected company</p>
-          <h3 id="company-overview-title">{company.name}</h3>
+          <h3 id="company-overview-title" tabIndex={-1}>
+            {company.name}
+          </h3>
           <p className="muted">
             Owned by {snapshot.player.username} · Level {snapshot.player.level}
           </p>

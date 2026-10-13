@@ -791,6 +791,8 @@ test("@journey player search hides opaque IDs and fits exact 320 px before and a
 
   await searchButton.focus();
   await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "View matching players" })).toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(resultButton).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { name: "Planner", exact: true })).toBeVisible();
@@ -1005,6 +1007,11 @@ test("@visual twelve-company max selector", async ({ page }) => {
   const companiesPanel = page
     .locator(".workspace-panel")
     .filter({ has: page.getByRole("heading", { name: "Companies" }) });
+  // This tests the unchanged selector. Remove the new above-hero context only
+  // for its isolated capture; full-page Lab snapshots verify that context separately.
+  await page.addStyleTag({
+    content: ".active-context, .search-completion { display: none !important; }",
+  });
   await expect(companiesPanel).toHaveScreenshot("company-selector-twelve-companies.png");
 });
 
@@ -1035,6 +1042,10 @@ test("@visual Company Lab twelve-company max portfolio", async ({ page }) => {
   );
   expect(overflow).toBeLessThanOrEqual(0);
 
+  // Keep the established isolated portfolio baseline independent of above-hero layout.
+  await page.addStyleTag({
+    content: ".active-context, .search-completion { display: none !important; }",
+  });
   await expect(page.locator(".company-lab-entry")).toHaveScreenshot(
     "company-lab-twelve-company-portfolio.png",
     { timeout: 15_000 },
@@ -1045,6 +1056,10 @@ test("@visual refresh snapshot control", async ({ page }) => {
   await installApiMocks(page);
   await importPlannerWorkspace(page);
 
+  // The control itself is unchanged; avoid a scroll/crop shift from the summary above it.
+  await page.addStyleTag({
+    content: ".active-context, .search-completion { display: none !important; }",
+  });
   const workspaceHeader = page.locator(".workspace > .workspace-heading");
   await expect(workspaceHeader).toHaveScreenshot("refresh-snapshot-control.png");
 });

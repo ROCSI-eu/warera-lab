@@ -123,7 +123,9 @@ export function MarketLabShell({
           <div className="section-heading">
             <div>
               <p className="section-kicker">Explore items</p>
-              <h3 id="market-catalogue-title">Current item overview</h3>
+              <h3 id="market-catalogue-title" tabIndex={-1}>
+                Current item overview
+              </h3>
             </div>
             {overview ? <span className="badge">{overview.items.length} items</span> : null}
           </div>
@@ -208,7 +210,9 @@ export function MarketLabShell({
           aria-labelledby="market-inspection-title"
         >
           <p className="section-kicker">Selected item · current-state inspection</p>
-          <h3 id="market-inspection-title">{itemCode ?? "Choose an item"}</h3>
+          <h3 id="market-inspection-title" tabIndex={-1}>
+            {itemCode ?? "Choose an item"}
+          </h3>
           {!itemCode ? (
             <p className="muted">
               Choose an item from the current catalogue to see its normalized recipe, output/input

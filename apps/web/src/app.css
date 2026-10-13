@@ -2092,3 +2092,75 @@ button:disabled {
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
+
+/* #106: succinct, non-sticky context and explicit action-completion cues. */
+.active-context {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  border: 1px solid rgba(155, 183, 220, 0.28);
+  border-radius: 1rem;
+  background: rgba(155, 183, 220, 0.07);
+  padding: clamp(0.85rem, 2.5vw, 1.3rem);
+  margin-top: 1rem;
+}
+.active-context__copy {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+.active-context__title {
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+}
+.active-context .section-kicker {
+  margin-bottom: 0.3rem;
+}
+.active-context p {
+  margin: 0.4rem 0 0;
+}
+.active-context__identity {
+  font-size: 0.9rem;
+}
+.active-context__identity code {
+  overflow-wrap: anywhere;
+}
+.active-context__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-self: center;
+}
+.active-context__actions button,
+.search-completion button {
+  cursor: pointer;
+}
+.search-completion {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(155, 183, 220, 0.22);
+  border-radius: 0.65rem;
+  font-size: 0.85rem;
+}
+.search-completion--success {
+  border-color: rgba(114, 181, 164, 0.38);
+}
+.search-completion strong {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 36rem) {
+  .active-context__actions {
+    width: 100%;
+  }
+  .active-context__actions button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
